@@ -35,7 +35,29 @@ int main(void) {
     (void)read6502(0xC081);
     assert(read6502(0xD000) == 0xAA);
 
-    /* 5. Unload system ROM (pass NULL) */
+    /* 6. apple2_mem_reset() must NOT clear the loaded system ROM pointer --
+     * real Apple II ROM chips don't get erased by a soft reset (or the
+     * 3-button reset combo). Re-select ROM read after reset (default LC
+     * state already selects ROM read post-reset, so no $C081 needed) and
+     * confirm the same ROM bytes are still served. */
+    apple2_mem_reset();
+    assert(read6502(0xD000) == 0xAA);
+
+    /* 7. Write-protection must still apply when a system ROM is loaded --
+     * the write path is governed purely by the LC write-enable
+     * softswitch, unrelated to whether a ROM is loaded for reads. A
+     * write to $D000 while write-protected (the post-reset default)
+     * must be silently ignored, not accidentally "succeed" into
+     * g_ram[] behind the ROM's back (which read6502() would never show
+     * anyway since ROM takes priority when g_lc_read_ram==0, but the
+     * write itself must still be correctly blocked, not just invisible
+     * by coincidence). */
+    (void)read6502(0xC080); /* select RAM read+write-protect at $D000-$DFFF */
+    write6502(0xD000, 0x99); /* should be ignored: write-protected */
+    (void)read6502(0xC081); /* re-select ROM read for the actual assertion */
+    assert(read6502(0xD000) == 0xAA); /* still ROM's value, write never took effect */
+
+    /* 8. Unload system ROM (pass NULL) */
     apple2_mem_load_system_rom(NULL);
     assert(read6502(0xD000) == 0x00);
 

@@ -1512,3 +1512,4 @@ b96a841 Update ralph-loop.log with latest pass 167/168 status
 0043bd8 Update dashboard.html: 351 tests GREEN, 14.3 KB RISC-V binary, Boot Splash Select Slot By Index Test landed
 93ef9f1 boot_splash: add boot_splash_select_slot_by_index API and test (351 tests GREEN)
 [2026-08-01 10:38:20] sleeping 300s...
+[2026-08-01 10:43:20] --- checking Woz ---
