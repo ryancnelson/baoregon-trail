@@ -68,8 +68,17 @@ int baoregon_emulator_is_in_splash_menu(void) {
     return g_in_splash_menu;
 }
 
+/* Alias for baoregon_emulator_is_in_splash_menu() -- added independently
+ * with an identical body (same drift-risk pattern already fixed twice
+ * this session: g_total_cycles in init()/reset_to_splash() at 0f538ac,
+ * button/annunciator clearing in apple2_mem_reset() at 31e30a0). Rather
+ * than duplicate the check against g_in_splash_menu a second time,
+ * this delegates to the canonical getter so the two names can never
+ * report different answers. See
+ * tests/test_emulator_loop_splash_active_matches_canonical.c for the
+ * regression lock. */
 int baoregon_emulator_is_splash_menu_active(void) {
-    return g_in_splash_menu;
+    return baoregon_emulator_is_in_splash_menu();
 }
 
 void baoregon_emulator_reset_to_splash(void) {
