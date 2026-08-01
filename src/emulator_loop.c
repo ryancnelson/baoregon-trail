@@ -24,12 +24,34 @@ static uint64_t g_total_cycles = 0ULL;
  * (g_total_cycles not zeroed in reset_to_splash() until commit 0f538ac;
  * this refactor closes that class of bug at the source instead of
  * requiring every future new piece of reset state to be manually kept
- * in sync between two separate copy-pasted functions). */
+ * in sync between two separate copy-pasted functions).
+ *
+ * Real bug fixed here: apple2_mem_reset() zeroes g_button_pressed[]
+ * (button register), and boot_splash_button_edge_state_init() assumes
+ * "all released" too -- but if a button is STILL PHYSICALLY HELD at
+ * the moment of reset (e.g. the 3-button reset combo itself: the user
+ * hasn't released PB0/PB1/PB2 yet when init() fires), a real GPIO-
+ * polling driver will re-assert pressed=1 for that button on the very
+ * next frame. boot_splash's edge detector would then see
+ * now_pressed=1, was_pressed=0 (freshly reset) and treat the still-
+ * held button as a BRAND NEW press, spuriously firing PREV/NEXT/SELECT
+ * in the splash menu the instant it's entered -- even though the user
+ * never released and re-pressed anything. Fix: sample the actual
+ * pre-reset button state BEFORE apple2_mem_reset() zeroes it, then
+ * seed the edge-detection state with those captured values instead of
+ * blindly assuming "all released". */
 static void reset_to_splash_menu(void) {
+    int pb0_was_held = apple2_mem_get_button_state(0);
+    int pb1_was_held = apple2_mem_get_button_state(1);
+    int pb2_was_held = apple2_mem_get_button_state(2);
+
     apple2_mem_reset();
     reset6502();
     boot_splash_init(&g_splash_state);
     boot_splash_button_edge_state_init(&g_edge_state);
+    g_edge_state.was_pressed[0] = pb0_was_held;
+    g_edge_state.was_pressed[1] = pb1_was_held;
+    g_edge_state.was_pressed[2] = pb2_was_held;
     g_in_splash_menu = 1;
     g_total_cycles = 0ULL;
 }
