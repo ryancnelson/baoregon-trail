@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">STEP 5 MAIN BOOT TRACKING (294 Tests) GREEN</span>
+                    <span class="pill pill-green">STEP 5 TERMINAL VIEWER (298 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -379,8 +379,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 3: Mode-Aware Frame Rendering Integration (<code class="code-inline">emulator_loop.c</code>)</span>
-                        <span class="pill pill-green">GREEN (57/57 PASS)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 2: Illegal Opcode Safety Hardening (<code class="code-inline">cpu6502.c</code>)</span>
+                        <span class="pill pill-green">GREEN (58/58 PASS)</span>
                     </div>
                 </div>
 
@@ -409,7 +409,7 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Mode-Aware Video DMA Routing Integration (<code class="code-inline">bio_display_render_frame_auto</code>)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 4: ANSI Truecolor Terminal Framebuffer Viewer (<code class="code-inline">tools/fb_terminal_viewer.py</code>)</span>
                         <span class="pill pill-green">GREEN (bio-sim PASS)</span>
                     </div>
                 </div>
@@ -487,8 +487,8 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 5 – 6: Main Entry Point Boot Performance Tracking (<code class="code-inline">main.c</code>) (COMPLETE)</h4>
-                            <p>Instrumented <code class="code-inline">src/main.c</code> with <code class="code-inline">baoregon_main_init()</code> to track 350MHz CPU boot cycles and validate sub-50ms power-on timing requirements!</p>
+                            <h4>Days 5 – 6: ANSI Truecolor Terminal Framebuffer Viewer (<code class="code-inline">tools/fb_terminal_viewer.py</code>) (COMPLETE)</h4>
+                            <p>Bunnie landed ANSI truecolor terminal viewer tool rendering 320x240 RGB565 framebuffers directly in host terminal using Unicode half-block characters!</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,30 +510,30 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. Main Entry Point Boot Performance Instrumentation Landed (<code class="code-inline">main.c</code>)</div>
+                    <div class="decision-title">1. ANSI Truecolor Terminal Framebuffer Viewer Landed (<code class="code-inline">tools/fb_terminal_viewer.py</code>)</div>
+                    <div class="decision-desc">
+                        Bunnie landed <code class="code-inline">tools/fb_terminal_viewer.py</code> to render 320x240 RGB565 framebuffers in terminal using ANSI 24-bit escape codes and Unicode half-block characters!
+                    </div>
+                </div>
+
+                <div class="decision-item">
+                    <div class="decision-title">2. Illegal Opcode Safety Hardening Landed (<code class="code-inline">cpu6502.c</code>)</div>
+                    <div class="decision-desc">
+                        Woz added regression tests in <code class="code-inline">tests/test_opcodes.c</code> locking in illegal/undocumented NMOS 6502 opcode fallback safety behavior!
+                    </div>
+                </div>
+
+                <div class="decision-item">
+                    <div class="decision-title">3. Main Entry Point Boot Performance Instrumentation Landed (<code class="code-inline">main.c</code>)</div>
                     <div class="decision-desc">
                         Instrumented <code class="code-inline">src/main.c</code> with <code class="code-inline">baoregon_main_init()</code> to track 350MHz CPU boot cycles and validate sub-50ms power-on timing requirements!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Mode-Aware Frame Rendering Integration Landed (<code class="code-inline">emulator_loop.c</code>)</div>
-                    <div class="decision-desc">
-                        Integrated <code class="code-inline">bio_display_render_frame_auto()</code> into <code class="code-inline">baoregon_emulator_run_frame()</code> in <code class="code-inline">src/emulator_loop.c</code> so every frame dynamically responds to softswitch video mode state!
-                    </div>
-                </div>
-
-                <div class="decision-item">
-                    <div class="decision-title">3. 3-Button Soft Reset Combo Landed (<code class="code-inline">emulator_loop.c</code>)</div>
-                    <div class="decision-desc">
-                        Landed 3-button soft reset combo (PB0 + PB1 + PB2 held simultaneously) in <code class="code-inline">src/emulator_loop.c</code> allowing users to exit running games and return to the boot splash menu!
-                    </div>
-                </div>
-
-                <div class="decision-item">
                     <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (294 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (298 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
