@@ -29,6 +29,14 @@ typedef struct {
     int head;        /* byte offset within the current track's nibble data */
     int read_only;
     int has_disk;
+    /* Real Disk II hardware's shift register takes TWO Q6-LOW ("shift")
+     * pulses to produce one available nibble -- toggles 0/1/0/1 on every
+     * DRIVEREAD access; a byte is only actually latched/head-advanced on
+     * alternating pulses (or unconditionally in write mode, per
+     * NibbleDiskDriver.onQ6Low()'s `skip || controller.q7` guard). Real
+     * DOS 3.3 RWTS polls $C0EC in a tight loop expecting this exact
+     * cadence; omitting it desyncs real boot code. */
+    int skip;
 } disk2_drive_state_t;
 
 typedef struct {

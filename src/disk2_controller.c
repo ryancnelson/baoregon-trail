@@ -139,33 +139,46 @@ static void set_phase(disk2_controller_t *ctl, int phase, int on) {
 
 /* Reads/writes the next raw nibble at the current drive's head position,
  * on the current track (Q6 LOW / "shift" case). Ported from
- * NibbleDiskDriver.onQ6Low(). */
+ * NibbleDiskDriver.onQ6Low().
+ *
+ * REAL BUG FIXED (found via TDD, tests/test_disk2_controller.c): the
+ * original version of this function read/wrote a nibble on EVERY
+ * DRIVEREAD access. Real Disk II hardware's shift register (and the
+ * reference NibbleDiskDriver.onQ6Low()) only actually shifts in/out a
+ * byte on every OTHER "shift" pulse while in read mode (tracked via a
+ * per-drive `skip` flag toggling 0/1/0/1); the intervening pulse is a
+ * hardware artifact of the shift-register's own timing that real DOS
+ * 3.3 RWTS code depends on when polling $C0EC for the latch's high bit.
+ * Also added the isOn() (motor_on) gate onQ6Low() has -- reads/writes
+ * while the drive is off must produce latch=0, not real track data. */
 static uint8_t nibble_shift(disk2_controller_t *ctl, int write_mode, uint8_t write_value) {
     disk2_drive_state_t *d = &ctl->drive[ctl->selected_drive];
-    int track_index = d->track >> 2;
-
-    if (track_index < 0 || track_index >= DISK2_MAX_TRACKS || !d->has_disk) {
-        return 0;
-    }
-
-    disk2_nibble_track_t *track = &d->tracks[track_index];
-    if (track->length == 0) {
-        return 0;
-    }
-
-    if (d->head >= track->length) {
-        d->head = 0;
-    }
-
     uint8_t result = 0;
-    if (write_mode) {
-        if (!d->read_only) {
-            track->data[d->head] = write_value;
+
+    if (ctl->motor_on && (d->skip || ctl->q7)) {
+        int track_index = d->track >> 2;
+        if (track_index >= 0 && track_index < DISK2_MAX_TRACKS && d->has_disk) {
+            disk2_nibble_track_t *track = &d->tracks[track_index];
+            if (track->length > 0) {
+                if (d->head >= track->length) {
+                    d->head = 0;
+                }
+
+                if (write_mode) {
+                    if (!d->read_only) {
+                        track->data[d->head] = write_value;
+                    }
+                } else {
+                    result = track->data[d->head];
+                }
+                d->head++;
+            }
         }
     } else {
-        result = track->data[d->head];
+        result = 0;
     }
-    d->head++;
+
+    d->skip = (d->skip + 1) % 2;
     return result;
 }
 
