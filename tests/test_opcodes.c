@@ -2300,6 +2300,36 @@ static void test_illegal_opcode_consumes_one_byte_without_crashing(void) {
           "test_illegal_opcode_consumes_one_byte_without_crashing");
 }
 
+static void test_pc_wraps_from_0xffff_to_0x0000_on_single_byte_opcode(void) {
+    /* pc is a uint16_t with no bounds checking -- real 6502 hardware has
+     * no concept of an "end of address space", it just wraps back to
+     * $0000. NOP at $FFFF must advance pc past the top of the 64KB
+     * space by wrapping to $0000, not overflow into undefined behavior
+     * or get stuck. Same wraparound-boundary class as the exec6502()
+     * clockticks6502 overflow bug found this session and the INC/DEC
+     * zeropage byte-wraparound tests -- untested until now despite pc++
+     * happening on literally every single instruction fetch. */
+    setup();
+    pc = 0xFFFF;
+    test_ram[0xFFFF] = 0xEA; /* NOP */
+    step6502();
+    CHECK(pc == 0x0000, "test_pc_wraps_from_0xffff_to_0x0000_on_single_byte_opcode");
+}
+
+static void test_pc_wraps_mid_instruction_for_a_two_byte_opcode(void) {
+    /* A 2-byte instruction (opcode + operand) straddling the $FFFF/$0000
+     * boundary: opcode at $FFFF, operand must be fetched from $0000 (the
+     * wrapped address), and pc after the fetch lands at $0001 -- not
+     * some garbage value from 16-bit overflow of the fetch sequence. */
+    setup();
+    pc = 0xFFFF;
+    test_ram[0xFFFF] = 0xA9; /* LDA #imm */
+    test_ram[0x0000] = 0x42; /* operand wraps to address $0000 */
+    step6502();
+    CHECK(pc == 0x0001 && a == 0x42,
+          "test_pc_wraps_mid_instruction_for_a_two_byte_opcode");
+}
+
 int main(void) {
     test_nop_advances_pc_and_takes_2_cycles();
     test_lda_immediate_loads_value();
@@ -2487,6 +2517,8 @@ int main(void) {
     test_beq_does_not_take_extra_cycle_within_same_page();
     test_bne_backward_branch_crosses_page_takes_extra_cycle();
     test_illegal_opcode_consumes_one_byte_without_crashing();
+    test_pc_wraps_from_0xffff_to_0x0000_on_single_byte_opcode();
+    test_pc_wraps_mid_instruction_for_a_two_byte_opcode();
 
     if (failures > 0) {
         printf("\n%d test(s) FAILED\n", failures);
