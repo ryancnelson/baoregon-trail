@@ -829,3 +829,4 @@ b00a453 Update dashboard.html: 324 tests GREEN, 14.1 KB RISC-V binary, Disk Trap
 e2d380b emulator_loop: add test_emulator_loop_select_attaches_disk_image integration test (326 tests GREEN)
 6aa39bd apple2_mem: lock in reset() restoring display-mode defaults with regression test
 [2026-08-01 06:04:51] sleeping 300s...
+[2026-08-01 06:09:51] --- checking Woz ---
