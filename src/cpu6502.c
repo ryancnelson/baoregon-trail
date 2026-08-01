@@ -75,6 +75,22 @@ static uint16_t fetch_indirect_indexed_addr(int *page_crossed) {
     return effective;
 }
 
+/* zeropage,X -- address wraps within the zero page, no page-cross concept. */
+static uint16_t fetch_zeropage_x_addr(void) {
+    return (uint8_t)(read6502(pc++) + x);
+}
+
+/* absolute,X / absolute,Y -- 16-bit base + index register, with normal
+ * carry into the next page. Sets *page_crossed for callers that charge an
+ * extra cycle on page crossing (reads only; writes are always the slow
+ * cycle count per NMOS 6502 timing). */
+static uint16_t fetch_absolute_indexed_addr(uint8_t index, int *page_crossed) {
+    uint16_t base = fetch_absolute_addr();
+    uint16_t effective = (uint16_t)(base + index);
+    *page_crossed = ((base & 0xFF00) != (effective & 0xFF00));
+    return effective;
+}
+
 /* --- branch helper --- */
 
 static void branch_if(int condition, int8_t offset) {
@@ -107,6 +123,28 @@ static void push8(uint8_t value) {
 static uint8_t pull8(void) {
     sp++;
     return read6502((uint16_t)(0x0100 + sp));
+}
+
+/* --- ADC helper (shared by all addressing modes) --- */
+
+static void adc_with_operand(uint8_t operand) {
+    uint8_t carry_in = (status & FLAG_CARRY) ? 1 : 0;
+    uint16_t sum = (uint16_t)a + operand + carry_in;
+
+    if (~(a ^ operand) & (a ^ (uint8_t)sum) & 0x80) {
+        status |= FLAG_OVERFLOW;
+    } else {
+        status &= (uint8_t)~FLAG_OVERFLOW;
+    }
+
+    if (sum > 0xFF) {
+        status |= FLAG_CARRY;
+    } else {
+        status &= (uint8_t)~FLAG_CARRY;
+    }
+
+    a = (uint8_t)sum;
+    set_zero_and_sign(a);
 }
 
 void step6502(void) {
@@ -206,24 +244,7 @@ void step6502(void) {
 
         case 0x69: { /* ADC immediate (binary mode only; decimal mode is a
                         separate future test per NEXT_STEPS.md flag coverage) */
-            uint8_t operand = fetch_immediate();
-            uint8_t carry_in = (status & FLAG_CARRY) ? 1 : 0;
-            uint16_t sum = (uint16_t)a + operand + carry_in;
-
-            if (~(a ^ operand) & (a ^ (uint8_t)sum) & 0x80) {
-                status |= FLAG_OVERFLOW;
-            } else {
-                status &= (uint8_t)~FLAG_OVERFLOW;
-            }
-
-            if (sum > 0xFF) {
-                status |= FLAG_CARRY;
-            } else {
-                status &= (uint8_t)~FLAG_CARRY;
-            }
-
-            a = (uint8_t)sum;
-            set_zero_and_sign(a);
+            adc_with_operand(fetch_immediate());
             clockticks6502 += 2;
             break;
         }
@@ -480,6 +501,75 @@ void step6502(void) {
             int page_crossed;
             write6502(fetch_indirect_indexed_addr(&page_crossed), a);
             clockticks6502 += 6;
+            break;
+        }
+
+        case 0xB5: /* LDA zeropage,X */
+            a = read6502(fetch_zeropage_x_addr());
+            set_zero_and_sign(a);
+            clockticks6502 += 4;
+            break;
+
+        case 0x95: /* STA zeropage,X */
+            write6502(fetch_zeropage_x_addr(), a);
+            clockticks6502 += 4;
+            break;
+
+        case 0xBD: { /* LDA absolute,X */
+            int page_crossed;
+            a = read6502(fetch_absolute_indexed_addr(x, &page_crossed));
+            set_zero_and_sign(a);
+            clockticks6502 += page_crossed ? 5 : 4;
+            break;
+        }
+
+        case 0xB9: { /* LDA absolute,Y */
+            int page_crossed;
+            a = read6502(fetch_absolute_indexed_addr(y, &page_crossed));
+            set_zero_and_sign(a);
+            clockticks6502 += page_crossed ? 5 : 4;
+            break;
+        }
+
+        case 0x9D: { /* STA absolute,X -- always 5 cycles */
+            int page_crossed;
+            write6502(fetch_absolute_indexed_addr(x, &page_crossed), a);
+            clockticks6502 += 5;
+            break;
+        }
+
+        case 0x99: { /* STA absolute,Y -- always 5 cycles */
+            int page_crossed;
+            write6502(fetch_absolute_indexed_addr(y, &page_crossed), a);
+            clockticks6502 += 5;
+            break;
+        }
+
+        case 0x7D: { /* ADC absolute,X */
+            int page_crossed;
+            adc_with_operand(read6502(fetch_absolute_indexed_addr(x, &page_crossed)));
+            clockticks6502 += page_crossed ? 5 : 4;
+            break;
+        }
+
+        case 0x79: { /* ADC absolute,Y */
+            int page_crossed;
+            adc_with_operand(read6502(fetch_absolute_indexed_addr(y, &page_crossed)));
+            clockticks6502 += page_crossed ? 5 : 4;
+            break;
+        }
+
+        case 0xDD: { /* CMP absolute,X */
+            int page_crossed;
+            compare(a, read6502(fetch_absolute_indexed_addr(x, &page_crossed)));
+            clockticks6502 += page_crossed ? 5 : 4;
+            break;
+        }
+
+        case 0xD9: { /* CMP absolute,Y */
+            int page_crossed;
+            compare(a, read6502(fetch_absolute_indexed_addr(y, &page_crossed)));
+            clockticks6502 += page_crossed ? 5 : 4;
             break;
         }
 

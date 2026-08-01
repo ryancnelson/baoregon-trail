@@ -690,6 +690,169 @@ static void test_sta_indirect_indexed_stores_via_zp_pointer_plus_y(void) {
           "test_sta_indirect_indexed_stores_via_zp_pointer_plus_y");
 }
 
+static void test_lda_zeropage_x_loads_value_with_index(void) {
+    setup();
+    x = 0x05;
+    test_ram[0x0400] = 0xB5; /* LDA $10,X */
+    test_ram[0x0401] = 0x10;
+    test_ram[0x0015] = 0x64; /* $10 + X = $15 */
+    step6502();
+    CHECK(a == 0x64 && pc == 0x0402 && clockticks6502 == 4,
+          "test_lda_zeropage_x_loads_value_with_index");
+}
+
+static void test_lda_zeropage_x_wraps_within_zero_page(void) {
+    setup();
+    x = 0xFF;
+    test_ram[0x0400] = 0xB5; /* LDA $80,X -> ($80+$FF)&$FF = $7F */
+    test_ram[0x0401] = 0x80;
+    test_ram[0x007F] = 0x22;
+    test_ram[0x017F] = 0xEE; /* decoy: would be hit if wrap were wrong */
+    step6502();
+    CHECK(a == 0x22 && pc == 0x0402 && clockticks6502 == 4,
+          "test_lda_zeropage_x_wraps_within_zero_page");
+}
+
+static void test_sta_zeropage_x_stores_value_with_index(void) {
+    setup();
+    a = 0x33;
+    x = 0x02;
+    test_ram[0x0400] = 0x95; /* STA $40,X */
+    test_ram[0x0401] = 0x40;
+    step6502();
+    CHECK(test_ram[0x0042] == 0x33 && pc == 0x0402 && clockticks6502 == 4,
+          "test_sta_zeropage_x_stores_value_with_index");
+}
+
+static void test_lda_absolute_x_loads_value_with_index(void) {
+    setup();
+    x = 0x05;
+    test_ram[0x0400] = 0xBD; /* LDA $1000,X */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x10;
+    test_ram[0x1005] = 0x71;
+    step6502();
+    CHECK(a == 0x71 && pc == 0x0403 && clockticks6502 == 4,
+          "test_lda_absolute_x_loads_value_with_index");
+}
+
+static void test_lda_absolute_x_extra_cycle_when_page_crossed(void) {
+    setup();
+    x = 0x01;
+    test_ram[0x0400] = 0xBD; /* LDA $10FF,X -> $1100 crosses page */
+    test_ram[0x0401] = 0xFF;
+    test_ram[0x0402] = 0x10;
+    test_ram[0x1100] = 0x5A;
+    step6502();
+    CHECK(a == 0x5A && pc == 0x0403 && clockticks6502 == 5,
+          "test_lda_absolute_x_extra_cycle_when_page_crossed");
+}
+
+static void test_lda_absolute_y_loads_value_with_index(void) {
+    setup();
+    y = 0x03;
+    test_ram[0x0400] = 0xB9; /* LDA $2000,Y */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x20;
+    test_ram[0x2003] = 0x38;
+    step6502();
+    CHECK(a == 0x38 && pc == 0x0403 && clockticks6502 == 4,
+          "test_lda_absolute_y_loads_value_with_index");
+}
+
+static void test_lda_absolute_y_extra_cycle_when_page_crossed(void) {
+    setup();
+    y = 0x01;
+    test_ram[0x0400] = 0xB9; /* LDA $20FF,Y -> $2100 crosses page */
+    test_ram[0x0401] = 0xFF;
+    test_ram[0x0402] = 0x20;
+    test_ram[0x2100] = 0x61;
+    step6502();
+    CHECK(a == 0x61 && pc == 0x0403 && clockticks6502 == 5,
+          "test_lda_absolute_y_extra_cycle_when_page_crossed");
+}
+
+static void test_sta_absolute_x_stores_value_with_index(void) {
+    setup();
+    a = 0x11;
+    x = 0x02;
+    test_ram[0x0400] = 0x9D; /* STA $3000,X */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x30;
+    step6502();
+    /* STA absolute,X is always 5 cycles regardless of page crossing. */
+    CHECK(test_ram[0x3002] == 0x11 && pc == 0x0403 && clockticks6502 == 5,
+          "test_sta_absolute_x_stores_value_with_index");
+}
+
+static void test_sta_absolute_y_stores_value_with_index(void) {
+    setup();
+    a = 0x44;
+    y = 0x02;
+    test_ram[0x0400] = 0x99; /* STA $4000,Y */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x40;
+    step6502();
+    /* STA absolute,Y is always 5 cycles regardless of page crossing. */
+    CHECK(test_ram[0x4002] == 0x44 && pc == 0x0403 && clockticks6502 == 5,
+          "test_sta_absolute_y_stores_value_with_index");
+}
+
+static void test_adc_absolute_x_adds_value_with_index(void) {
+    setup();
+    status &= (uint8_t)~FLAG_CARRY;
+    a = 0x10;
+    x = 0x04;
+    test_ram[0x0400] = 0x7D; /* ADC $5000,X */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x50;
+    test_ram[0x5004] = 0x05;
+    step6502();
+    CHECK(a == 0x15 && pc == 0x0403 && clockticks6502 == 4,
+          "test_adc_absolute_x_adds_value_with_index");
+}
+
+static void test_adc_absolute_y_extra_cycle_when_page_crossed(void) {
+    setup();
+    status &= (uint8_t)~FLAG_CARRY;
+    a = 0x01;
+    y = 0x01;
+    test_ram[0x0400] = 0x79; /* ADC $50FF,Y -> $5100 crosses page */
+    test_ram[0x0401] = 0xFF;
+    test_ram[0x0402] = 0x50;
+    test_ram[0x5100] = 0x01;
+    step6502();
+    CHECK(a == 0x02 && pc == 0x0403 && clockticks6502 == 5,
+          "test_adc_absolute_y_extra_cycle_when_page_crossed");
+}
+
+static void test_cmp_absolute_x_compares_with_index(void) {
+    setup();
+    a = 0x50;
+    x = 0x04;
+    test_ram[0x0400] = 0xDD; /* CMP $6000,X */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x60;
+    test_ram[0x6004] = 0x50;
+    step6502();
+    CHECK((status & FLAG_ZERO) != 0 && (status & FLAG_CARRY) != 0 &&
+          pc == 0x0403 && clockticks6502 == 4,
+          "test_cmp_absolute_x_compares_with_index");
+}
+
+static void test_cmp_absolute_y_extra_cycle_when_page_crossed(void) {
+    setup();
+    a = 0x10;
+    y = 0x01;
+    test_ram[0x0400] = 0xD9; /* CMP $70FF,Y -> $7100 crosses page */
+    test_ram[0x0401] = 0xFF;
+    test_ram[0x0402] = 0x70;
+    test_ram[0x7100] = 0x10;
+    step6502();
+    CHECK((status & FLAG_ZERO) != 0 && pc == 0x0403 && clockticks6502 == 5,
+          "test_cmp_absolute_y_extra_cycle_when_page_crossed");
+}
+
 int main(void) {
     test_nop_advances_pc_and_takes_2_cycles();
     test_lda_immediate_loads_value();
@@ -752,6 +915,19 @@ int main(void) {
     test_lda_indirect_indexed_extra_cycle_when_page_crossed();
     test_sta_indexed_indirect_stores_via_zp_x_pointer();
     test_sta_indirect_indexed_stores_via_zp_pointer_plus_y();
+    test_lda_zeropage_x_loads_value_with_index();
+    test_lda_zeropage_x_wraps_within_zero_page();
+    test_sta_zeropage_x_stores_value_with_index();
+    test_lda_absolute_x_loads_value_with_index();
+    test_lda_absolute_x_extra_cycle_when_page_crossed();
+    test_lda_absolute_y_loads_value_with_index();
+    test_lda_absolute_y_extra_cycle_when_page_crossed();
+    test_sta_absolute_x_stores_value_with_index();
+    test_sta_absolute_y_stores_value_with_index();
+    test_adc_absolute_x_adds_value_with_index();
+    test_adc_absolute_y_extra_cycle_when_page_crossed();
+    test_cmp_absolute_x_compares_with_index();
+    test_cmp_absolute_y_extra_cycle_when_page_crossed();
 
     if (failures > 0) {
         printf("\n%d test(s) FAILED\n", failures);
