@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">STEP 5 BUTTON BOUNDS SAFETY TEST (331 Tests) GREEN</span>
+                    <span class="pill pill-green">STEP 5 SAMPLE BOOT DSK WRITE ERROR TEST (332 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -380,7 +380,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: LC $DFFF/$E000 Boundary Test (<code class="code-inline">test_lc_dfff_e000_exact_boundary_no_off_by_one</code>)</span>
-                        <span class="pill pill-green">GREEN (331 PASS)</span>
+                        <span class="pill pill-green">GREEN (332 PASS)</span>
                     </div>
                 </div>
 
@@ -394,7 +394,7 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Button Bounds Safety Test (<code class="code-inline">test_apple2_mem_button_bounds_safety.c</code>)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Sample Boot DSK Write Error Test (<code class="code-inline">test_create_sample_boot_dsk_write_error.py</code>)</span>
                         <span class="pill pill-green">GREEN (14.1 KB Binary)</span>
                     </div>
                 </div>
@@ -410,7 +410,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Interactive Terminal Runner (<code class="code-inline">make terminal-play</code>)</span>
-                        <span class="pill pill-green">GREEN (331 PASS)</span>
+                        <span class="pill pill-green">GREEN (332 PASS)</span>
                     </div>
                 </div>
 
@@ -487,8 +487,8 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 5 – 6: Button Bounds Safety Unit Test (<code class="code-inline">apple2_mem.c</code>) (COMPLETE)</h4>
-                            <p>Duke added <code class="code-inline">test_apple2_mem_button_bounds_safety.c</code> verifying out-of-bounds button index handling (331 tests GREEN)!</p>
+                            <h4>Days 5 – 6: Sample Boot DSK Write Error Unit Test (<code class="code-inline">create_sample_boot_dsk.py</code>) (COMPLETE)</h4>
+                            <p>Duke added <code class="code-inline">test_create_sample_boot_dsk_write_error.py</code> verifying graceful error reporting without traceback (332 tests GREEN)!</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,30 +510,30 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. Button Bounds Safety Unit Test Landed (<code class="code-inline">apple2_mem.c</code>)</div>
+                    <div class="decision-title">1. Sample Boot DSK Write Error Test Landed (<code class="code-inline">create_sample_boot_dsk.py</code>)</div>
                     <div class="decision-desc">
-                        Duke added <code class="code-inline">test_apple2_mem_button_bounds_safety.c</code> verifying button getters/setters safely ignore invalid indices (-1, 3, 99) (331 tests GREEN)!
+                        Duke added <code class="code-inline">test_create_sample_boot_dsk_write_error.py</code> proving write failures produce clean <code class="code-inline">error: ...</code> messages without Python tracebacks (332 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. LC $DFFF/$E000 Exact Boundary Test Landed (<code class="code-inline">apple2_mem.c</code>)</div>
+                    <div class="decision-title">2. Button Bounds Safety Unit Test Landed (<code class="code-inline">apple2_mem.c</code>)</div>
                     <div class="decision-desc">
-                        Woz added <code class="code-inline">test_lc_dfff_e000_exact_boundary_no_off_by_one</code> verifying $DFFF is bank-specific and $E000 is shared across Language Card banks 1 &amp; 2 (331 tests GREEN)!
+                        Duke added <code class="code-inline">test_apple2_mem_button_bounds_safety.c</code> verifying button getters/setters safely ignore invalid indices (-1, 3, 99) (332 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
                     <div class="decision-title">3. Composed System Disk Boot Integration Test (<code class="code-inline">test_dos33_composed_boot.c</code>)</div>
                     <div class="decision-desc">
-                        Fable-5 Item 1: Created <code class="code-inline">tools/create_sample_boot_dsk.py</code> generating <code class="code-inline">disks/dos33_sample.dsk</code> (140 KiB flat DOS 3.3 image) embedded into <code class="code-inline">src/embedded_disk_dos33.h</code>, driven through composed <code class="code-inline">cpu6502+apple2_mem+disk_trap</code> (331 tests GREEN)!
+                        Fable-5 Item 1: Created <code class="code-inline">tools/create_sample_boot_dsk.py</code> generating <code class="code-inline">disks/dos33_sample.dsk</code> (140 KiB flat DOS 3.3 image) embedded into <code class="code-inline">src/embedded_disk_dos33.h</code>, driven through composed <code class="code-inline">cpu6502+apple2_mem+disk_trap</code> (332 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
                     <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (331 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (332 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
