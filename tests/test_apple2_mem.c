@@ -153,6 +153,111 @@ static void test_disk_trap_invalid_track_select_does_not_disturb_prior_selection
           "test_disk_trap_invalid_track_select_does_not_disturb_prior_selection");
 }
 
+/*
+ * Language Card ($C080-$C08F) bank-switching tests.
+ *
+ * Standard Apple II LC softswitch decode (real hardware behavior we're
+ * modeling): address bits within $C080-$C08F select read/write mode for
+ * the $D000-$FFFF region:
+ *   bit0 (0x01): 0 = read RAM, 1 = read ROM
+ *   bit1 (0x02) combined with bit0: 00/11 write-enable RAM, 01/10 do not
+ *     (i.e. bit0 XOR bit1 == 0 means write-enabled: $C080/$C083/$C088/$C08B)
+ *   bit3 (0x08): 0 = bank 2, 1 = bank 1 -- selects one of two independent
+ *     4KB RAM banks for $D000-$DFFF ONLY; $E000-$FFFF is a single shared
+ *     RAM region regardless of bank bit (matches real Apple II LC wiring:
+ *     only $D000-$DFFF is bank-switched, $E000-$FFFF is not).
+ *   bit2 (0x04): read-only duplicate of bits 0-1's encoding (C084-C087
+ *     behave identically to C080-C083 for our purposes; real hardware's
+ *     double-read-to-write-enable latch trick is simplified away here --
+ *     a single write access with the write-enable bit pattern takes
+ *     effect immediately, documented simplification).
+ * Any access (read OR write) to $C080-$C08F triggers the switch, per
+ * real Apple II softswitch semantics (same "any access" rule as $C030).
+ */
+
+static void test_lc_default_state_reads_rom_and_blocks_writes(void) {
+    /* Baseline: before touching any LC softswitch, $D000-$FFFF behaves
+     * exactly like the existing ROM write-protection (no regression). */
+    apple2_mem_reset();
+
+    uint8_t before = read6502(0xE000);
+    write6502(0xE000, 0xAB);
+    uint8_t after = read6502(0xE000);
+
+    CHECK(after == before,
+          "test_lc_default_state_reads_rom_and_blocks_writes");
+}
+
+static void test_lc_c08b_enables_ram_read_and_write_at_d000(void) {
+    /* Canonical Apple II Language Card softswitch table (bank 2 shown;
+     * add $08 to each address for bank 1, which mirrors the same
+     * read/write semantics for a second independent $D000-$DFFF bank):
+     *   $C080/$C084 = read RAM,  write protect
+     *   $C081/$C085 = read ROM,  write enable
+     *   $C082/$C086 = read ROM,  write protect
+     *   $C083/$C087 = read RAM,  write enable
+     * $C08B = $C083 + $08 = bank 1, read RAM, write enable. */
+    apple2_mem_reset();
+
+    (void)read6502(0xC08B); /* bank 1, read RAM, write enable */
+    write6502(0xD000, 0x77);
+    uint8_t got = read6502(0xD000);
+
+    CHECK(got == 0x77,
+          "test_lc_c08b_enables_ram_read_and_write_at_d000");
+}
+
+static void test_lc_c082_restores_rom_read_and_write_protection(void) {
+    apple2_mem_reset();
+
+    (void)read6502(0xC08B); /* enable RAM read+write, bank 1 */
+    write6502(0xD000, 0x77); /* write into LC RAM */
+
+    (void)read6502(0xC082); /* bank 2, read ROM, write protect */
+    uint8_t rom_value_before = read6502(0xD000); /* reads ROM, not the 0x77 we wrote to RAM */
+    write6502(0xD000, 0x99); /* should be ignored -- ROM write-protected */
+    uint8_t after_blocked_write = read6502(0xD000);
+
+    CHECK(rom_value_before != 0x77 && after_blocked_write == rom_value_before,
+          "test_lc_c082_restores_rom_read_and_write_protection");
+}
+
+static void test_lc_bank1_and_bank2_are_independent_at_d000(void) {
+    /* $D000-$DFFF is bank-switched (bit3 selects bank1 vs bank2); a write
+     * to bank 1's RAM must NOT be visible when bank 2 is selected, and
+     * vice versa -- they are two separate 4KB RAM regions. */
+    apple2_mem_reset();
+
+    (void)read6502(0xC08B); /* bank 1 (bit3=1 via $C08B=$0B), RAM read+write */
+    write6502(0xD050, 0xAA);
+
+    (void)read6502(0xC083); /* bank 2 (bit3=0 via $C083), RAM read+write */
+    write6502(0xD050, 0x55);
+    uint8_t bank2_value = read6502(0xD050);
+
+    (void)read6502(0xC08B); /* back to bank 1 */
+    uint8_t bank1_value = read6502(0xD050);
+
+    CHECK(bank2_value == 0x55 && bank1_value == 0xAA,
+          "test_lc_bank1_and_bank2_are_independent_at_d000");
+}
+
+static void test_lc_e000_ffff_is_shared_across_banks(void) {
+    /* $E000-$FFFF is NOT bank-switched -- both bank1 and bank2 selections
+     * see the same underlying RAM there (only $D000-$DFFF is banked on
+     * real Apple II hardware). */
+    apple2_mem_reset();
+
+    (void)read6502(0xC08B); /* bank 1, RAM read+write */
+    write6502(0xE500, 0x42);
+
+    (void)read6502(0xC083); /* bank 2, RAM read+write */
+    uint8_t seen_from_bank2 = read6502(0xE500);
+
+    CHECK(seen_from_bank2 == 0x42,
+          "test_lc_e000_ffff_is_shared_across_banks");
+}
+
 int main(void) {
     fill_mock_disk_image();
 
@@ -163,6 +268,11 @@ int main(void) {
     test_disk_trap_select_and_stream_sector_via_c0ec();
     test_disk_trap_cursor_wraps_after_256_bytes();
     test_disk_trap_invalid_track_select_does_not_disturb_prior_selection();
+    test_lc_default_state_reads_rom_and_blocks_writes();
+    test_lc_c08b_enables_ram_read_and_write_at_d000();
+    test_lc_c082_restores_rom_read_and_write_protection();
+    test_lc_bank1_and_bank2_are_independent_at_d000();
+    test_lc_e000_ffff_is_shared_across_banks();
 
     if (failures == 0) {
         printf("All tests passed.\n");
