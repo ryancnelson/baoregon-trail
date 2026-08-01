@@ -76,13 +76,14 @@ Instead of emulating the full physical Disk II stepper motor and raw GCR nibble 
 
 ### 5. Multi-Game "Cartridge" Selection Menu & Hardware Inputs
 
-#### Hardware Input Interface (CONFIRMED-from-photo):
-* **Physical Controls**: The badge module features **3 physical buttons** (Upper-Left, Upper-Right, Bottom-Center), confirmed directly from hardware inspection photos.
-* **Control Mapping**:
-  * **Upper-Left**: `PREV` / Up / Left (Move selection up / retro choice 1).
-  * **Upper-Right**: `NEXT` / Down / Right (Move selection down / retro choice 2).
-  * **Bottom-Center**: `SELECT` / Enter / Action (Confirm game launch / action trigger).
-* **In-Game 6502 Input Binding**: The 3 buttons map directly to standard Apple II keyboard matrix soft-switches (`$C000` / `$C010` strobe).
+#### Hardware Input Interface:
+* **Button Count**: **3 physical buttons** (CONFIRMED by Ryan).
+* **Button Layout & Geometry**: **TBD / UNCONFIRMED** (exact board positioning and button shapes pending clearer photo).
+* **Logical Mapping (Layout-Agnostic)**:
+  * **Button 0**: `PREV` / Up / Left (Move menu selection / option 1).
+  * **Button 1**: `NEXT` / Down / Right (Move menu selection / option 2).
+  * **Button 2**: `SELECT` / Enter / Action (Confirm selection / action trigger).
+* **In-Game 6502 Input Binding**: The 3 logical buttons map directly to standard Apple II keyboard matrix soft-switches (`$C000` / `$C010` strobe).
 
 #### Multi-Game Cartridge Layout:
 With 3.8 MiB of free ReRAM remaining, we can embed multiple `.dsk` files:
