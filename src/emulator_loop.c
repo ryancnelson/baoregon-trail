@@ -130,6 +130,15 @@ uint32_t baoregon_emulator_run_frame(void) {
 
     bio_display_render_frame_auto_text_aware(is_hires, is_page2, is_mixed, is_text, read6502, g_framebuffer);
 
+    /* Stage the rendered frame for the (not-yet-existing) SPI DMA
+     * peripheral. bio_display_dma_push() is a host-testable STUB only --
+     * no real hardware I/O happens here (see bio_display.h doc comment).
+     * Pushes just the native BIO_DISPLAY_WIDTH*HEIGHT (280x192) region,
+     * not the full 320x240 g_framebuffer -- that's all the renderer
+     * actually wrote (see baoregon_emulator_get_framebuffer()'s margin
+     * caveat doc comment). */
+    bio_display_dma_push(g_framebuffer, BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT);
+
     return BAOREGON_CYCLES_PER_FRAME;
 }
 
