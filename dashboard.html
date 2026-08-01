@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">BOOT SPLASH GET SELECTED SLOT INDEX TEST (354 Tests) GREEN</span>
+                    <span class="pill pill-green">STEP 6 QEMU RAMFB DISPLAY DRIVER (355 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -380,7 +380,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary)">System ROM $C100-$CFFF Fix (<code class="code-inline">apple2_mem.c</code>)</span>
-                        <span class="pill pill-green">GREEN (354 PASS)</span>
+                        <span class="pill pill-green">GREEN (355 PASS)</span>
                     </div>
                 </div>
 
@@ -404,13 +404,13 @@
                     <div class="specialist-info">
                         <div class="avatar bunnie">B</div>
                         <div class="name-role">
-                            <h3>Bunnie</h3>
+                            <h3>Bunnie (Lead - Step 6)</h3>
                             <p>BIO Coprocessor & Graphics/Audio Engineer</p>
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Lo-Res Graphics Row Offsets &amp; Bounds Safety Test (<code class="code-inline">test_lores_apple2_row_offsets_bounds.c</code>)</span>
-                        <span class="pill pill-green">GREEN (354 PASS)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 6: QEMU ramfb Display Driver (<code class="code-inline">src/ramfb_display.c</code>)</span>
+                        <span class="pill pill-green">GREEN (355 PASS)</span>
                     </div>
                 </div>
 
@@ -467,7 +467,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">📅 DEF CON 34 Bring-Up Sprint</div>
-                    <span class="pill pill-green">Days 1-5 GREEN</span>
+                    <span class="pill pill-green">Days 1-6 GREEN</span>
                 </div>
                 <div class="timeline">
                     <div class="timeline-item active">
@@ -487,8 +487,8 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 5 – 6: Boot Splash Get Selected Slot Index Test (<code class="code-inline">boot_splash.c</code>) (COMPLETE)</h4>
-                            <p>Duke landed <code class="code-inline">boot_splash_get_selected_slot_index()</code> and <code class="code-inline">test_boot_splash_get_selected_slot_index.c</code> verifying 0-based slot index retrieval, button navigation tracking, and out-of-bounds clamping (354 tests GREEN)!</p>
+                            <h4>Days 5 – 6: Step 6 QEMU ramfb Display Driver (<code class="code-inline">ramfb_display.c</code>) (COMPLETE)</h4>
+                            <p>Bunnie &amp; baochip landed <code class="code-inline">src/ramfb_display.c</code> and <code class="code-inline">test_ramfb_display.c</code> verifying RGB565 to XRGB8888 conversion, QEMU fw_cfg registration, and null safety (355 tests GREEN)!</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,30 +510,30 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. Boot Splash Get Selected Slot Index API Landed (<code class="code-inline">boot_splash.c</code>)</div>
+                    <div class="decision-title">1. QEMU ramfb Display Driver Landed (<code class="code-inline">src/ramfb_display.c</code>)</div>
                     <div class="decision-desc">
-                        Duke added <code class="code-inline">boot_splash_get_selected_slot_index()</code> and <code class="code-inline">test_boot_splash_get_selected_slot_index.c</code> proving slot index getter access, edge navigation, and NULL safety (354 tests GREEN)!
+                        Bunnie &amp; baochip added <code class="code-inline">ramfb_display.c</code> and <code class="code-inline">test_ramfb_display.c</code> proving RGB565 to 32-bit XRGB8888 conversion, QEMU fw_cfg registration, and 280x192 framebuffer flush (355 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Boot Perf Cycles to Microseconds Conversion API Landed (<code class="code-inline">boot_perf.c</code>)</div>
+                    <div class="decision-title">2. Boot Splash Get Selected Slot Index API Landed (<code class="code-inline">boot_splash.c</code>)</div>
+                    <div class="decision-desc">
+                        Duke added <code class="code-inline">boot_splash_get_selected_slot_index()</code> and <code class="code-inline">test_boot_splash_get_selected_slot_index.c</code> proving slot index getter access, edge navigation, and NULL safety!
+                    </div>
+                </div>
+
+                <div class="decision-item">
+                    <div class="decision-title">3. Boot Perf Cycles to Microseconds Conversion API Landed (<code class="code-inline">boot_perf.c</code>)</div>
                     <div class="decision-desc">
                         Duke added <code class="code-inline">boot_perf_cycles_to_us()</code> and <code class="code-inline">test_boot_perf_cycles_to_us.c</code> proving 350 cycles/us scaling, UINT32_MAX overflow clamping, and 32-bit RISC-V divu compatibility!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">3. Emulator Loop Select Slot By Index API Landed (<code class="code-inline">emulator_loop.c</code>)</div>
-                    <div class="decision-desc">
-                        Duke added <code class="code-inline">baoregon_emulator_select_slot_by_index()</code> and <code class="code-inline">test_emulator_loop_select_slot_by_index.c</code> proving instant game selection, splash exit, and disk trap pointer attachment!
-                    </div>
-                </div>
-
-                <div class="decision-item">
                     <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (354 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (355 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
