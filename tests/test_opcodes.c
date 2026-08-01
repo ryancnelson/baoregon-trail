@@ -1344,6 +1344,27 @@ static void test_plp_pulls_status_but_ignores_break_bit(void) {
           "test_plp_pulls_status_but_ignores_break_bit");
 }
 
+static void test_plp_forces_constant_bit_even_if_stack_value_has_it_clear(void) {
+    /* Real 6502 hardware: bit 5 (FLAG_CONSTANT) is unconnected on the
+     * physical status register and always reads back as 1 -- PLP must
+     * force it to 1 regardless of what byte is actually sitting on the
+     * stack, not just "happen to preserve it" because every existing
+     * test only pulls values that were pushed via PHP (which itself
+     * always sets bit 5). This directly crafts a stack byte with bit 5
+     * explicitly CLEAR to prove PLP's '| FLAG_CONSTANT' forcing is
+     * actually exercised, not just coincidentally passing because the
+     * bit was already set going in. */
+    setup();
+    sp = 0xFE;
+    test_ram[0x0100 + sp + 1] = (uint8_t)(FLAG_CARRY & (uint8_t)~FLAG_CONSTANT); /* bit 5 explicitly 0 */
+    test_ram[0x0400] = 0x28; /* PLP */
+
+    step6502();
+
+    CHECK((status & FLAG_CONSTANT) != 0 && (status & FLAG_CARRY) != 0,
+          "test_plp_forces_constant_bit_even_if_stack_value_has_it_clear");
+}
+
 static void test_brk_pushes_pc_and_status_then_jumps_to_irq_vector(void) {
     setup();
     test_ram[0xFFFE] = 0x00; /* IRQ/BRK vector lo */
@@ -2509,6 +2530,7 @@ int main(void) {
     test_jmp_indirect_has_page_boundary_bug();
     test_php_pushes_status_with_break_and_constant_bits_set();
     test_plp_pulls_status_but_ignores_break_bit();
+    test_plp_forces_constant_bit_even_if_stack_value_has_it_clear();
     test_brk_pushes_pc_and_status_then_jumps_to_irq_vector();
     test_brk_pushed_return_address_is_pc_plus_2();
     test_rti_restores_status_and_pc_from_stack();
