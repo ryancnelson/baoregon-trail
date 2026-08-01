@@ -7,7 +7,7 @@ BUILD_DIR = build
 
 .PHONY: test clean
 
-test: $(BUILD_DIR)/test_reset $(BUILD_DIR)/test_opcodes $(BUILD_DIR)/test_functional_suite $(BUILD_DIR)/test_disk_sector_layout $(BUILD_DIR)/test_disk_trap $(BUILD_DIR)/test_video_apple2 $(BUILD_DIR)/test_video_apple2_color $(BUILD_DIR)/test_video_apple2_color_edges $(BUILD_DIR)/test_video_apple2_fullframe $(BUILD_DIR)/test_video_apple2_realbus $(BUILD_DIR)/test_video_apple2_page2 $(BUILD_DIR)/test_video_apple2_color_page2 $(BUILD_DIR)/test_lores_apple2 $(BUILD_DIR)/test_bunnie_audio $(BUILD_DIR)/test_apple2_mem $(BUILD_DIR)/test_apple2_mem_button_getter $(BUILD_DIR)/test_bio_display $(BUILD_DIR)/test_bio_display_page2 $(BUILD_DIR)/test_bio_display_mixed $(BUILD_DIR)/test_rram_driver $(BUILD_DIR)/test_cartridge_layout $(BUILD_DIR)/test_rram_cartridge_integration $(BUILD_DIR)/test_boot_splash $(BUILD_DIR)/test_boot_splash_apple2_mem_poll
+test: $(BUILD_DIR)/test_reset $(BUILD_DIR)/test_opcodes $(BUILD_DIR)/test_functional_suite $(BUILD_DIR)/test_disk_sector_layout $(BUILD_DIR)/test_disk_trap $(BUILD_DIR)/test_video_apple2 $(BUILD_DIR)/test_video_apple2_color $(BUILD_DIR)/test_video_apple2_color_edges $(BUILD_DIR)/test_video_apple2_fullframe $(BUILD_DIR)/test_video_apple2_realbus $(BUILD_DIR)/test_video_apple2_page2 $(BUILD_DIR)/test_video_apple2_color_page2 $(BUILD_DIR)/test_lores_apple2 $(BUILD_DIR)/test_bunnie_audio $(BUILD_DIR)/test_apple2_mem $(BUILD_DIR)/test_apple2_mem_button_getter $(BUILD_DIR)/test_bio_display $(BUILD_DIR)/test_bio_display_page2 $(BUILD_DIR)/test_bio_display_mixed $(BUILD_DIR)/test_rram_driver $(BUILD_DIR)/test_cartridge_layout $(BUILD_DIR)/test_rram_cartridge_integration $(BUILD_DIR)/test_boot_splash $(BUILD_DIR)/test_boot_splash_apple2_mem_poll $(BUILD_DIR)/test_emulator_loop
 	@$(BUILD_DIR)/test_reset
 	@$(BUILD_DIR)/test_opcodes
 	@./tests/fetch_functional_test.sh
@@ -34,6 +34,7 @@ test: $(BUILD_DIR)/test_reset $(BUILD_DIR)/test_opcodes $(BUILD_DIR)/test_functi
 	@$(BUILD_DIR)/test_rram_cartridge_integration
 	@$(BUILD_DIR)/test_boot_splash
 	@$(BUILD_DIR)/test_boot_splash_apple2_mem_poll
+	@$(BUILD_DIR)/test_emulator_loop
 	@python3 -m unittest tests.test_embed_disk -v
 
 $(BUILD_DIR)/test_reset: $(TEST_DIR)/test_reset.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/cpu6502.h
@@ -131,6 +132,10 @@ $(BUILD_DIR)/test_boot_splash: $(TEST_DIR)/test_boot_splash.c $(SRC_DIR)/boot_sp
 $(BUILD_DIR)/test_boot_splash_apple2_mem_poll: $(TEST_DIR)/test_boot_splash_apple2_mem_poll.c $(SRC_DIR)/boot_splash.c $(SRC_DIR)/boot_splash.h $(SRC_DIR)/cartridge_layout.c $(SRC_DIR)/cartridge_layout.h $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_trap.c $(SRC_DIR)/disk_trap.h $(SRC_DIR)/apple2_mem.c $(SRC_DIR)/apple2_mem.h $(SRC_DIR)/cpu6502.c $(SRC_DIR)/bunnie_audio.c
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_boot_splash_apple2_mem_poll.c $(SRC_DIR)/boot_splash.c $(SRC_DIR)/cartridge_layout.c $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_trap.c $(SRC_DIR)/apple2_mem.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/bunnie_audio.c
+
+$(BUILD_DIR)/test_emulator_loop: $(TEST_DIR)/test_emulator_loop.c $(SRC_DIR)/emulator_loop.c $(SRC_DIR)/emulator_loop.h $(SRC_DIR)/boot_splash.c $(SRC_DIR)/cartridge_layout.c $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_trap.c $(SRC_DIR)/apple2_mem.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/bunnie_audio.c $(SRC_DIR)/video_apple2.c $(SRC_DIR)/bio_display.c
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_emulator_loop.c $(SRC_DIR)/emulator_loop.c $(SRC_DIR)/boot_splash.c $(SRC_DIR)/cartridge_layout.c $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_trap.c $(SRC_DIR)/apple2_mem.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/bunnie_audio.c $(SRC_DIR)/video_apple2.c $(SRC_DIR)/bio_display.c
 
 # Full 6502 functional-correctness integration test against Klaus Dormann's
 # 6502_functional_test.bin (see tests/test_functional_suite.c). Promoted
