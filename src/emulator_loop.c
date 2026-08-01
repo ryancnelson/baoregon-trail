@@ -116,3 +116,7 @@ int baoregon_emulator_is_audio_active(void) {
     const bunnie_audio_state_t *state = apple2_mem_get_audio_state();
     return state ? (int)state->pwm_pin_state : 0;
 }
+
+uint32_t baoregon_emulator_get_cycles_per_frame(void) {
+    return BAOREGON_CYCLES_PER_FRAME;
+}
