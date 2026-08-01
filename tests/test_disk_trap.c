@@ -141,6 +141,122 @@ static int test_select_invalid_sector_does_not_crash_or_corrupt(void) {
     return 0;
 }
 
+/*
+ * Hardening iteration (2026-07-31): multi-sector sequential read across a
+ * full track and across a track boundary.
+ *
+ * Real DOS 3.3/ProDOS drivers re-issue an explicit track/sector select
+ * ($C0E0/$C0E1) before reading each 256-byte sector -- there is no
+ * hardware auto-advance across sector or track boundaries on real Disk II
+ * hardware, and this trap deliberately mirrors that (BRAINSTORM.md section
+ * 4: no physical stepper/GCR emulation, but the *protocol* -- explicit
+ * select before each sector -- is preserved). So "sequential read" here
+ * means: software walks track/sector pairs itself, selecting each one in
+ * turn, and this test proves every one of those selections lands at the
+ * mathematically correct offset with no drift, including across the
+ * track-16-sectors boundary and the very last sector of the whole disk.
+ */
+static int test_sequential_select_across_full_track_and_track_boundary(void) {
+    /* Walk every sector of track 0, then track 1's sector 0 -- proves the
+     * track-boundary transition (sector 15 -> next track's sector 0) lands
+     * at the right offset, not just each individual sector in isolation. */
+    for (uint8_t sector = 0; sector < DOS33_SECTORS_PER_TRACK; sector++) {
+        write6502(0xC0E0, 0);
+        write6502(0xC0E1, sector);
+
+        uint32_t expected_base;
+        if (dos33_sector_offset(0, sector, &expected_base) != 0) {
+            fprintf(stderr, "FAIL: dos33_sector_offset(0, %u) unexpectedly rejected\n", sector);
+            failures++;
+            return 1;
+        }
+
+        for (uint16_t addr = 0xC0E2; addr <= 0xC0EF; addr++) {
+            uint32_t byte_offset = addr - 0xC0E2;
+            uint8_t expected = g_mock_disk_image[expected_base + byte_offset];
+            uint8_t got = read6502(addr);
+            if (got != expected) {
+                fprintf(stderr,
+                        "FAIL: test_sequential_select_across_full_track_and_track_boundary: "
+                        "track 0 sector %u byte %u = 0x%02X, expected 0x%02X\n",
+                        sector, (unsigned)byte_offset, got, expected);
+                failures++;
+                return 1;
+            }
+        }
+    }
+
+    /* Now cross the track boundary: track 1, sector 0. */
+    write6502(0xC0E0, 1);
+    write6502(0xC0E1, 0);
+
+    uint32_t expected_base;
+    dos33_sector_offset(1, 0, &expected_base);
+    uint8_t got_first_byte = read6502(0xC0E2);
+    uint8_t expected_first_byte = g_mock_disk_image[expected_base];
+    if (got_first_byte != expected_first_byte) {
+        fprintf(stderr,
+                "FAIL: test_sequential_select_across_full_track_and_track_boundary: "
+                "track 1 sector 0 byte 0 = 0x%02X, expected 0x%02X (track-boundary transition)\n",
+                got_first_byte, expected_first_byte);
+        failures++;
+        return 1;
+    }
+
+    printf("PASS: test_sequential_select_across_full_track_and_track_boundary "
+           "(16 sectors of track 0 + track boundary into track 1)\n");
+    return 0;
+}
+
+/*
+ * Edge case: the very last valid sector of the whole disk (track 34,
+ * sector 15 -- DOS33_TRACKS-1, DOS33_SECTORS_PER_TRACK-1). Its last byte
+ * must be exactly the final byte of the 143360-byte image -- an off-by-one
+ * in dos33_sector_offset() or the disk image size would show up here as
+ * an out-of-bounds read one byte past the end of g_mock_disk_image.
+ */
+static int test_last_sector_of_disk_reaches_exact_end_of_image(void) {
+    write6502(0xC0E0, DOS33_TRACKS - 1);
+    write6502(0xC0E1, DOS33_SECTORS_PER_TRACK - 1);
+
+    uint32_t expected_base;
+    if (dos33_sector_offset(DOS33_TRACKS - 1, DOS33_SECTORS_PER_TRACK - 1, &expected_base) != 0) {
+        fprintf(stderr, "FAIL: dos33_sector_offset(last track, last sector) unexpectedly rejected\n");
+        failures++;
+        return 1;
+    }
+    if (expected_base + DOS33_SECTOR_SIZE != DOS33_DISK_IMAGE_SIZE) {
+        fprintf(stderr,
+                "FAIL: last sector's offset+size = %u, expected exactly DOS33_DISK_IMAGE_SIZE (%d)\n",
+                expected_base + DOS33_SECTOR_SIZE, DOS33_DISK_IMAGE_SIZE);
+        failures++;
+        return 1;
+    }
+
+    /* Verify the first 16 bytes of the last sector (the $C0E2-$C0EF mock
+     * window's full width) land correctly at the tail of the image -- an
+     * off-by-one in dos33_sector_offset() or DOS33_DISK_IMAGE_SIZE would
+     * surface here as an out-of-bounds read one byte past the end of
+     * g_mock_disk_image. A full 256-byte streaming-cursor proof (the real
+     * apple2_mem.c auto-increment behavior, not this mock's fixed window)
+     * already exists in tests/test_apple2_mem.c. */
+    for (uint16_t addr = 0xC0E2; addr <= 0xC0EF; addr++) {
+        uint32_t byte_offset = addr - 0xC0E2;
+        uint8_t expected = g_mock_disk_image[expected_base + byte_offset];
+        uint8_t got = read6502(addr);
+        if (got != expected) {
+            fprintf(stderr,
+                    "FAIL: test_last_sector_of_disk_reaches_exact_end_of_image: "
+                    "byte %u = 0x%02X, expected 0x%02X\n",
+                    byte_offset, got, expected);
+            failures++;
+            return 1;
+        }
+    }
+    printf("PASS: test_last_sector_of_disk_reaches_exact_end_of_image\n");
+    return 0;
+}
+
 int main(void) {
     fill_mock_disk_image();
     disk_trap_set_image(g_mock_disk_image);
@@ -148,6 +264,8 @@ int main(void) {
     test_select_and_read_track0_sector0();
     test_select_and_read_track17_sector0_matches_vtoc_offset();
     test_select_invalid_sector_does_not_crash_or_corrupt();
+    test_sequential_select_across_full_track_and_track_boundary();
+    test_last_sector_of_disk_reaches_exact_end_of_image();
 
     if (failures == 0) {
         printf("All tests passed.\n");

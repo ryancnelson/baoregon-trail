@@ -604,6 +604,92 @@ static void test_clv_clears_overflow_flag(void) {
           "test_clv_clears_overflow_flag");
 }
 
+static void test_lda_indexed_indirect_loads_via_zp_x_pointer(void) {
+    /* (zp,X): pointer = zeropage[(operand + X) & 0xFF .. +1], little-endian */
+    setup();
+    x = 0x04;
+    test_ram[0x0400] = 0xA1; /* LDA ($20,X) */
+    test_ram[0x0401] = 0x20;
+    test_ram[0x0024] = 0x00; /* pointer lo, at $20+X=$24 */
+    test_ram[0x0025] = 0x05; /* pointer hi -> effective addr $0500 */
+    test_ram[0x0500] = 0x9A;
+    step6502();
+    CHECK(a == 0x9A && pc == 0x0402 && clockticks6502 == 6,
+          "test_lda_indexed_indirect_loads_via_zp_x_pointer");
+}
+
+static void test_lda_indexed_indirect_wraps_zeropage_pointer_address(void) {
+    /* (operand + X) must wrap within zero page (stay 8-bit), not carry into
+     * page 1. */
+    setup();
+    x = 0xFF;
+    test_ram[0x0400] = 0xA1; /* LDA ($02,X) -> ($02+$FF)&$FF = $01 */
+    test_ram[0x0401] = 0x02;
+    test_ram[0x0001] = 0x34;
+    test_ram[0x0002] = 0x12; /* effective addr $1234 */
+    test_ram[0x1234] = 0x77;
+    step6502();
+    CHECK(a == 0x77 && pc == 0x0402,
+          "test_lda_indexed_indirect_wraps_zeropage_pointer_address");
+}
+
+static void test_lda_indirect_indexed_loads_via_zp_pointer_plus_y(void) {
+    /* (zp),Y: pointer = zeropage[operand..+1], effective addr = pointer + Y */
+    setup();
+    y = 0x10;
+    test_ram[0x0400] = 0xB1; /* LDA ($30),Y */
+    test_ram[0x0401] = 0x30;
+    test_ram[0x0030] = 0x00; /* pointer lo */
+    test_ram[0x0031] = 0x06; /* pointer hi -> base $0600 */
+    test_ram[0x0610] = 0x55; /* base + Y = $0610 */
+    step6502();
+    CHECK(a == 0x55 && pc == 0x0402 && clockticks6502 == 5,
+          "test_lda_indirect_indexed_loads_via_zp_pointer_plus_y");
+}
+
+static void test_lda_indirect_indexed_extra_cycle_when_page_crossed(void) {
+    /* Page-crossing on the base+Y add costs one extra cycle (6 vs 5), a
+     * real NMOS 6502 timing quirk relevant to Bunnie's audio-sync work. */
+    setup();
+    y = 0x01;
+    test_ram[0x0400] = 0xB1; /* LDA ($30),Y */
+    test_ram[0x0401] = 0x30;
+    test_ram[0x0030] = 0xFF; /* pointer lo */
+    test_ram[0x0031] = 0x06; /* pointer hi -> base $06FF, +Y=1 -> $0700 */
+    test_ram[0x0700] = 0x88;
+    step6502();
+    CHECK(a == 0x88 && pc == 0x0402 && clockticks6502 == 6,
+          "test_lda_indirect_indexed_extra_cycle_when_page_crossed");
+}
+
+static void test_sta_indexed_indirect_stores_via_zp_x_pointer(void) {
+    setup();
+    a = 0x42;
+    x = 0x04;
+    test_ram[0x0400] = 0x81; /* STA ($20,X) */
+    test_ram[0x0401] = 0x20;
+    test_ram[0x0024] = 0x00;
+    test_ram[0x0025] = 0x05; /* effective addr $0500 */
+    step6502();
+    CHECK(test_ram[0x0500] == 0x42 && pc == 0x0402 && clockticks6502 == 6,
+          "test_sta_indexed_indirect_stores_via_zp_x_pointer");
+}
+
+static void test_sta_indirect_indexed_stores_via_zp_pointer_plus_y(void) {
+    setup();
+    a = 0x99;
+    y = 0x10;
+    test_ram[0x0400] = 0x91; /* STA ($30),Y */
+    test_ram[0x0401] = 0x30;
+    test_ram[0x0030] = 0x00;
+    test_ram[0x0031] = 0x06; /* base $0600, +Y=$0610 */
+    step6502();
+    /* STA (zp),Y is always 6 cycles regardless of page crossing (no early-
+     * termination optimization on a write, per NMOS 6502 reference). */
+    CHECK(test_ram[0x0610] == 0x99 && pc == 0x0402 && clockticks6502 == 6,
+          "test_sta_indirect_indexed_stores_via_zp_pointer_plus_y");
+}
+
 int main(void) {
     test_nop_advances_pc_and_takes_2_cycles();
     test_lda_immediate_loads_value();
@@ -660,6 +746,12 @@ int main(void) {
     test_cli_clears_interrupt_disable_flag();
     test_sei_sets_interrupt_disable_flag();
     test_clv_clears_overflow_flag();
+    test_lda_indexed_indirect_loads_via_zp_x_pointer();
+    test_lda_indexed_indirect_wraps_zeropage_pointer_address();
+    test_lda_indirect_indexed_loads_via_zp_pointer_plus_y();
+    test_lda_indirect_indexed_extra_cycle_when_page_crossed();
+    test_sta_indexed_indirect_stores_via_zp_x_pointer();
+    test_sta_indirect_indexed_stores_via_zp_pointer_plus_y();
 
     if (failures > 0) {
         printf("\n%d test(s) FAILED\n", failures);

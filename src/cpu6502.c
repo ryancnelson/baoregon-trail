@@ -52,6 +52,29 @@ static uint16_t fetch_absolute_addr(void) {
     return (uint16_t)(lo | (hi << 8));
 }
 
+/* (zp,X) -- pre-indexed indirect. Zero-page pointer address wraps within
+ * the zero page (does not carry into page 1) before the 16-bit pointer is
+ * read. */
+static uint16_t fetch_indexed_indirect_addr(void) {
+    uint8_t zp_ptr = (uint8_t)(read6502(pc++) + x);
+    uint16_t lo = read6502(zp_ptr);
+    uint16_t hi = read6502((uint8_t)(zp_ptr + 1));
+    return (uint16_t)(lo | (hi << 8));
+}
+
+/* (zp),Y -- post-indexed indirect. Reads a 16-bit base pointer from zero
+ * page, then adds Y (with normal 16-bit carry into the page). Sets
+ * *page_crossed for the caller to charge the extra read-side cycle. */
+static uint16_t fetch_indirect_indexed_addr(int *page_crossed) {
+    uint8_t zp_addr = read6502(pc++);
+    uint16_t lo = read6502(zp_addr);
+    uint16_t hi = read6502((uint8_t)(zp_addr + 1));
+    uint16_t base = (uint16_t)(lo | (hi << 8));
+    uint16_t effective = (uint16_t)(base + y);
+    *page_crossed = ((base & 0xFF00) != (effective & 0xFF00));
+    return effective;
+}
+
 /* --- branch helper --- */
 
 static void branch_if(int condition, int8_t offset) {
@@ -432,6 +455,33 @@ void step6502(void) {
             status &= (uint8_t)~FLAG_OVERFLOW;
             clockticks6502 += 2;
             break;
+
+        case 0xA1: /* LDA (zp,X) */
+            a = read6502(fetch_indexed_indirect_addr());
+            set_zero_and_sign(a);
+            clockticks6502 += 6;
+            break;
+
+        case 0xB1: { /* LDA (zp),Y */
+            int page_crossed;
+            a = read6502(fetch_indirect_indexed_addr(&page_crossed));
+            set_zero_and_sign(a);
+            clockticks6502 += page_crossed ? 6 : 5;
+            break;
+        }
+
+        case 0x81: /* STA (zp,X) */
+            write6502(fetch_indexed_indirect_addr(), a);
+            clockticks6502 += 6;
+            break;
+
+        case 0x91: { /* STA (zp),Y -- always 6 cycles, no page-cross skip
+                        on a write (NMOS 6502 timing). */
+            int page_crossed;
+            write6502(fetch_indirect_indexed_addr(&page_crossed), a);
+            clockticks6502 += 6;
+            break;
+        }
 
         default:
             /* Unimplemented opcode: not yet driven by a failing test. */
