@@ -54,7 +54,20 @@ typedef enum {
  * store must remain valid for the lifetime of subsequent calls. addr
  * values passed to rram_read()/rram_write() are absolute (relative to
  * base_addr), matching the real driver's absolute-RRAM-address API.
- */
+ *
+ * Precondition: size SHOULD be a multiple of RRAM_PAGE_SIZE (32).
+ * rram_write()'s ragged-end read-modify-write path operates on whole
+ * RRAM_PAGE_SIZE-byte pages internally, and rram_write_page() bounds-
+ * checks against a FULL page fitting within [base, base+size) -- if
+ * size is not page-aligned, a write ending within RRAM_PAGE_SIZE bytes
+ * of the (non-page-aligned) region top can spuriously fail with
+ * RRAM_ERR_OUT_OF_BOUNDS even though the caller's actual byte range is
+ * entirely in-bounds. This is never triggered by the real
+ * rram_driver_attach_cartridge_partition() caller below, whose
+ * CARTRIDGE_TOTAL_SIZE is always a clean multiple of RRAM_PAGE_SIZE --
+ * see tests/test_rram_driver_page_aligned_boundary_write.c for the
+ * regression proof of that invariant and the boundary-write guarantee
+ * it provides. */
 void rram_driver_attach_backing_store(uint8_t *store, uint32_t base_addr, uint32_t size);
 
 /*
