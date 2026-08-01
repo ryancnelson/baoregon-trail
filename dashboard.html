@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">STEP 5 RRAM ERASE PAGE BOUNDS TEST (340 Tests) GREEN</span>
+                    <span class="pill pill-green">STEP 5 RRAM CARTRIDGE WRITE BOUNDS TEST (341 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -380,7 +380,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: NMOS Decimal Flag Reset Parity (<code class="code-inline">test_reset_does_not_clear_decimal_flag</code>)</span>
-                        <span class="pill pill-green">GREEN (340 PASS)</span>
+                        <span class="pill pill-green">GREEN (341 PASS)</span>
                     </div>
                 </div>
 
@@ -394,7 +394,7 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: ReRAM Erase Page Bounds Safety Test (<code class="code-inline">test_rram_driver_erase_bounds_safety.c</code>)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: ReRAM Cartridge Write Bounds Test (<code class="code-inline">test_rram_cartridge_write_bounds.c</code>)</span>
                         <span class="pill pill-green">GREEN (14.2 KB Binary)</span>
                     </div>
                 </div>
@@ -410,7 +410,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Emulator Loop Copy Framebuffer Safety Test (<code class="code-inline">test_emulator_loop_copy_framebuffer_null_safety.c</code>)</span>
-                        <span class="pill pill-green">GREEN (340 PASS)</span>
+                        <span class="pill pill-green">GREEN (341 PASS)</span>
                     </div>
                 </div>
 
@@ -487,8 +487,8 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 5 – 6: ReRAM Erase Page Bounds Safety Test (<code class="code-inline">rram_driver.c</code>) (COMPLETE)</h4>
-                            <p>Duke added <code class="code-inline">test_rram_driver_erase_bounds_safety.c</code> verifying safe page erasing with 0xFF pattern and unaligned/out-of-bounds rejection (340 tests GREEN)!</p>
+                            <h4>Days 5 – 6: ReRAM Cartridge Partition Write Bounds Test (<code class="code-inline">rram_driver.c</code>) (COMPLETE)</h4>
+                            <p>Duke added <code class="code-inline">test_rram_cartridge_write_bounds.c</code> verifying strict bounds enforcement for writes against the cartridge partition boundary (341 tests GREEN)!</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,30 +510,30 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. ReRAM Erase Page Bounds Safety Test Landed (<code class="code-inline">rram_driver.c</code>)</div>
+                    <div class="decision-title">1. ReRAM Cartridge Partition Write Bounds Test Landed (<code class="code-inline">rram_driver.c</code>)</div>
                     <div class="decision-desc">
-                        Duke added <code class="code-inline">test_rram_driver_erase_bounds_safety.c</code> proving <code class="code-inline">rram_erase_page()</code> populates 0xFF on page-aligned addresses and rejects unaligned/OOB offsets (340 tests GREEN)!
+                        Duke added <code class="code-inline">test_rram_cartridge_write_bounds.c</code> proving <code class="code-inline">rram_write()</code> safely rejects writes extending past the cartridge partition boundary or below the 2.5 MiB headroom base (341 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Boot Splash Invalid Index Clamping Test Landed (<code class="code-inline">boot_splash.c</code>)</div>
+                    <div class="decision-title">2. ReRAM Erase Page Bounds Safety Test Landed (<code class="code-inline">rram_driver.c</code>)</div>
                     <div class="decision-desc">
-                        Duke added <code class="code-inline">test_boot_splash_invalid_index_clamping.c</code> proving <code class="code-inline">boot_splash_current_slot()</code> safely clamps negative and oversized indices to slot 0 (340 tests GREEN)!
+                        Duke added <code class="code-inline">test_rram_driver_erase_bounds_safety.c</code> proving <code class="code-inline">rram_erase_page()</code> populates 0xFF on page-aligned addresses and rejects unaligned/OOB offsets (341 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">3. Copy Framebuffer Null Safety Test Landed (<code class="code-inline">emulator_loop.c</code>)</div>
+                    <div class="decision-title">3. Boot Splash Invalid Index Clamping Test Landed (<code class="code-inline">boot_splash.c</code>)</div>
                     <div class="decision-desc">
-                        Bunnie added <code class="code-inline">test_emulator_loop_copy_framebuffer_null_safety.c</code> proving <code class="code-inline">baoregon_emulator_copy_framebuffer()</code> safely returns -1 on NULL or insufficient buffer count (340 tests GREEN)!
+                        Duke added <code class="code-inline">test_boot_splash_invalid_index_clamping.c</code> proving <code class="code-inline">boot_splash_current_slot()</code> safely clamps negative and oversized indices to slot 0 (341 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
                     <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (340 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (341 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
