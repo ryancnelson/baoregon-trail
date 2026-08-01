@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">6/6 Test Targets GREEN</span>
+                    <span class="pill pill-green">7/7 Test Targets (73 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -379,8 +379,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 2: <code class="code-inline">cpu6502.c</code> 49 Opcodes + Reset</span>
-                        <span class="pill pill-green">GREEN (49 PASS)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 2: <code class="code-inline">cpu6502.c</code> 56 Opcodes + Reset</span>
+                        <span class="pill pill-green">GREEN (56 PASS)</span>
                     </div>
                 </div>
 
@@ -395,7 +395,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 3: Sector Layout, Fast Trap &amp; <code class="code-inline">embed_disk.py</code></span>
-                        <span class="pill pill-green">GREEN (8 PASS)</span>
+                        <span class="pill pill-green">GREEN (17 PASS)</span>
                     </div>
                 </div>
 
@@ -473,8 +473,8 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 1 – 2: 6502 Core, Memory &amp; Audio Traps (COMPLETE)</h4>
-                            <p>Woz: 49 CPU Opcodes &amp; Reset GREEN. Duke: Sector layout &amp; ReRAM disk read traps GREEN. Bunnie: 192-line un-swizzler &amp; $C030 speaker PWM GREEN.</p>
+                            <h4>Days 1 – 2: 6502 Core, Memory, Audio &amp; Disk Generator (COMPLETE)</h4>
+                            <p>Woz: 56 CPU Opcodes GREEN. Duke: Sector layout, ReRAM traps &amp; <code class="code-inline">embed_disk.py</code> GREEN. Bunnie: 192-line un-swizzler &amp; $C030 PWM GREEN.</p>
                         </div>
                     </div>
                     <div class="timeline-item active">
@@ -531,9 +531,9 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">4. Bunnie's $C030 Speaker PWM Trap Landed</div>
+                    <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Fire-and-forget memory-mapped flag mechanism implemented in <code class="code-inline">src/bunnie_audio.c</code>. BIO Core 1 polls flag and toggles PWM pin without stalling main 6502 loop.
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code>, and auto-pushes to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
