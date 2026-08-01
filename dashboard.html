@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">STEP 5 DISK TRAP UNLOAD SAFETY (307 Tests) GREEN</span>
+                    <span class="pill pill-green">STEP 5 MAIN BOOT METRICS GETTER (308 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -394,7 +394,7 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Disk Trap Unload Image Safety (<code class="code-inline">test_disk_trap_unload_image.c</code>)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Main Boot Metrics Getter (<code class="code-inline">main.c</code>)</span>
                         <span class="pill pill-green">GREEN (13.8 KB Binary)</span>
                     </div>
                 </div>
@@ -410,7 +410,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Video Decoding NULL Pointer Safety (<code class="code-inline">video_apple2.c</code> / <code class="code-inline">lores_apple2.c</code>)</span>
-                        <span class="pill pill-green">GREEN (307 PASS)</span>
+                        <span class="pill pill-green">GREEN (308 PASS)</span>
                     </div>
                 </div>
 
@@ -487,8 +487,8 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 5 – 6: Disk Trap Unload Image Safety (<code class="code-inline">test_disk_trap_unload_image.c</code>) (COMPLETE)</h4>
-                            <p>Duke added <code class="code-inline">disk_trap_set_image(NULL)</code> safety verification tests in <code class="code-inline">tests/test_disk_trap_unload_image.c</code> (307 tests GREEN)!</p>
+                            <h4>Days 5 – 6: Main Boot Metrics Getter (<code class="code-inline">main.c</code>) (COMPLETE)</h4>
+                            <p>Duke added <code class="code-inline">baoregon_get_boot_metrics()</code> accessor with unit tests in <code class="code-inline">tests/test_main_boot_metrics_getter.c</code> (308 tests GREEN)!</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,30 +510,30 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. Disk Trap Unload Image Safety Landed (<code class="code-inline">test_disk_trap_unload_image.c</code>)</div>
+                    <div class="decision-title">1. Main Boot Metrics Getter Landed (<code class="code-inline">main.c</code>)</div>
                     <div class="decision-desc">
-                        Duke added <code class="code-inline">disk_trap_set_image(NULL)</code> safety verification tests in <code class="code-inline">tests/test_disk_trap_unload_image.c</code> (307 tests GREEN)!
+                        Duke added <code class="code-inline">baoregon_get_boot_metrics()</code> accessor with unit tests in <code class="code-inline">tests/test_main_boot_metrics_getter.c</code> (308 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Boot Timing Benchmark Safety Landed (<code class="code-inline">boot_perf.c</code>)</div>
+                    <div class="decision-title">2. Disk Trap Unload Image Safety Landed (<code class="code-inline">test_disk_trap_unload_image.c</code>)</div>
                     <div class="decision-desc">
-                        Duke added NULL pointer safety, cycle count overflow protection, and <code class="code-inline">boot_perf_is_sub_50ms()</code> with unit tests in <code class="code-inline">tests/test_boot_perf_safety.c</code> (307 tests GREEN)!
+                        Duke added <code class="code-inline">disk_trap_set_image(NULL)</code> safety verification tests in <code class="code-inline">tests/test_disk_trap_unload_image.c</code> (308 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">3. Framebuffer Margin Bounds &amp; Documentation Landed (<code class="code-inline">emulator_loop.h</code>)</div>
+                    <div class="decision-title">3. Boot Timing Benchmark Safety Landed (<code class="code-inline">boot_perf.c</code>)</div>
                     <div class="decision-desc">
-                        Duke &amp; Woz documented 320x240 framebuffer margin caveats (top-left 280x192 is rendered, remaining 23040 pixels are unwritten margins) with unit tests in <code class="code-inline">tests/test_emulator_loop_framebuffer_bounds.c</code> (307 tests GREEN)!
+                        Duke added NULL pointer safety, cycle count overflow protection, and <code class="code-inline">boot_perf_is_sub_50ms()</code> with unit tests in <code class="code-inline">tests/test_boot_perf_safety.c</code> (308 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
                     <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (307 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (308 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
