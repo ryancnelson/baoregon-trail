@@ -14,6 +14,7 @@ static boot_splash_state_t g_splash_state;
 static boot_splash_button_edge_state_t g_edge_state;
 static int g_in_splash_menu = 1;
 static uint16_t g_framebuffer[320 * 240];
+static uint64_t g_total_cycles = 0ULL;
 
 void baoregon_emulator_init(void) {
     apple2_mem_reset();
@@ -21,6 +22,11 @@ void baoregon_emulator_init(void) {
     boot_splash_init(&g_splash_state);
     boot_splash_button_edge_state_init(&g_edge_state);
     g_in_splash_menu = 1;
+    g_total_cycles = 0ULL;
+}
+
+uint64_t baoregon_emulator_get_total_cycles(void) {
+    return g_total_cycles;
 }
 
 int baoregon_emulator_is_in_splash_menu(void) {
@@ -53,9 +59,12 @@ void baoregon_emulator_poll_input(void) {
 uint32_t baoregon_emulator_run_frame(void) {
     baoregon_emulator_poll_input();
 
+    uint32_t start_ticks = clockticks6502;
     if (!g_in_splash_menu) {
         exec6502(BAOREGON_CYCLES_PER_FRAME);
     }
+    uint32_t cycles_this_frame = clockticks6502 - start_ticks;
+    g_total_cycles += cycles_this_frame;
 
     /* Process audio state update */
     bunnie_audio_poll_and_apply(apple2_mem_get_audio_state());

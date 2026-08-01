@@ -16,6 +16,7 @@ uint32_t baoregon_emulator_run_frame(void);
 void baoregon_emulator_poll_input(void);
 int baoregon_emulator_is_in_splash_menu(void);
 void baoregon_emulator_reset_to_splash(void);
+uint64_t baoregon_emulator_get_total_cycles(void);
 
 /* Test/inspection hook: read-only access to the internal framebuffer
  * baoregon_emulator_run_frame() renders into. Not for hardware use (the
