@@ -399,6 +399,42 @@ static void test_display_mode_defaults_to_text_page1_lores(void) {
           "test_display_mode_defaults_to_text_page1_lores: LORES");
 }
 
+static void test_apple2_mem_reset_restores_display_mode_defaults(void) {
+    /* Same reset-completeness class as the paddle/disk-cursor/
+     * pending-track/keyboard-strobe/LC-state gaps fixed earlier this
+     * session: the test above only proves the NEVER-touched default
+     * state -- nothing proves reset() actually restores TEXT/PAGE1/
+     * LORES/not-MIXED after the display mode has been flipped away
+     * from all four of them (GRAPHICS, PAGE2, HIRES, MIXED all
+     * selected). A stale HIRES/PAGE2/MIXED/GRAPHICS state surviving a
+     * mid-game reset would make Bunnie's video_apple2.c render the
+     * wrong screen mode for a freshly-reset (or soft-reset-combo'd)
+     * program that assumes the real Apple II post-reset defaults. */
+    apple2_mem_reset();
+
+    /* Flip all four display-mode softswitches away from their reset
+     * defaults. */
+    (void)read6502(0xC050); /* GRAPHICS (not TEXT) */
+    (void)read6502(0xC053); /* MIXED */
+    (void)read6502(0xC055); /* PAGE2 */
+    (void)read6502(0xC057); /* HIRES */
+
+    CHECK(apple2_mem_is_text_mode() == 0 && apple2_mem_is_mixed_mode() == 1 &&
+          apple2_mem_is_page2_selected() == 1 && apple2_mem_is_hires_mode() == 1,
+          "test_apple2_mem_reset_restores_display_mode_defaults: setup sanity check (all flipped)");
+
+    apple2_mem_reset();
+
+    CHECK(apple2_mem_is_text_mode() == 1,
+          "test_apple2_mem_reset_restores_display_mode_defaults: TEXT restored");
+    CHECK(apple2_mem_is_mixed_mode() == 0,
+          "test_apple2_mem_reset_restores_display_mode_defaults: MIXED cleared");
+    CHECK(apple2_mem_is_page2_selected() == 0,
+          "test_apple2_mem_reset_restores_display_mode_defaults: PAGE1 restored");
+    CHECK(apple2_mem_is_hires_mode() == 0,
+          "test_apple2_mem_reset_restores_display_mode_defaults: LORES restored");
+}
+
 static void test_c050_selects_graphics_mode(void) {
     apple2_mem_reset();
     (void)read6502(0xC050);
@@ -740,6 +776,7 @@ int main(void) {
     test_lc_e000_ffff_is_shared_across_banks();
     test_apple2_mem_reset_restores_lc_default_rom_state();
     test_display_mode_defaults_to_text_page1_lores();
+    test_apple2_mem_reset_restores_display_mode_defaults();
     test_c050_selects_graphics_mode();
     test_c051_selects_text_mode();
     test_c052_selects_full_screen_c053_selects_mixed();
