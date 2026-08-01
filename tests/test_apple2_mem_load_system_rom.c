@@ -7,7 +7,6 @@
 #include <string.h>
 
 #include "../src/apple2_mem.h"
-#include "../src/apple2_mem.h"
 #include "../src/cpu6502.h"
 
 int main(void) {
