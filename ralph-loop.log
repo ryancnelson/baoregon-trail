@@ -102,3 +102,19 @@ dd7f28f lores_apple2: Apple II Lo-Res (40x48 block) graphics decoding
 ❯ 
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 [2026-07-31 23:49:16] --- checking baochip ---
+[2026-07-31 23:50:11] baochip reply (truncated): Dashboard Sync
+
+  • Clean working tree on main synchronized with origin main at
+  http://biggie:3000/ryan/baoregon-trail.git.
+  • Live Status Dashboard: **dashboard.html**.
+
+────────────────────────────────────────────────────────────────────────────────────────
+>
+────────────────────────────────────────────────────────────────────────────────────────
+? for shortcuts                                                  Gemini 3.6 Flash · high
+[2026-07-31 23:50:11] recent commits: 1c76504 Update dashboard.html: 273 tests GREEN, 12.8 KB RISC-V binary, Boot Perf module landed
+360ed0f boot_perf: add 350MHz boot timing benchmark counters and sub-50ms badge validator (273 tests GREEN)
+bd8ec63 Update ralph-loop.log with latest pass 23 status
+ead7b92 Update dashboard.html: 270 tests GREEN, 12.8 KB RISC-V binary, Full Emulator Loop landed
+6931cf4 emulator_loop: land full frame-driven emulator main loop and unit tests (270 tests GREEN)
+[2026-07-31 23:50:11] sleeping 300s...
