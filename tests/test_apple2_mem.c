@@ -175,6 +175,42 @@ static void test_apple2_mem_reset_clears_mid_stream_disk_cursor(void) {
           "test_apple2_mem_reset_clears_mid_stream_disk_cursor");
 }
 
+static void test_apple2_mem_reset_clears_stale_pending_track(void) {
+    /* Companion to the mid-stream cursor test above: g_pending_track
+     * holds the staged track number from a $C0E0 write, latched by the
+     * FOLLOWING $C0E1 (sector) write via disk_trap_select_sector(). If
+     * software writes $C0E0 (stages a track), gets interrupted by a
+     * reset before ever writing $C0E1, and then some LATER unrelated
+     * code path writes only $C0E1 without a fresh $C0E0 (unlikely in
+     * practice, but nothing proved reset actually clears this staging
+     * register rather than leaving a stale track number silently
+     * carried across the reset) -- the sector selected must come from
+     * track 0 (the post-reset default), not the stale pre-reset track. */
+    apple2_mem_reset();
+    apple2_mem_set_disk_image(g_mock_disk_image);
+
+    /* Stage track 99 (deliberately never followed by a matching $C0E1
+     * before the reset -- an interrupted stage). */
+    write6502(0xC0E0, 99);
+
+    apple2_mem_reset();
+    apple2_mem_set_disk_image(g_mock_disk_image);
+
+    /* Now write ONLY $C0E1 (sector), simulating code that assumes
+     * g_pending_track defaults to 0 post-reset (matching real Apple II
+     * behavior where DOS always writes $C0E0 first anyway, but the
+     * defensive expectation is that reset leaves no stale staged
+     * value). */
+    write6502(0xC0E1, 0);
+
+    uint32_t base_offset;
+    dos33_sector_offset(0, 0, &base_offset); /* track 0, sector 0 */
+    uint8_t got = read6502(0xC0EC);
+
+    CHECK(got == g_mock_disk_image[base_offset],
+          "test_apple2_mem_reset_clears_stale_pending_track");
+}
+
 static void test_disk_trap_invalid_track_select_does_not_disturb_prior_selection(void) {
     apple2_mem_reset();
     apple2_mem_set_disk_image(g_mock_disk_image);
@@ -633,6 +669,7 @@ int main(void) {
     test_disk_trap_select_and_stream_sector_via_c0ec();
     test_disk_trap_cursor_wraps_after_256_bytes();
     test_apple2_mem_reset_clears_mid_stream_disk_cursor();
+    test_apple2_mem_reset_clears_stale_pending_track();
     test_disk_trap_invalid_track_select_does_not_disturb_prior_selection();
     test_lc_default_state_reads_rom_and_blocks_writes();
     test_lc_c08b_enables_ram_read_and_write_at_d000();
