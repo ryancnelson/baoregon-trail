@@ -52,6 +52,9 @@ static int g_display_hires_mode = 0;
 static uint8_t g_keyboard_ascii = 0;
 static int g_keyboard_strobe_pending = 0;
 
+/* Pushbutton/paddle inputs ($C061-$C063). Index 0/1/2 maps to PB0/PB1/PB2. */
+static int g_button_pressed[3] = {0, 0, 0};
+
 void apple2_mem_reset(void) {
     for (uint32_t i = 0; i < APPLE2_RAM_SIZE; i++) {
         g_ram[i] = 0;
@@ -72,6 +75,9 @@ void apple2_mem_reset(void) {
     g_display_hires_mode = 0;
     g_keyboard_ascii = 0;
     g_keyboard_strobe_pending = 0;
+    g_button_pressed[0] = 0;
+    g_button_pressed[1] = 0;
+    g_button_pressed[2] = 0;
 }
 
 void apple2_mem_set_disk_image(const uint8_t *image) {
@@ -101,6 +107,13 @@ int apple2_mem_is_hires_mode(void) {
 void apple2_mem_inject_key(uint8_t ascii_value) {
     g_keyboard_ascii = (uint8_t)(ascii_value & 0x7F);
     g_keyboard_strobe_pending = 1;
+}
+
+void apple2_mem_set_button_state(int button_index, int pressed) {
+    if (button_index < 0 || button_index > 2) {
+        return; /* out of range: not one of PB0/PB1/PB2, silently ignored */
+    }
+    g_button_pressed[button_index] = pressed ? 1 : 0;
 }
 
 /* Apply the Language Card softswitch selected by a $C080-$C08F access.
@@ -226,6 +239,15 @@ static uint8_t handle_soft_switch_read(uint16_t address) {
     if (address >= 0xC050 && address <= 0xC057) {
         apply_display_mode_switch(address);
         return 0x00;
+    }
+    if (address == 0xC061) {
+        return g_button_pressed[0] ? 0x80 : 0x00;
+    }
+    if (address == 0xC062) {
+        return g_button_pressed[1] ? 0x80 : 0x00;
+    }
+    if (address == 0xC063) {
+        return g_button_pressed[2] ? 0x80 : 0x00;
     }
     /* Any other $C0xx read (including $C0E0/$C0E1, write-only): inert 0. */
     return 0x00;

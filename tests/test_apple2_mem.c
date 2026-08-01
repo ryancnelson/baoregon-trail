@@ -396,6 +396,76 @@ static void test_keyboard_new_key_resets_strobe_even_before_c010(void) {
           "test_keyboard_new_key_resets_strobe_even_before_c010");
 }
 
+/*
+ * Pushbutton/paddle input tests ($C061-$C063). Real Apple II semantics:
+ * bit 7 (0x80) of the read reflects the button's current held/released
+ * state; bits 0-6 are unspecified (we return 0 there, matching the
+ * "unimplemented bits read as 0" convention used elsewhere in this file).
+ * PB0=$C061, PB1=$C062, PB2=$C063.
+ */
+
+static void test_buttons_default_to_released(void) {
+    apple2_mem_reset();
+
+    CHECK(read6502(0xC061) == 0x00, "test_buttons_default_to_released: PB0");
+    CHECK(read6502(0xC062) == 0x00, "test_buttons_default_to_released: PB1");
+    CHECK(read6502(0xC063) == 0x00, "test_buttons_default_to_released: PB2");
+}
+
+static void test_pb0_reflects_button0_state(void) {
+    apple2_mem_reset();
+
+    apple2_mem_set_button_state(0, 1); /* press button 0 */
+    CHECK(read6502(0xC061) == 0x80,
+          "test_pb0_reflects_button0_state: pressed reads 0x80");
+
+    apple2_mem_set_button_state(0, 0); /* release */
+    CHECK(read6502(0xC061) == 0x00,
+          "test_pb0_reflects_button0_state: released reads 0x00");
+}
+
+static void test_pb1_reflects_button1_state(void) {
+    apple2_mem_reset();
+
+    apple2_mem_set_button_state(1, 1);
+    CHECK(read6502(0xC062) == 0x80,
+          "test_pb1_reflects_button1_state");
+}
+
+static void test_pb2_reflects_button2_state(void) {
+    apple2_mem_reset();
+
+    apple2_mem_set_button_state(2, 1);
+    CHECK(read6502(0xC063) == 0x80,
+          "test_pb2_reflects_button2_state");
+}
+
+static void test_buttons_are_independent(void) {
+    /* Pressing one button must not affect the others' reported state. */
+    apple2_mem_reset();
+
+    apple2_mem_set_button_state(1, 1); /* only button 1 pressed */
+
+    CHECK(read6502(0xC061) == 0x00 && read6502(0xC062) == 0x80 &&
+          read6502(0xC063) == 0x00,
+          "test_buttons_are_independent");
+}
+
+static void test_button_reads_do_not_have_side_effects(void) {
+    /* Unlike the other soft-switches in this file, reading a pushbutton
+     * address must be a pure query -- it must not toggle/clear/latch
+     * anything (repeated reads return the same value, and reading one
+     * button must not disturb another). */
+    apple2_mem_reset();
+    apple2_mem_set_button_state(0, 1);
+
+    uint8_t first = read6502(0xC061);
+    uint8_t second = read6502(0xC061);
+
+    CHECK(first == 0x80 && second == 0x80,
+          "test_button_reads_do_not_have_side_effects");
+}
+
 int main(void) {
     fill_mock_disk_image();
 
@@ -423,6 +493,12 @@ int main(void) {
     test_keyboard_c010_write_also_clears_strobe();
     test_keyboard_no_key_pressed_reads_zero();
     test_keyboard_new_key_resets_strobe_even_before_c010();
+    test_buttons_default_to_released();
+    test_pb0_reflects_button0_state();
+    test_pb1_reflects_button1_state();
+    test_pb2_reflects_button2_state();
+    test_buttons_are_independent();
+    test_button_reads_do_not_have_side_effects();
 
     if (failures == 0) {
         printf("All tests passed.\n");

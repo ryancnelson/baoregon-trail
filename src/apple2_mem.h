@@ -39,6 +39,8 @@
  *   $C052/$C053    : FULL-screen / MIXED mode select (any access).
  *   $C054/$C055    : PAGE1 / PAGE2 select (any access).
  *   $C056/$C057    : LORES / HIRES mode select (any access).
+ *   $C061/$C062/$C063 : PB0/PB1/PB2 pushbutton state (read) -- bit 7
+ *                     (0x80) reflects the button's held/released state.
  *   $C080-$C08F    : Language Card bank-switching -- see
  *                     apply_language_card_switch() in apple2_mem.c for
  *                     the full read/write/bank truth table.
@@ -86,5 +88,21 @@ int apple2_mem_is_hires_mode(void);  /* 1 = HIRES ($C057), 0 = LORES ($C056) */
  * real physical keystroke -- sets the ASCII value and raises the strobe
  * (high bit) exactly as real Apple II keyboard hardware would. */
 void apple2_mem_inject_key(uint8_t ascii_value);
+
+/* Pushbutton/paddle button inputs ($C061-$C063 reads). Real Apple II
+ * hardware reports each button's state in bit 7 (0x80) of the
+ * corresponding address, bits 0-6 undefined/ignored here (we return 0
+ * there, matching the "unimplemented reads as 0" convention used
+ * elsewhere in this file):
+ *   $C061 = PB0 (button 0, typically the Apple II's OpenApple/joystick
+ *           button 0 -- also doubles as the Enter key equivalent on some
+ *           software)
+ *   $C062 = PB1 (button 1, ClosedApple/joystick button 1)
+ *   $C063 = PB2 (button 2, joystick button 2 -- present on some clones
+ *           and later machines, wired here for completeness)
+ * apple2_mem_set_button_state() is the test/host-side hook standing in
+ * for a real physical button press -- button_index is 0/1/2 matching
+ * PB0/PB1/PB2, pressed is nonzero for "held down". */
+void apple2_mem_set_button_state(int button_index, int pressed);
 
 #endif /* APPLE2_MEM_H */
