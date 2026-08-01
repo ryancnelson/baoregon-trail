@@ -91,13 +91,15 @@ void apple2_mem_reset(void) {
     g_display_hires_mode = 0;
     g_keyboard_ascii = 0;
     g_keyboard_strobe_pending = 0;
-    g_button_pressed[0] = 0;
-    g_button_pressed[1] = 0;
-    g_button_pressed[2] = 0;
-    g_annunciator_on[0] = 0;
-    g_annunciator_on[1] = 0;
-    g_annunciator_on[2] = 0;
-    g_annunciator_on[3] = 0;
+    /* Reuse the dedicated clear helpers rather than duplicating their
+     * zeroing logic inline -- this is the same drift-risk pattern
+     * already caught once in emulator_loop.c's init()/reset_to_splash()
+     * duplication (commit 65114df): two copies of the same zeroing
+     * logic are easy to update in one place and forget the other. See
+     * tests/test_apple2_mem_reset_uses_clear_helpers.c for the
+     * regression lock. */
+    apple2_mem_clear_button_states();
+    apple2_mem_clear_annunciator_states();
     g_paddle_countdown_target[0] = 0;
     g_paddle_countdown_target[1] = 0;
     g_paddle_reads_remaining[0] = 0;
