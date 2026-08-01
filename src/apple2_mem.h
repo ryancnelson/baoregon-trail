@@ -118,6 +118,7 @@ void apple2_mem_set_button_state(int button_index, int pressed);
  * memory read. Returns 1 = pressed, 0 = released or button_index out of
  * range (not one of 0/1/2). */
 int apple2_mem_get_button_state(int button_index);
+void apple2_mem_clear_button_states(void);
 
 /* Paddle analog timer inputs ($C064/$C065 PADDLE0/PADDLE1 reads,
  * $C070 PDRIVE trigger). Real Apple II hardware charges an RC circuit

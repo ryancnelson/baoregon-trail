@@ -149,6 +149,12 @@ int apple2_mem_get_button_state(int button_index) {
     return g_button_pressed[button_index];
 }
 
+void apple2_mem_clear_button_states(void) {
+    g_button_pressed[0] = 0;
+    g_button_pressed[1] = 0;
+    g_button_pressed[2] = 0;
+}
+
 int apple2_mem_get_annunciator_state(int annunciator_index) {
     if (annunciator_index < 0 || annunciator_index > 3) {
         return 0; /* out of range: not one of AN0-AN3 */
