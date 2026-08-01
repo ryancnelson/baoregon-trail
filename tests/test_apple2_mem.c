@@ -134,6 +134,47 @@ static void test_disk_trap_cursor_wraps_after_256_bytes(void) {
           "test_disk_trap_cursor_wraps_after_256_bytes");
 }
 
+static void test_apple2_mem_reset_clears_mid_stream_disk_cursor(void) {
+    /* Same drift-risk class as the paddle-state and button/annunciator
+     * reset gaps caught earlier this session: apple2_mem_reset() zeros
+     * g_disk_stream_cursor/g_pending_track inline, but nothing proved it
+     * actually resets a cursor that's mid-stream (non-zero, partway
+     * through a 256-byte sector) at the moment of reset -- every
+     * existing disk-trap test only exercises reset->select->stream from
+     * a clean start, never a reset happening mid-stream. Confirms a
+     * post-reset $C0EC read -- WITHOUT re-selecting via $C0E0/$C0E1,
+     * which would trivially reset disk_trap's own cursor regardless of
+     * apple2_mem_reset()'s own zeroing -- starts back at cursor 0, not
+     * wherever the interrupted stream left off. disk_trap's internal
+     * selected-sector state is Duke's module and deliberately NOT reset
+     * here (real Apple II hardware doesn't re-home the disk head on a
+     * soft reset either) -- only apple2_mem.c's own g_disk_stream_cursor
+     * field is under test. */
+    apple2_mem_reset();
+    apple2_mem_set_disk_image(g_mock_disk_image);
+    write6502(0xC0E0, 0);
+    write6502(0xC0E1, 0);
+
+    /* Stream partway through the sector -- cursor now sits mid-flight,
+     * NOT at 0 and NOT wrapped back around yet. */
+    for (int i = 0; i < 100; i++) {
+        (void)read6502(0xC0EC);
+    }
+
+    apple2_mem_reset();
+
+    /* Deliberately no $C0E0/$C0E1 write here -- if apple2_mem_reset()
+     * didn't zero g_disk_stream_cursor, this read would return byte 100
+     * of the still-selected sector (continuing where the interrupted
+     * stream left off) instead of byte 0. */
+    uint32_t base_offset;
+    dos33_sector_offset(0, 0, &base_offset);
+    uint8_t first_byte_after_reset = read6502(0xC0EC);
+
+    CHECK(first_byte_after_reset == g_mock_disk_image[base_offset],
+          "test_apple2_mem_reset_clears_mid_stream_disk_cursor");
+}
+
 static void test_disk_trap_invalid_track_select_does_not_disturb_prior_selection(void) {
     apple2_mem_reset();
     apple2_mem_set_disk_image(g_mock_disk_image);
@@ -591,6 +632,7 @@ int main(void) {
     test_c030_triggers_audio_toggle_without_blocking();
     test_disk_trap_select_and_stream_sector_via_c0ec();
     test_disk_trap_cursor_wraps_after_256_bytes();
+    test_apple2_mem_reset_clears_mid_stream_disk_cursor();
     test_disk_trap_invalid_track_select_does_not_disturb_prior_selection();
     test_lc_default_state_reads_rom_and_blocks_writes();
     test_lc_c08b_enables_ram_read_and_write_at_d000();
