@@ -60,11 +60,15 @@ SECTIONS
     } > RERAM
 
     /* Embedded game .dsk byte arrays (tools/embed_disk.py output), per
-     * BRAINSTORM.md section 5's ReRAM offset table. Kept in its own
-     * output section (rather than folded into .rodata) so the multi-game
-     * cartridge loader can reason about/relocate this region independently
-     * as more games are added, and so `size`/`readelf` output makes disk-
-     * image footprint visible at a glance during ReRAM budget planning. */
+     * BRAINSTORM.md section 5's ReRAM offset table (src/cartridge_layout.h
+     * for the verified slot addresses -- CARTRIDGE_RERAM_BASE == 0x20280000,
+     * 2.5 MiB into ReRAM, corrected 2026-07-31 per Discord #c-side hardware
+     * findings: leave ample headroom below that boundary for .text/.rodata
+     * program code growth). Kept in its own output section (rather than
+     * folded into .rodata) so the multi-game cartridge loader can reason
+     * about/relocate this region independently as more games are added,
+     * and so `size`/`readelf` output makes disk-image footprint visible at
+     * a glance during ReRAM budget planning. */
     .dsk_images :
     {
         *(.dsk_images .dsk_images.*)

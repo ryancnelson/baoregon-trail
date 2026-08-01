@@ -93,16 +93,19 @@ Instead of emulating the full physical Disk II stepper motor and raw GCR nibble 
 * **In-Game 6502 Input Binding**: The 3 logical buttons map directly to standard Apple II keyboard matrix soft-switches (`$C000` / `$C010` strobe).
 
 #### Multi-Game Cartridge Layout:
-With 3.8 MiB of free ReRAM remaining, we can embed multiple `.dsk` files:
+With 3.8 MiB of free ReRAM remaining, we can embed multiple `.dsk` files. Offsets corrected 2026-07-31
+(see section 6C's ReRAM Driver Guidance correction); verified in `src/cartridge_layout.c` /
+`tests/test_cartridge_layout.c` -- base address is `0x20280000` (2.5 MiB into ReRAM), not the earlier
+`0x20080000` typo:
 
 ```
 ReRAM Offset     Size      Game Title
-0x20080000       140 KB    The Oregon Trail (1985)
-0x200A3000       140 KB    Where in the World is Carmen Sandiego?
-0x200C6000       140 KB    Karateka
-0x200E9000       140 KB    Lode Runner
-0x2010C000       140 KB    Prince of Persia (Disk 1)
-0x2012F000       140 KB    Ultima IV
+0x20280000       140 KB    The Oregon Trail (1985)
+0x202A3000       140 KB    Where in the World is Carmen Sandiego?
+0x202C6000       140 KB    Karateka
+0x202E9000       140 KB    Lode Runner
+0x2030C000       140 KB    Prince of Persia (Disk 1)
+0x2032F000       140 KB    Ultima IV
 ```
 
 A custom retro boot splash screen allows using the 3 physical badge buttons (`PREV`, `NEXT`, `SELECT`) to pick a game, pointing the disk controller trap to the selected ReRAM offset and resetting the 6502!
