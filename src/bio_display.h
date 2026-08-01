@@ -136,7 +136,9 @@ void bio_display_render_lores_frame_mixed(int page2, int mixed_mode, read6502_fn
  * explicitly NOT handled here, since no character ROM data exists in
  * this codebase yet (see bio_display_render_frame_mixed()'s doc comment
  * for the same caveat on the MIXED-mode text region). Callers in TEXT
- * mode should not call this function.
+ * mode should not call this function -- see
+ * bio_display_render_frame_auto_text_aware() for a variant that DOES
+ * check apple2_mem_is_text_mode() and is safe to call unconditionally.
  *
  * mixed_mode is honored for BOTH the HIRES path (via
  * bio_display_render_frame_mixed()) and the LORES path (via
@@ -146,6 +148,35 @@ void bio_display_render_lores_frame_mixed(int page2, int mixed_mode, read6502_fn
 void bio_display_render_frame_auto(int hires_mode, int page2, int mixed_mode,
                                     read6502_fn read_mem,
                                     uint16_t framebuffer[BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT]);
+
+/*
+ * Text-mode-aware variant of bio_display_render_frame_auto(): a REAL
+ * bug fix, not just a new feature. Real Apple II hardware's TEXT/
+ * GRAPHICS soft-switch ($C050/$C051) is INDEPENDENT of HIRES/LORES, and
+ * the machine defaults to TEXT mode post-reset (NOT graphics) -- but
+ * bio_display_render_frame_auto() never checked it, so it always
+ * rendered Hi-Res/Lo-Res graphics garbage into the framebuffer even in
+ * full TEXT mode (e.g. the boot splash screen, or any TEXT-mode 6502
+ * program, would show block-graphics noise instead of a blank/text
+ * screen).
+ *
+ * text_mode matches apple2_mem_is_text_mode()'s convention (nonzero =
+ * TEXT/$C051, 0 = GRAPHICS/$C050). When text_mode is nonzero AND
+ * mixed_mode is 0 (full-screen TEXT, not MIXED), this function is a
+ * SAFE NO-OP -- framebuffer is left UNTOUCHED (not zeroed, not black),
+ * matching the same "renderer doesn't own this content" convention
+ * already used for MIXED mode's text region. TEXT character rendering
+ * itself (character ROM lookup, 40-column layout) is explicitly OUT OF
+ * SCOPE here -- no character ROM data exists in this codebase yet.
+ * When mixed_mode is nonzero, TEXT/GRAPHICS is irrelevant (real Apple
+ * II MIXED mode always shows graphics on top regardless of the TEXT/
+ * GRAPHICS switch) -- this function proceeds with the normal HIRES/
+ * LORES + MIXED-boundary dispatch (bio_display_render_frame_auto())
+ * in that case.
+ */
+void bio_display_render_frame_auto_text_aware(int hires_mode, int page2, int mixed_mode,
+                                               int text_mode, read6502_fn read_mem,
+                                               uint16_t framebuffer[BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT]);
 
 /*
  * DMA push stub. Records that a push was requested (pointer + size) via

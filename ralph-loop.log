@@ -449,3 +449,8 @@ ac0193e emulator_loop: add baoregon_emulator_get_total_cycles cumulative cycle c
 f72faef Update dashboard.html: 310 tests GREEN, 13.9 KB RISC-V binary, No Stale Framebuffer Reset Safety landed
 [2026-08-01 02:56:43] sleeping 300s...
 [2026-08-01 03:01:43] --- checking Woz ---
+[2026-08-01 03:07:16] Woz reply (truncated): ��───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 
+[2026-08-01 03:07:16] --- checking Bunnie ---

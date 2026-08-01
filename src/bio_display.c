@@ -132,6 +132,15 @@ void bio_display_render_frame_auto(int hires_mode, int page2, int mixed_mode,
     }
 }
 
+void bio_display_render_frame_auto_text_aware(int hires_mode, int page2, int mixed_mode,
+                                               int text_mode, read6502_fn read_mem,
+                                               uint16_t framebuffer[BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT]) {
+    if (text_mode && !mixed_mode) {
+        return; /* full-screen TEXT: no character ROM yet, safe no-op */
+    }
+    bio_display_render_frame_auto(hires_mode, page2, mixed_mode, read_mem, framebuffer);
+}
+
 /* DMA push stub state -- see bio_display.h doc comment: no real SPI/DMA
  * peripheral exists yet, this just records the call for host-test
  * inspection until baochip's hardware-init sequence / register map lands. */
