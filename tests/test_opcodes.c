@@ -2323,6 +2323,26 @@ static void test_bne_backward_branch_crosses_page_takes_extra_cycle(void) {
           "test_bne_backward_branch_crosses_page_takes_extra_cycle");
 }
 
+static void test_bne_branch_wraps_full_address_space_at_top_of_memory(void) {
+    /* Same intersection-of-features gap as the JSR/RTS and IRQ tests at
+     * PC=0xFFFF -- branch_if()'s 'pc = pc + offset' wraps via uint16_t
+     * overflow, matching real 6502 hardware where a branch near the top
+     * of the address space with a forward offset wraps the target
+     * around to a low address, not just crossing a page boundary like
+     * the tests above. Never explicitly exercised despite branch_if()
+     * being on the hot path for every conditional branch opcode.
+     * Instruction after BNE lands at $FFFF; target = $FFFF + 5 wraps
+     * (via uint16_t overflow) to $0004. */
+    setup();
+    status &= (uint8_t)~FLAG_ZERO;
+    pc = 0xFFFD;
+    test_ram[0xFFFD] = 0xD0; /* BNE +5 */
+    test_ram[0xFFFE] = 0x05;
+    step6502();
+    CHECK(pc == 0x0004,
+          "test_bne_branch_wraps_full_address_space_at_top_of_memory");
+}
+
 static void test_illegal_opcode_consumes_one_byte_without_crashing(void) {
     /* baochip confirmed illegal/undocumented NMOS opcodes are out of
      * scope for DOS 3.3/ProDOS/Oregon Trail 1985 (documented opcodes
@@ -2565,6 +2585,7 @@ int main(void) {
     test_beq_takes_extra_cycle_when_branch_crosses_page();
     test_beq_does_not_take_extra_cycle_within_same_page();
     test_bne_backward_branch_crosses_page_takes_extra_cycle();
+    test_bne_branch_wraps_full_address_space_at_top_of_memory();
     test_illegal_opcode_consumes_one_byte_without_crashing();
     test_pc_wraps_from_0xffff_to_0x0000_on_single_byte_opcode();
     test_pc_wraps_mid_instruction_for_a_two_byte_opcode();
