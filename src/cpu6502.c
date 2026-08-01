@@ -152,6 +152,29 @@ static void adc_with_operand(uint8_t operand) {
     set_zero_and_sign(a);
 }
 
+/* --- SBC helper (shared by all addressing modes; binary mode only, see
+ * ADC note above) --- */
+
+static void sbc_with_operand(uint8_t operand) {
+    uint8_t borrow_in = (status & FLAG_CARRY) ? 0 : 1;
+    uint16_t diff = (uint16_t)a - operand - borrow_in;
+
+    if ((a ^ operand) & (a ^ (uint8_t)diff) & 0x80) {
+        status |= FLAG_OVERFLOW;
+    } else {
+        status &= (uint8_t)~FLAG_OVERFLOW;
+    }
+
+    if (diff <= 0xFF) {
+        status |= FLAG_CARRY; /* no borrow occurred */
+    } else {
+        status &= (uint8_t)~FLAG_CARRY; /* borrow occurred */
+    }
+
+    a = (uint8_t)diff;
+    set_zero_and_sign(a);
+}
+
 /* --- read-modify-write helpers (shared by all addressing modes of
  * ASL/LSR/ROL/ROR/INC/DEC) --- */
 
@@ -362,28 +385,10 @@ void step6502(void) {
             clockticks6502 += 2;
             break;
 
-        case 0xE9: { /* SBC immediate (binary mode only; see ADC note) */
-            uint8_t operand = fetch_immediate();
-            uint8_t borrow_in = (status & FLAG_CARRY) ? 0 : 1;
-            uint16_t diff = (uint16_t)a - operand - borrow_in;
-
-            if ((a ^ operand) & (a ^ (uint8_t)diff) & 0x80) {
-                status |= FLAG_OVERFLOW;
-            } else {
-                status &= (uint8_t)~FLAG_OVERFLOW;
-            }
-
-            if (diff <= 0xFF) {
-                status |= FLAG_CARRY; /* no borrow occurred */
-            } else {
-                status &= (uint8_t)~FLAG_CARRY; /* borrow occurred */
-            }
-
-            a = (uint8_t)diff;
-            set_zero_and_sign(a);
+        case 0xE9: /* SBC immediate */
+            sbc_with_operand(fetch_immediate());
             clockticks6502 += 2;
             break;
-        }
 
         case 0xC9: /* CMP immediate */
             compare(a, fetch_immediate());
@@ -850,6 +855,113 @@ void step6502(void) {
             clockticks6502 += 6;
             break;
         }
+
+        case 0x8D: /* STA absolute */
+            write6502(fetch_absolute_addr(), a);
+            clockticks6502 += 4;
+            break;
+
+        case 0x86: /* STX zeropage */
+            write6502(fetch_zeropage_addr(), x);
+            clockticks6502 += 3;
+            break;
+
+        case 0x96: /* STX zeropage,Y */
+            write6502(fetch_zeropage_y_addr(), x);
+            clockticks6502 += 4;
+            break;
+
+        case 0x8E: /* STX absolute */
+            write6502(fetch_absolute_addr(), x);
+            clockticks6502 += 4;
+            break;
+
+        case 0x84: /* STY zeropage */
+            write6502(fetch_zeropage_addr(), y);
+            clockticks6502 += 3;
+            break;
+
+        case 0x94: /* STY zeropage,X */
+            write6502(fetch_zeropage_x_addr(), y);
+            clockticks6502 += 4;
+            break;
+
+        case 0x8C: /* STY absolute */
+            write6502(fetch_absolute_addr(), y);
+            clockticks6502 += 4;
+            break;
+
+        case 0x9A: /* TXS -- unlike TSX, does NOT affect any flags */
+            sp = x;
+            clockticks6502 += 2;
+            break;
+
+        case 0xBA: /* TSX */
+            x = sp;
+            set_zero_and_sign(x);
+            clockticks6502 += 2;
+            break;
+
+        case 0xD8: /* CLD */
+            status &= (uint8_t)~FLAG_DECIMAL;
+            clockticks6502 += 2;
+            break;
+
+        case 0xF8: /* SED */
+            status |= FLAG_DECIMAL;
+            clockticks6502 += 2;
+            break;
+
+        case 0xAD: /* LDA absolute */
+            a = read6502(fetch_absolute_addr());
+            set_zero_and_sign(a);
+            clockticks6502 += 4;
+            break;
+
+        case 0xAE: /* LDX absolute */
+            x = read6502(fetch_absolute_addr());
+            set_zero_and_sign(x);
+            clockticks6502 += 4;
+            break;
+
+        case 0xAC: /* LDY absolute */
+            y = read6502(fetch_absolute_addr());
+            set_zero_and_sign(y);
+            clockticks6502 += 4;
+            break;
+
+        case 0x2D: /* AND absolute */
+            a &= read6502(fetch_absolute_addr());
+            set_zero_and_sign(a);
+            clockticks6502 += 4;
+            break;
+
+        case 0x0D: /* ORA absolute */
+            a |= read6502(fetch_absolute_addr());
+            set_zero_and_sign(a);
+            clockticks6502 += 4;
+            break;
+
+        case 0x4D: /* EOR absolute */
+            a ^= read6502(fetch_absolute_addr());
+            set_zero_and_sign(a);
+            clockticks6502 += 4;
+            break;
+
+        case 0x6D: /* ADC absolute */
+            adc_with_operand(read6502(fetch_absolute_addr()));
+            clockticks6502 += 4;
+            break;
+
+        case 0xED: /* SBC absolute */
+            sbc_with_operand(read6502(fetch_absolute_addr()));
+            clockticks6502 += 4;
+            break;
+
+        case 0xCD: /* CMP absolute */
+            compare(a, read6502(fetch_absolute_addr()));
+            clockticks6502 += 4;
+            break;
 
         default:
             /* Unimplemented opcode: not yet driven by a failing test. */

@@ -26,3 +26,4 @@
 8baa6b1 Update dashboard.html: Bunnie color edges test suite landed (all 9 test targets GREEN)
 969b558 linker.ld: fold .sdata/.sbss into .data/.bss (RISC-V small-data fix)
 [2026-07-31 22:16:35] sleeping 300s...
+[2026-07-31 22:21:35] --- checking Woz ---

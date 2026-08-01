@@ -1,0 +1,255 @@
+This is the start of the #c-side channel. All things related to C, C-toolchains and C development on Baochip
+bunnie — 3/7/26, 3:30 AM
+Welcome to the c-side! who needs memory safety, anyways.
+armstrongsubero — 3/7/26, 4:37 AM
+Lol 😆 😆 😆 😆
+schwim1337 — 3/7/26, 12:49 PM
+I didn't look into Rust yet and c/c++ is good enough for my need. My programms are that small and not really IoT/internet, so i don't care mem safty right now. For the future that might change. I am to lazy to dig into Rust honestly, as i do more hardware stuff. Also i love baremetal in C/C++ as you highly can optimize code <3. Especially old 8-bit chip - i just love them 😄
+futaris [AU] — 3/7/26, 4:50 PM
+Program in C. Too many C shells by the C-side might make you go underwater.
+
+https://youtu.be/tas0O586t80
+YouTube
+Kaslai
+Program in C
+Image
+yspacelabs [LASR],  — 3/8/26, 4:15 PM
+I was going to post that too! 
+Wulfsta — 3/9/26, 2:17 PM
+If anyone ever wants to use baochip (the current bao1x or a future mcu) on a 3D printer controller board, reach out and I will help add it to Klipper. Figured I’d make a standing offer to help, since I think the baochip project is cool and want to see it succeed 🙂 
+Wulfsta — 3/9/26, 2:18 PM
+For context, I have previously added the atsamc21 (I hate that chip), and sped up the atsame70 by about four times
+armstrongsubero — 3/9/26, 4:16 PM
+Why you hate the samc21? SAMD21 was my goto for years..loved peogramming that thing bare metal in atmel atudio....
+Wulfsta — 3/9/26, 4:42 PM
+We had to patch the atmel provided header files because they are bugged (they forgot a zero and it took weeks to figure out), and the documentation is pretty bad in general. Plus, that chip has no USB, and the header bug was in the CAN peripheral... the only route that really works for the higher level communication with Klipper.
+armstrongsubero — 3/9/26, 4:45 PM
+Yea atmel was buggy but once you worked out kinks and had things setup I loved the debugging experience...
+Wulfsta — 3/9/26, 4:45 PM
+We also didn't use atmel studio lol
+armstrongsubero — 3/9/26, 4:45 PM
+Ahhhhh
+Wulfsta — 3/9/26, 4:46 PM
+Just gcc and gdb, basically
+It also does this weird thing where you have to send a logic pattern to the reset pin prior to attempting to connect a debugger, and that is not obviously documented. That made using openocd and a rpi to flash very difficult - one of the goals to put it into klipper, so that an average user likely had hardware to flash the chip without needing a dedicated debugger.
+Wulfsta — 3/9/26, 4:56 PM
+And I still haven't had the gumption to port the chip to Katapult (CAN bootloader), so it still has to be manually flashed with a pi for everyone that wants to use it.
+armstrongsubero — 3/9/26, 5:56 PM
+Yea if you're using those chips and  you try outside atmel studio with atmel ice its gonna take some work..
+Wulfsta — 3/9/26, 5:58 PM
+Oh it took me like five months of free time to go from "I want this board to support klipper" to "oh my printer works again"
+armstrongsubero — 3/9/26, 5:59 PM
+😆
+ijo Pewa [UTKN],  — 3/17/26, 6:00 AM
+HELL YES
+ijo Pewa [UTKN],  — 3/17/26, 6:10 AM
+i make OSHW 3D printer boards using FOSS, an OSHW board with an OSHW chip on it would be sick
+I also feel like Baochip is a really good candidate for a 3DP mainboard; Tiny package but plenty of IO, BIO means an SPI->CAN chip isn't needed, and its got a fairly high clock so I imagine it'd have fairly good perf? idk i don't do chips x3
+
+Either way it solves a lot of issues I have with RPxyz chips, aside from iirc there not being many ADCs? But that's what chips like the ADS1115 are for
+Might be a good canidate for RRF even actually, with all the RAM & Flash
+but yeah i've been wanting to make a mainboard based off this for a while but i can't code to save my life so have just been waiting for someone else to do that bit x3
+ijo Pewa [UTKN],  — 3/17/26, 6:22 AM
+oh another thing to consider, Baochip support would mean some level of RISC-V support which opens the door to more easily supporting a wide range of other RISC-V MCUs e.g. the RP2350s RISC-V side, ESP32, some variants of the GD32, the one in Pinecils, ect. 
+
+I think someone's actually already started work on an ESP32 fork of Klipper which could be used to base off of? Though looking at it, it seems really ESP-specific. https://github.com/nikhil-robinson/klipper_esp32 
+ [UTKN], 
+Wulfsta — 3/17/26, 8:13 AM
+ADCs are by far the biggest drawback, but external ones would be fine. The second fastest chip in klipper to my knowledge is the atsame70 at 300MHz, so the bao1x should be plenty to drive a pretty heavy duty mainboard. Implementing CAN on the BIO seems feasible, and I think software CAN is what one of the rpi chips currently does. Adding a chip to klipper is really just implementing a particular set of hardware specific functions, effectively writing a HAL for that given chip. I haven’t touched RRF myself, but you would have a problem with CAN-FD, I think Bosch stopped a software implementation of that for the RP2040 a while back?
+ [UTKN], 
+Wulfsta — 3/17/26, 8:15 AM
+The ESP32 fork is fairly interesting, the person working on that has been talking about it in the klipper discord. Nobody worked on it prior to them for some interrupt-timing reasons that I don’t know the specifics of
+ijo Pewa [UTKN],  — 3/17/26, 8:29 AM
+Yeah as I recall, Kevin made a PIO CAN implementation for Klipper (tho idk if any boards actually use it)
+TeamGloomy wanted to do PIO CAN-FD for RRF but Bosch still holds patents for it, so their boards make use of MCPsomethingsomthing chips for CANFD
+ijo Pewa [UTKN],  — 3/17/26, 8:34 AM
+To be fair, I can also understand why there was little interest in implementing support for the ESP32. The main draw of them is their wireless capabilities, which due to the linux host would be entirely unused.
+So at that point you're putting in effort to support an expensive and bulky chip running on a different architecture with very few IOs and such, theres just not much reason to out much effort behind that.
+yspacelabs [LASR],  — 3/18/26, 9:01 PM
+I think using one of the cheap WCH RISC-V chips as an ADC would work really well with the Baochip to make up for its lack in analog peripherals! 
+could also use the op amps on it
+the TI MSPM0s can also be reasonably priced and have some really good analog peripherals for the price
+like 2x 4MSa/s ADC
+ [LASR], 
+Wulfsta — 3/18/26, 9:09 PM
+I have to admit, I’d lean towards an already supported and well tested peripheral adc
+Wulfsta — 3/18/26, 9:20 PM
+Only to reduce the implementation effort honestly
+Wulfsta — 3/18/26, 9:32 PM
+In particular, the MAXxxxxx series is well tested and known good
+Might be the only peripheral sensor that is
+Looks like the only SPI based one, which is likely the reason
+ijo Pewa [UTKN],  — 3/19/26, 11:55 AM
+The only actual ADC expansion Klipper supports is the ADS1115/similar, Kalico has untested TLA2518 support.
+The MAX chips Klipper has support for are Thermocouple or RTD amplifiers
+ [LASR], 
+ijo Pewa [UTKN],  — 3/19/26, 11:59 AM
+Oh god damn these would make a nice ADC chip
+$0.39 for a chip with a 12-bit ADC w/ 8 ADC pins
+ [UTKN], 
+yspacelabs [LASR],  — 3/19/26, 12:14 PM
+which one?
+ijo Pewa [UTKN],  — 3/19/26, 12:28 PM
+https://www.lcsc.com/product-detail/C29976667.html?s_z=n_mspm0
+LCSC Electronics
+MSPM0C1103SDYYR | TI | Price | In Stock | LCSC Electronics
+MSPM0C1103SDYYR by TI - In-stock components at LCSC. Price from $0.1876. Free access MSPM0C1103SDYYR datasheet, Package, pinout diagrams, and BOM tools.
+Image
+ [UTKN], 
+Wulfsta — 3/19/26, 1:05 PM
+Right, I forgot because I basically only have PT1000s on my machine, other than the thermistor built into the bed
+ [UTKN], 
+Wulfsta — 3/19/26, 1:09 PM
+That is nice actually
+I wonder if there are any limitations about the concurrency of reads?
+ijo Pewa [UTKN],  — 3/19/26, 1:10 PM
+Yeah its even ARM, I knew you could get cheaper ARM chips outside of STM32F042 but holy shit lol
+Wulfsta — 3/19/26, 1:12 PM
+I haven’t looked at the data sheet so idk if it degrades if you take more measurements
+ijo Pewa [UTKN],  — 3/19/26, 1:17 PM
+I cant imagine itd degrade too bad for a few sensors
+You could just put the hotend(s) and chamber heater(s) therms on the Baochip directly and then use the MSP for bed, chamber, motors, ect 
+ [LASR], 
+armstrongsubero — 3/19/26, 6:04 PM
+Bingo!!! Have you'll seen the CH32V006? Thats my plan actually, put a cheap $0.10 CH32 Chip as a sensor processing powerhouse I2C or SPI slave and let the Baochip act as a super processing machine..and keep it all RISC-V
+yspacelabs [LASR],  — 3/19/26, 9:28 PM
+Yep! There's also an onboard op amp!
+3MSa/s is also really good for the price
+armstrongsubero — 3/19/26, 9:33 PM
+Yea the op amp and comparator are really nice...and way more cost effective than buying any comparable module thats on the market...
+ijo Pewa [UTKN],  — 3/20/26, 12:46 AM
+I just go to where theres already FW support lol, id have better luck figuring out how to pilot in a day then write any FW!
+M — 3/21/26, 8:51 AM
+@armstrongsubero anybody checked the INL/DNL on the CH32's ADC
+also the enob when its going fast
+armstrongsubero — 3/21/26, 9:18 AM
+Hmmph interesting, I dont think anyone published INL/DNL or ENOB characterizatoin on the ch32 adc, and I ddint see anything from WCH either...well I guess that is a gap in the CH32s vs a TI or ST part....cause ik for them you get full dynamic adc characterization static and dynamic in the datasheet, cant recall seeing that for wch or prob missed it...a signal gen, a good precision refeererence and an FFT cpuld take care of that...hmmph uts something I could look into...rn I'm porting LVGL to it on my Rovari Platform...but thats something I could look at definately!! Oof thats a darn good idea!
+Image
+ijo Pewa [UTKN],  — 3/21/26, 11:24 AM
+On the hardware side of things I know id deffo prefer using the chrap TI chip for ADCs purely from the view of having better documentation
+Have used WCH stuff and while they do have datasheets, personally I'd much prefer to pay a little extra for a similar TI, ST ect chip with much more comprehensive documentation
+yspacelabs [LASR],  — 3/21/26, 3:37 PM
+That would be interesting to do, but I don't know if I have a good enough signal gen
+especially overclocked
+since the V203's ADC can go much faster than advertised
+bunnie — 4/11/26, 8:48 PM
+Crossbar has released their SDK: https://github.com/Cramiumlabs/daric-sdk This contains C drivers for many of the peripherals for ThreadX. I think this can be quite helpful for those looking to write C-based drivers for the Baochip-1x!
+GitHub
+GitHub - Cramiumlabs/daric-sdk: SDK for developing firmware on Dari...
+SDK for developing firmware on Daric embedded platforms, featuring a Secure Crypto Engine (SCE) with hardware-accelerated cryptography (AES, ECDSA, EdDSA, ZKP), HAL drivers, ThreadX RTOS support, a...
+GitHub - Cramiumlabs/daric-sdk: SDK for developing firmware on Dari...
+armstrongsubero — 4/21/26, 4:26 PM
+Bare metal blinky in C is working, still getting a feel for the chip though!, dev key signing and UF2 flashing sorted, and image validates with the dev key, it's late but gonna start on UART now that the bug bit me...lol..once I get all the base peripherals validated I'll start putting SDK together from the skeleton I have..
+Image
+bunnie — 4/21/26, 9:11 PM
+awww yah! nice!
+yspacelabs [LASR],  — 4/22/26, 8:41 PM
+Nice!
+armstrongsubero — 4/25/26, 11:00 PM
+So SDK structure finalized for Dabao bare metal C HAL, PICO style layout, one driver per peripheral, register headers centralized, board support separated and hardware drivers...gpio, uart (polling and non blocking) and timers are solid, working though UDMA peripherals now....
+Image
+here's a fun one I've been jumping a bit trying to get SDIO working, cause wanted to add sd card support early, found 3 silicon bugs in the Baochip-1x SDIO controller...response timeout is hardcoded to 38 cycles (SD spec allows 64), clock stops in idle, and there's a command output enable issue....CMD2 can't complete...SPI mode at 12.4 MHz works fine though....FatFS mounts, reads, writes...
+armstrongsubero — 4/25/26, 11:08 PM
+I have a lot of notes on quirks and snippets for using that I'm sure people will find handy, I'm liking the chip so far reminds me of a pico + propellor + samd21 all in one lol...I'll definately have to do some blog posts on some of the stuff along the way....I'll keep updating as I work thoguh!!! I'm starting to get the hang of how things work and really liking it..woudlve liked soem more docs though but hey whats the fun in that!!! Xous source, the RTL and Daric SDK have been treasure troves, but takes a lot of digging....
+bunnie — 4/26/26, 2:01 AM
+hah...yah docs would have been nice. "back in my day" all i had was RTL source code 🤣  j/k. thanks for doing all of this wow!
+bunnie — 4/26/26, 2:02 AM
+oh interesting about the silicon bugs. maybe we'll have to make a BIO version of the controller sooner than later.
+i didn't touch the SDIO block during chip validation, i wonder if the erratum is known or not.
+armstrongsubero — 4/26/26, 5:52 AM
+I saw a small note in the RTL about one, 'command output ebable is incorrect during the stop bit of command frame', or something like that; so at least one is known, that comment was like dated 2024-12-30.....and the other 2 bugs well I verified from testing...its not a deal breaker, SPI based SD card access is fine for anyone wanting to use the board....yea I was thinking BIO version of SDIO too or even more SPI, cause I saw an SPI protocol on BIO in the Xous source I think....its fine I ported Elm Chan FatFS and making the SD driver simple so yea..we good lol 
+armstrongsubero — 4/26/26, 4:14 PM
+Today was plyaing around wit dma stuff, I see the Baochip  has a PL230 MDMA DMA controller, tihs reads fine, reports 8 channels....but writes to the config registers silently fail, dug though the Xous codebase and found a comment abotu this haha...thank goodness!!  So I wrote a DMA engine in C using the BIO coprocessor instead, 700 MHz memory copies, dedicated BIO3 for this, it means when you're doing MDMA in bare metal C you can't use that BIO engine, but its totally worth it, the BIO is really a big help on this chip!
+bunnie — 4/27/26, 12:02 AM
+I think I eventually mangaed to figure out how to get something to work on the PL230 but it's tricky to configure and also closed source, so I decided not to support it driver-wise. The BIO (edit - i had said MDMA incorrectly here before) should have slightly better performnce than the PL230 when optimized but both have "meh" peak performance due to the slow speed of the bus they are connected to. 
+armstrongsubero — 4/28/26, 7:59 AM
+Finally got reliable readings from the adc, I didn't realize it taps out at bandgap reference (1.208v) and I thought I was doing soemthing wrong, was testing with a pot so saturation came quickly, lol, also to get DMA transfer to work correctly, you must set RX_CFG to 1 and you need to enable the adc after analog block enables and put a small delay to get it to stabilzie..the Daric SDK was useful for the init sequence.....but what no where tells you is that it's also its CRITICAL to use low impedance on input, I think could be the internal sampling cap, with high source impedance (I'm guessing) the cap cannot charge fast enough, and you get stale reading from internal leakage currents..to get usable (usable for me is able to read 0-3.3v liek other mcus) 3.2k or lower total impedance on input and you'll be fine...used a pot with voltage divider 2.2k and 1k and getting usable ADC readings....I guess if you're using an op amp you can skip the divider and connect correctly as long as the voltage is below the 1.208v bandgap reference I measured....
+armstrongsubero — 4/29/26, 11:00 AM
+This ReRAM thing is kinda cool, wrote a driver for unaligned support and readback verification, reminds me of the days when eeprom were on chip (for those of you who used old school 8-bitters), for some reason feels much eaiser to interact with compared to flash drivers on the chips I've used recently...I set it at around 2.5MB accessible by that so it wont collide with programs....4MB of memory is a LOT for bare metal...unless you're storing large binary blobs or something its hard to write even a 1 MB program lol.....oh also got an interrupt dispatch system up, Timer0 firing at 500 ms and UART TX done interrupts running simultaneously through the same VexRiscv trap handler....ended up being 20 IRQ arrays, each with 16 event sources, one callback table so shoudl be easy to use...as I work through will post more stuff here, more or less about 50% done....I can't think about anything else but this chip right now lol....
+armstrongsubero — 5/2/26, 4:13 PM
+So was playign around with the crpyo blocks...got hardware AES working.... NIST FIPS 197 test vector, encrypt and decrypt, round-trip matches, also SHA 256 also passes against known vectors and TRNG is working..all bare metal C!!!
+Image
+armstrongsubero — 5/7/26, 5:15 PM
+So I've been heads down on this for a while now, finally got the bare metal C SDK to a point where I'm happy with it,  in total I have 17 drivers, 26 examples, and I tested all tested on hardware.... covers pretty much everything on the chip....What I have got up is GPIO, UART, SPI, I2C, PWM, ADC, timers, BIO, DMA, RRAM, AES, SHA, TRNG, WDT, RTC, QSPI, I also integrated W25Q and a FatFS example for SD cards. All UDMA based with blocking and async APIs where it makes sense, . Put it up on GitHub if anyone wants to poke at it, its not 100% complete but it's usable, I ran static analysis and stuff, but I'm sure bugs will popup though use, if you got any bugs tell me here, I'm working on a doc for this, should be up by next week, nothing fancy but like a reference guide....well here's the link to the repo over the next couple of weeks to months I'll be doing projects with this ship and I'll update the SDK as bugs pop up...
+
+https://github.com/armstrongsubero/dabao-sdk 
+GitHub
+GitHub - ArmstrongSubero/dabao-sdk: Bare metal C SDK for the Baochi...
+Bare metal C SDK for the Baochip-1x RISC-V SoC . Contribute to ArmstrongSubero/dabao-sdk development by creating an account on GitHub.
+GitHub - ArmstrongSubero/dabao-sdk: Bare metal C SDK for the Baochi...
+bunnie — 5/8/26, 6:49 AM
+wooooow that's amazing!
+thank you!
+armstrongsubero — 5/21/26, 2:30 PM
+This channel has gotten quiet  lol, but I've been a busy bee!!! The SDK I'm using it so far nothing stood out, thankfully I shared on reddit and someone caught a bug that would not have shown itself easily!! Where I have been using dabao is edge AI stuff I've been experimenting with edge speech synthesis and I'm looking at using BIO to handle compute since we dont have vector stuff....I also came across the DIRC-RAG which was particularly interesting to me....the qualcomm acquiring edge impulse has been a bit uneasy for me, so I'm building my own offline ML libraries that I'll open as well...and the Baochip is foremost of my test target....what I wished was that the camera interface on this board were there!! For me personally its the ONLY thing thats missing...hopwfully we get a community board with that eventually and some PSRAM as well...there is ample ram, but for for some of the AI stuff weights are a bit heavy to fit on board..especially since I've been experimenting with RAG and wikipedia stuff offline....I'm seeing quite a bit of research on ReRAM and CIM on Arxiv, so I'm itching to do some of those..but yeah without the camera interface I've been using the CH32H417 for edge AI vision stuff...maybe BIO could handle it, but I want BIO free to do other stuff lol...where I'm seeing Baochip as a powerhouse for audio processing, I already have speech recognition (traditional and neural) up (I've been using these a while on some of my other stuff so it was mostly porting) and looking at keyword spotting now...but fleshing out an entire offline, open MLOps pipeline has taken over my very very limited time....there's so much to do..so little time....I've also started compiling my notes I gathered while working with the chip, I might turn it into a book, that'll benefit people doing lower level stuff it dosen't use the SDK but the C layer underneath for people doing more advanced stuff..also doing a getting started guide to put into the SDK repo as well so yea!!
+either ways as I do stuff I'll keep stuff updated here, this chip ahs so much potential!!
+josuah — 5/21/26, 2:51 PM
+qualcomm acquiring edge impulse [and <insert company du jour here>]
+and suddenly they become all quiet!
+CH32H417 for edge AI vision stuff
+how did you get the camera data in? I've heard it's kind of a powerful chip but never tried
+Baochip as a powerhouse for audio processing
+I will be curious to see that, will you post that in this channel?
+armstrongsubero — 5/21/26, 2:58 PM
+The chip handles camera interface pretty well, I've been loving the CH32H417!!! I have a demo here, I did a full facial recognition pipeline on it with internal SRAM + camera buffer + display buffer + image processing pipeline and model lol... you can see a demo of the faical recog on the CH32H417 here: https://www.youtube.com/watch?v=d6_rkVJkZG0&t=140s
+YouTube
+TriniRobotics
+Real Time Facial Recognition on The Edge With CH32H417 RISC-V MCU
+Image
+josuah — 5/21/26, 3:00 PM
+oh right, it got DVP, it's CSI it lacks.
+armstrongsubero — 5/21/26, 3:00 PM
+haha probably when the first set of campaign boards go out, I'll do yt videos with demos, but I'll definately post those before on github
+josuah — 5/21/26, 3:02 PM
+it looks like it runs kinda well
+josuah — 5/21/26, 3:04 PM
+yea would be great to see how it performs side by side to others, performance could be spread differently for different things
+RebelMike — 5/21/26, 3:04 PM
+I've just been having a quick look at your SDK and it looks good - it's great to see plenty of examples!  I'm sure the channel will get busier once more people have the boards in their hands, it's a bit of a waiting game until then
+josuah — 5/21/26, 3:05 PM
+out of the SDK there's plenty of software that can be ported to it
+armstrongsubero — 5/21/26, 3:07 PM
+it runs very well, on part with optimized stm32s and optimized arm stuff and I didnt even do too much optimization, I cld probably squeeze more out if I really push it..but its good enough for an edge framerate detection..I have a video player up and all sorts of cool things..for many many years my chip of choice had a few bytes of ram the PIC16F57..then the PIC16F887 had a few hundred btyes and then I locked in on 2 KB of SRAM...which is my default (and still is I reach for the CH32V003 these days instead of an 8 -bitter but the 006 has been waht I'm eyeing, got a batch of 50 lol) and with like 900+ KB to play with its like a kid in a candy store...I even managed to train my own deepseek R1 algorithm on the chip based on thier paper lol...crazy times.....
+armstrongsubero — 5/21/26, 3:09 PM
+Yea it's new software so defiantrly no perfect but has been working for me so far, I'm sure once more people start using bugs will pop up and we can improve...it's refreshing to work on a chip without all the vendor bloat...
+josuah — 5/21/26, 3:09 PM
+that's definitely some progression from 8-bit that we're seeing
+armstrongsubero — 5/21/26, 3:10 PM
+Yea the SDK put the chip in a "known" state for me, so I could port hundreds of drivers from 8-bit to 64-bit stuff I've had over the years....it's more a matter of demand...
+josuah — 5/21/26, 3:10 PM
+it's nice to be in known ground
+RebelMike — 5/21/26, 3:13 PM
+It would be nice to work out a flow to build bio programs from asm to a header file that could then be included in the C program, like the pio build on the pico-sdk.
+armstrongsubero — 5/21/26, 3:14 PM
+Yeah I mostly do low level electronics and control stuff, I prefer robust, predictable and cheap...especially the PICs have core independent peripherals that are unmatched in pure electornics applications...but the price of the CH32 its hard to justify it, even with the CIPs....I've been weaning away form STM32H7 which I use high end stuff for, I'm hoping once we get morre baochip out there in the wild more people will use it for higher end stuff....cause for me having MEGABYTES of processing on board a chip is crazzyyyy  esp in such a tiny package...I usually had to use sram....and the ReRAM for edge AI...we're defiantely in the future!! That said community needs to build casue rn its all STM32s and ESP32s, I hoep people can appreciate the chip....
+armstrongsubero — 5/21/26, 3:18 PM
+I was thinking of a little GUI, for programming as well, problem is the 1 Mbaud dosent play well with dupont or even short wires o na breadboard on the whole, cause I was lookign at a little all in one GUI tool to just use DTR for reset and just send everything though serial...I'm building Rovari studio, so my idea was to support Baochip as well and just allow for a "bio.asm" file just like I have right now for .ropy and .guvari extensions that is added when a new project is created...MLOps pipeline first though can I wanna toss that into studio as well...that way from oen place you can collect, process, train and display data...
+josuah — 5/21/26, 3:25 PM
+Yea that's lot of on-chip RAM. Fun times.
+Cheap and powerful chips like BAO's are springing. 
+RebelMike — 5/21/26, 3:29 PM
+Personally command line for programming is fine, though I'm sure some people would like a GUI (or webUSB?).  DTR reset and then program over USB CDC looks like the best option currently?  Would be nice to get to the point where you could bring USB up mostly so you could then ask for reset over USB!
+armstrongsubero — 5/21/26, 6:54 PM
+Yea the baud rate us a bother though 1 MBaud is unreliable...rn I have the MCU connected via USB and uart to usb, I run in volatile mode so program runs and before I upload a new one all I have to press is reset...in the flash script I did add the option for using only serial to flash but the breadboard cant handle the high baud rate it spits out random garbage sometimes so programming fails maybe a shielded wire will work or twist pair with ground will help but didnt try yet though...the usb-uart and usb to dabao is not a bad setup one debugs and one programs but I'll have to experiment and see which method is reliable for 1 mbaud on breadboard...
+bry — 5/21/26, 7:27 PM
+Odd that it's having issues so low, ime breadboards can handle a lot more
+I've run 108mhz VGA pixels over breadboard wires with no problems
+Granted that can degrade gracefully and is a nice terminated signal but still
+MattyTrentini — 5/21/26, 7:28 PM
+Oh, @armstrongsubero, I meant to mention that a friend of mine built a very quick proof-of-concept port of MicroPython using your SDK. It's just REPL access at the moment, no other peripherals have been added yet. (The weird characters are output from the bootloader at a different baud rate.) The SDK looks really well done, nice work!
+
+We're debating the merits of building on your SDK or building on @sam blenny's good work (see ⁠not-rust⁠). Spoilt with good options!
+Image
+josuah — 5/21/26, 7:30 PM
+I was wondering when someone would port MicroPython to it, I didn't expect it to happen this fast.
+oh, ok, this is already done far in the past 
+sam blenny — 5/21/26, 8:26 PM
+I'd recommend armstrongsubero's C SDK if you care about completeness of driver support. My rust thing is just a minimal proof of concept that I don't plan to maintain or extend. Of course you are welcome to chop my SDK thing up for parts to build your own thing though, if you like the idea of going the rust route. 
+armstrongsubero — 5/22/26, 3:18 AM
+Thats awesome!! Yes I hope we get more as well!! Well it boils down to choice which is a good thing!!
+Working on a mobile phone OS..hoping to port to dabao as well..something satisfying about browsing the internet on a microcontroller....
+https://youtu.be/jj8A8WJguXc
+YouTube
+TriniRobotics
+I Built a Web Browser on a RISC-V Microcontroller (No Linux)
+Image

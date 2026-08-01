@@ -1289,6 +1289,232 @@ static void test_rti_restores_status_and_pc_from_stack(void) {
           "test_rti_restores_status_and_pc_from_stack");
 }
 
+static void test_sta_absolute_stores_accumulator(void) {
+    setup();
+    a = 0x42;
+    test_ram[0x0400] = 0x8D; /* STA $0200 */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x02;
+    step6502();
+    CHECK(test_ram[0x0200] == 0x42 && pc == 0x0403 && clockticks6502 == 4,
+          "test_sta_absolute_stores_accumulator");
+}
+
+static void test_stx_zeropage_stores_x_register(void) {
+    setup();
+    x = 0x33;
+    test_ram[0x0400] = 0x86; /* STX $10 */
+    test_ram[0x0401] = 0x10;
+    step6502();
+    CHECK(test_ram[0x0010] == 0x33 && pc == 0x0402 && clockticks6502 == 3,
+          "test_stx_zeropage_stores_x_register");
+}
+
+static void test_stx_zeropage_y_stores_x_register_with_index(void) {
+    setup();
+    x = 0x44;
+    y = 0x02;
+    test_ram[0x0400] = 0x96; /* STX $10,Y */
+    test_ram[0x0401] = 0x10;
+    step6502();
+    CHECK(test_ram[0x0012] == 0x44 && pc == 0x0402 && clockticks6502 == 4,
+          "test_stx_zeropage_y_stores_x_register_with_index");
+}
+
+static void test_stx_absolute_stores_x_register(void) {
+    setup();
+    x = 0x55;
+    test_ram[0x0400] = 0x8E; /* STX $0300 */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x03;
+    step6502();
+    CHECK(test_ram[0x0300] == 0x55 && pc == 0x0403 && clockticks6502 == 4,
+          "test_stx_absolute_stores_x_register");
+}
+
+static void test_sty_zeropage_stores_y_register(void) {
+    setup();
+    y = 0x66;
+    test_ram[0x0400] = 0x84; /* STY $10 */
+    test_ram[0x0401] = 0x10;
+    step6502();
+    CHECK(test_ram[0x0010] == 0x66 && pc == 0x0402 && clockticks6502 == 3,
+          "test_sty_zeropage_stores_y_register");
+}
+
+static void test_sty_zeropage_x_stores_y_register_with_index(void) {
+    setup();
+    y = 0x77;
+    x = 0x02;
+    test_ram[0x0400] = 0x94; /* STY $10,X */
+    test_ram[0x0401] = 0x10;
+    step6502();
+    CHECK(test_ram[0x0012] == 0x77 && pc == 0x0402 && clockticks6502 == 4,
+          "test_sty_zeropage_x_stores_y_register_with_index");
+}
+
+static void test_sty_absolute_stores_y_register(void) {
+    setup();
+    y = 0x88;
+    test_ram[0x0400] = 0x8C; /* STY $0300 */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x03;
+    step6502();
+    CHECK(test_ram[0x0300] == 0x88 && pc == 0x0403 && clockticks6502 == 4,
+          "test_sty_absolute_stores_y_register");
+}
+
+static void test_txs_copies_x_to_stack_pointer(void) {
+    setup();
+    x = 0xAB;
+    test_ram[0x0400] = 0x9A; /* TXS -- does NOT affect flags */
+    step6502();
+    CHECK(sp == 0xAB && pc == 0x0401 && clockticks6502 == 2,
+          "test_txs_copies_x_to_stack_pointer");
+}
+
+static void test_tsx_copies_stack_pointer_to_x(void) {
+    setup();
+    sp = 0xCD;
+    test_ram[0x0400] = 0xBA; /* TSX */
+    step6502();
+    CHECK(x == 0xCD && pc == 0x0401 && clockticks6502 == 2 &&
+          (status & FLAG_SIGN) != 0,
+          "test_tsx_copies_stack_pointer_to_x");
+}
+
+static void test_cld_clears_decimal_flag(void) {
+    setup();
+    status |= FLAG_DECIMAL;
+    test_ram[0x0400] = 0xD8; /* CLD */
+    step6502();
+    CHECK((status & FLAG_DECIMAL) == 0 && pc == 0x0401 && clockticks6502 == 2,
+          "test_cld_clears_decimal_flag");
+}
+
+static void test_sed_sets_decimal_flag(void) {
+    setup();
+    status &= (uint8_t)~FLAG_DECIMAL;
+    test_ram[0x0400] = 0xF8; /* SED */
+    step6502();
+    CHECK((status & FLAG_DECIMAL) != 0 && pc == 0x0401 && clockticks6502 == 2,
+          "test_sed_sets_decimal_flag");
+}
+
+static void test_lda_absolute_loads_value(void) {
+    /* Found via Klaus Dormann's functional_test.bin integration run:
+     * LDA absolute was missing, causing the CPU to consume only the
+     * opcode byte and desync PC against the address operand bytes. */
+    setup();
+    test_ram[0x0400] = 0xAD; /* LDA $0200 */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x02;
+    test_ram[0x0200] = 0x5C;
+    step6502();
+    CHECK(a == 0x5C && pc == 0x0403 && clockticks6502 == 4,
+          "test_lda_absolute_loads_value");
+}
+
+static void test_ldx_absolute_loads_value(void) {
+    setup();
+    test_ram[0x0400] = 0xAE; /* LDX $0200 */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x02;
+    test_ram[0x0200] = 0x6D;
+    step6502();
+    CHECK(x == 0x6D && pc == 0x0403 && clockticks6502 == 4,
+          "test_ldx_absolute_loads_value");
+}
+
+static void test_ldy_absolute_loads_value(void) {
+    setup();
+    test_ram[0x0400] = 0xAC; /* LDY $0200 */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x02;
+    test_ram[0x0200] = 0x7E;
+    step6502();
+    CHECK(y == 0x7E && pc == 0x0403 && clockticks6502 == 4,
+          "test_ldy_absolute_loads_value");
+}
+
+static void test_and_absolute_masks_accumulator(void) {
+    /* Found via Klaus Dormann's functional_test.bin integration run:
+     * AND/ORA/EOR/ADC/SBC/CMP absolute were all missing (only the
+     * indexed and immediate forms existed). */
+    setup();
+    a = 0xF0;
+    test_ram[0x0400] = 0x2D; /* AND $0200 */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x02;
+    test_ram[0x0200] = 0x0F;
+    step6502();
+    CHECK(a == 0x00 && pc == 0x0403 && clockticks6502 == 4,
+          "test_and_absolute_masks_accumulator");
+}
+
+static void test_ora_absolute_sets_bits(void) {
+    setup();
+    a = 0x0F;
+    test_ram[0x0400] = 0x0D; /* ORA $0200 */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x02;
+    test_ram[0x0200] = 0xF0;
+    step6502();
+    CHECK(a == 0xFF && pc == 0x0403 && clockticks6502 == 4,
+          "test_ora_absolute_sets_bits");
+}
+
+static void test_eor_absolute_toggles_bits(void) {
+    setup();
+    a = 0xFF;
+    test_ram[0x0400] = 0x4D; /* EOR $0200 */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x02;
+    test_ram[0x0200] = 0x0F;
+    step6502();
+    CHECK(a == 0xF0 && pc == 0x0403 && clockticks6502 == 4,
+          "test_eor_absolute_toggles_bits");
+}
+
+static void test_adc_absolute_adds_value(void) {
+    setup();
+    status &= (uint8_t)~FLAG_CARRY;
+    a = 0x10;
+    test_ram[0x0400] = 0x6D; /* ADC $0200 */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x02;
+    test_ram[0x0200] = 0x05;
+    step6502();
+    CHECK(a == 0x15 && pc == 0x0403 && clockticks6502 == 4,
+          "test_adc_absolute_adds_value");
+}
+
+static void test_sbc_absolute_subtracts_value(void) {
+    setup();
+    status |= FLAG_CARRY;
+    a = 0x10;
+    test_ram[0x0400] = 0xED; /* SBC $0200 */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x02;
+    test_ram[0x0200] = 0x05;
+    step6502();
+    CHECK(a == 0x0B && pc == 0x0403 && clockticks6502 == 4,
+          "test_sbc_absolute_subtracts_value");
+}
+
+static void test_cmp_absolute_compares_value(void) {
+    setup();
+    a = 0x30;
+    test_ram[0x0400] = 0xCD; /* CMP $0200 */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x02;
+    test_ram[0x0200] = 0x30;
+    step6502();
+    CHECK((status & FLAG_ZERO) != 0 && (status & FLAG_CARRY) != 0 &&
+          pc == 0x0403 && clockticks6502 == 4,
+          "test_cmp_absolute_compares_value");
+}
+
 int main(void) {
     test_nop_advances_pc_and_takes_2_cycles();
     test_lda_immediate_loads_value();
@@ -1399,6 +1625,26 @@ int main(void) {
     test_brk_pushes_pc_and_status_then_jumps_to_irq_vector();
     test_brk_pushed_return_address_is_pc_plus_2();
     test_rti_restores_status_and_pc_from_stack();
+    test_sta_absolute_stores_accumulator();
+    test_stx_zeropage_stores_x_register();
+    test_stx_zeropage_y_stores_x_register_with_index();
+    test_stx_absolute_stores_x_register();
+    test_sty_zeropage_stores_y_register();
+    test_sty_zeropage_x_stores_y_register_with_index();
+    test_sty_absolute_stores_y_register();
+    test_txs_copies_x_to_stack_pointer();
+    test_tsx_copies_stack_pointer_to_x();
+    test_cld_clears_decimal_flag();
+    test_sed_sets_decimal_flag();
+    test_lda_absolute_loads_value();
+    test_ldx_absolute_loads_value();
+    test_ldy_absolute_loads_value();
+    test_and_absolute_masks_accumulator();
+    test_ora_absolute_sets_bits();
+    test_eor_absolute_toggles_bits();
+    test_adc_absolute_adds_value();
+    test_sbc_absolute_subtracts_value();
+    test_cmp_absolute_compares_value();
 
     if (failures > 0) {
         printf("\n%d test(s) FAILED\n", failures);
