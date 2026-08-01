@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">EMULATOR LOOP SELECT SLOT BY INDEX TEST (352 Tests) GREEN</span>
+                    <span class="pill pill-green">BOOT PERF CYCLES TO US TEST (353 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -380,7 +380,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary)">System ROM Loader API &amp; Test (<code class="code-inline">test_apple2_mem_load_system_rom.c</code>)</span>
-                        <span class="pill pill-green">GREEN (352 PASS)</span>
+                        <span class="pill pill-green">GREEN (353 PASS)</span>
                     </div>
                 </div>
 
@@ -394,7 +394,7 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Emulator Loop Select Slot By Index Test (<code class="code-inline">test_emulator_loop_select_slot_by_index.c</code>)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Boot Perf Cycles to US Test (<code class="code-inline">test_boot_perf_cycles_to_us.c</code>)</span>
                         <span class="pill pill-green">GREEN (14.4 KB Binary)</span>
                     </div>
                 </div>
@@ -410,7 +410,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Lo-Res Graphics Row Offsets &amp; Bounds Safety Test (<code class="code-inline">test_lores_apple2_row_offsets_bounds.c</code>)</span>
-                        <span class="pill pill-green">GREEN (352 PASS)</span>
+                        <span class="pill pill-green">GREEN (353 PASS)</span>
                     </div>
                 </div>
 
@@ -487,8 +487,8 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 5 – 6: Emulator Loop Select Slot By Index Test (<code class="code-inline">emulator_loop.c</code>) (COMPLETE)</h4>
-                            <p>Duke landed <code class="code-inline">baoregon_emulator_select_slot_by_index()</code> and <code class="code-inline">test_emulator_loop_select_slot_by_index.c</code> verifying game slot selection, splash menu exit, and disk trap attachment (352 tests GREEN)!</p>
+                            <h4>Days 5 – 6: Boot Perf Cycles to Microseconds Conversion Test (<code class="code-inline">boot_perf.c</code>) (COMPLETE)</h4>
+                            <p>Duke landed <code class="code-inline">boot_perf_cycles_to_us()</code> and <code class="code-inline">test_boot_perf_cycles_to_us.c</code> verifying 350MHz cycle conversion, overflow clamping, and bare-metal RISC-V zero-libgcc division (353 tests GREEN)!</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,30 +510,30 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. Emulator Loop Select Slot By Index API Landed (<code class="code-inline">emulator_loop.c</code>)</div>
+                    <div class="decision-title">1. Boot Perf Cycles to Microseconds Conversion API Landed (<code class="code-inline">boot_perf.c</code>)</div>
                     <div class="decision-desc">
-                        Duke added <code class="code-inline">baoregon_emulator_select_slot_by_index()</code> and <code class="code-inline">test_emulator_loop_select_slot_by_index.c</code> proving instant game selection, splash exit, and disk trap pointer attachment (352 tests GREEN)!
+                        Duke added <code class="code-inline">boot_perf_cycles_to_us()</code> and <code class="code-inline">test_boot_perf_cycles_to_us.c</code> proving 350 cycles/us scaling, UINT32_MAX overflow clamping, and 32-bit RISC-V divu compatibility (353 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. System Firmware ROM Loader API &amp; Test Landed (<code class="code-inline">apple2_mem.c</code>)</div>
+                    <div class="decision-title">2. Emulator Loop Select Slot By Index API Landed (<code class="code-inline">emulator_loop.c</code>)</div>
+                    <div class="decision-desc">
+                        Duke added <code class="code-inline">baoregon_emulator_select_slot_by_index()</code> and <code class="code-inline">test_emulator_loop_select_slot_by_index.c</code> proving instant game selection, splash exit, and disk trap pointer attachment!
+                    </div>
+                </div>
+
+                <div class="decision-item">
+                    <div class="decision-title">3. System Firmware ROM Loader API &amp; Test Landed (<code class="code-inline">apple2_mem.c</code>)</div>
                     <div class="decision-desc">
                         Woz added <code class="code-inline">apple2_mem_load_system_rom()</code> and <code class="code-inline">test_apple2_mem_load_system_rom.c</code> proving 16KB system firmware ROM loading, softswitch ROM/RAM gating, and NULL unload safety!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">3. Cartridge Layout Find Slot By Title API Landed (<code class="code-inline">cartridge_layout.c</code>)</div>
-                    <div class="decision-desc">
-                        Duke added <code class="code-inline">cartridge_layout_find_slot_by_title()</code> and <code class="code-inline">test_cartridge_layout_find_by_title.c</code> proving title lookup, address resolution, and NULL title safety!
-                    </div>
-                </div>
-
-                <div class="decision-item">
                     <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (352 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (353 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
