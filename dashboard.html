@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">14 Host + 1 RISC-V Target (199 Tests) GREEN</span>
+                    <span class="pill pill-green">14 Host + 1 RISC-V Target (201 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -379,8 +379,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 2: 171 Opcodes + Klaus Dormann Suite (45,289 Steps)</span>
-                        <span class="pill pill-green">GREEN (171 PASS)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 2: 173 Opcodes + SBC Absolute X/Y + Klaus Dormann (45k Steps)</span>
+                        <span class="pill pill-green">GREEN (173 PASS)</span>
                     </div>
                 </div>
 
@@ -395,7 +395,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Retro Boot-Splash Selector (<code class="code-inline">boot_splash.c</code>) &amp; 3-Button Nav</span>
-                        <span class="pill pill-green">GREEN (10.1 KB Binary)</span>
+                        <span class="pill pill-green">GREEN (10.7 KB Binary)</span>
                     </div>
                 </div>
 
@@ -474,14 +474,14 @@
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
                             <h4>Days 1 – 2: 6502 Core, Memory Router, Audio &amp; Disk Generator (COMPLETE)</h4>
-                            <p>Woz: 171 CPU Opcodes GREEN + BCD + Klaus Dormann harness (45,289 steps). Duke: Memory router (<code class="code-inline">apple2_mem.c</code>), traps &amp; <code class="code-inline">embed_disk.py</code> GREEN. Bunnie: 192-line un-swizzler &amp; $C030 PWM GREEN.</p>
+                            <p>Woz: 173 CPU Opcodes GREEN + BCD + SBC Absolute X/Y + Klaus Dormann harness (45k steps). Duke: Memory router (<code class="code-inline">apple2_mem.c</code>), traps &amp; <code class="code-inline">embed_disk.py</code> GREEN. Bunnie: 192-line un-swizzler &amp; $C030 PWM GREEN.</p>
                         </div>
                     </div>
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
                             <h4>Days 3 – 4: RISC-V Cross-Compilation &amp; Linker Script (COMPLETE)</h4>
-                            <p><code class="code-inline">linker.ld</code>, <code class="code-inline">crt0.S</code>, and <code class="code-inline">Makefile.riscv</code> complete! Built <code class="code-inline">baoregon.bin</code> (10.1 KB ReRAM Flash image) with verified section placement.</p>
+                            <p><code class="code-inline">linker.ld</code>, <code class="code-inline">crt0.S</code>, and <code class="code-inline">Makefile.riscv</code> complete! Built <code class="code-inline">baoregon.bin</code> (10.7 KB ReRAM Flash image) with verified section placement.</p>
                         </div>
                     </div>
                     <div class="timeline-item active">
@@ -510,30 +510,30 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. Indirect Addressing Modes Landed (171 Opcodes)</div>
+                    <div class="decision-title">1. SBC Absolute X/Y Opcodes Landed (201 Tests)</div>
+                    <div class="decision-desc">
+                        Woz landed <code class="code-inline">SBC absolute,X</code> (0xFD) and <code class="code-inline">SBC absolute,Y</code> (0xF9) opcodes with unit tests in <code class="code-inline">test_opcodes.c</code> (201 total unit tests GREEN).
+                    </div>
+                </div>
+
+                <div class="decision-item">
+                    <div class="decision-title">2. Indirect Addressing Modes Landed (173 Opcodes)</div>
                     <div class="decision-desc">
                         Woz landed <code class="code-inline">($zp,X)</code> and <code class="code-inline">($zp),Y</code> indirect modes for AND, ORA, EOR, ADC, SBC, CMP (12 opcodes total). Klaus Dormann execution reached 45,289 steps!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Boot-Splash Game Selector Landed (<code class="code-inline">boot_splash.c</code>)</div>
+                    <div class="decision-title">3. Boot-Splash Game Selector Landed (<code class="code-inline">boot_splash.c</code>)</div>
                     <div class="decision-desc">
                         Duke landed <code class="code-inline">src/boot_splash.c</code> with 3-button navigation (PREV/NEXT/SELECT), cycling 6 game slots and pointing <code class="code-inline">disk_trap_set_image()</code> at selected ReRAM offset.
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">3. Authoritative Power &amp; BIO Independent Execution (bunnie huang)</div>
-                    <div class="decision-desc">
-                        Full on ~40 mA; WFI sleep ~12–14 mA; Deep sleep &lt;1 mA. BIO cores execute 100% independently while main CPU is in WFI sleep.
-                    </div>
-                </div>
-
-                <div class="decision-item">
                     <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (199 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (201 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
