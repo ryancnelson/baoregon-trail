@@ -394,7 +394,7 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Multi-Sector Traps &amp; Linker Placement</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Multi-Sector Traps &amp; ReRAM Unaligned Partition</span>
                         <span class="pill pill-green">GREEN (7.8 KB Binary)</span>
                     </div>
                 </div>
@@ -409,7 +409,7 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: <code class="code-inline">bio-sim</code> Verilator Harness &amp; RV32IMC ISA</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: PL230 MDMA Erratum Workaround (BIO3 Memcopy)</span>
                         <span class="pill pill-green">GREEN (bio-sim ACTIVE)</span>
                     </div>
                 </div>
@@ -488,7 +488,7 @@
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
                             <h4>Days 5 – 6: BIO Sim (<code class="code-inline">baochip/bio-sim</code>) &amp; Firmware Validation (IN PROGRESS)</h4>
-                            <p>Bunnie landed QEMU bare-metal RV32E audio firmware and integrated Verilator <code class="code-inline">bio-sim</code> with true RV32IMC + reserved <code class="code-inline">x16-x31</code> hardware MMIO registers.</p>
+                            <p>Integrated <code class="code-inline">dabao-sdk</code> &amp; <code class="code-inline">daric-sdk</code> findings. PL230 MDMA erratum workaround allocated to BIO3 (700MHz memcopy engine).</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,30 +510,30 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. BIO Core Silicon ISA: RV32IMC + Reserved x16-x31 (CONFIRMED)</div>
+                    <div class="decision-title">1. PL230 MDMA Erratum &amp; BIO3 DMA Engine (CONFIRMED)</div>
                     <div class="decision-desc">
-                        Confirmed via <code class="code-inline">bio-sim</code> source (<code class="code-inline">sw/build.zig</code> &amp; <code class="code-inline">sw/include/bio.h</code>): BIO cores are 32-register <b>RV32IMC</b>. Registers <code class="code-inline">x16-x31</code> are reserved from compiler GPR allocation and hardwired to special-purpose peripheral MMIO (FIFOs, GPIO, event masks).
+                        Discord #c-side log confirmed PL230 MDMA config writes silently fail on real silicon. Workaround: BIO Core 3 dedicated as a 700 MHz memory-copy DMA engine.
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. 125 6502 Opcodes GREEN</div>
+                    <div class="decision-title">2. Bare-Metal C SDK References (<code class="code-inline">dabao-sdk</code> &amp; <code class="code-inline">daric-sdk</code>)</div>
                     <div class="decision-desc">
-                        Woz added <code class="code-inline">AND</code>/<code class="code-inline">ORA</code>/<code class="code-inline">EOR</code>/<code class="code-inline">ADC</code>/<code class="code-inline">SBC</code>/<code class="code-inline">CMP</code> absolute, <code class="code-inline">STX</code>/<code class="code-inline">STY</code>/<code class="code-inline">STA</code>, <code class="code-inline">JMP indirect</code>, <code class="code-inline">BRK</code>, and <code class="code-inline">RTI</code>, bringing total test suite to 155 GREEN.
+                        Absorbed <code class="code-inline">armstrongsubero/dabao-sdk</code> (17 hardware drivers, 26 examples) and <code class="code-inline">Cramiumlabs/daric-sdk</code> (ThreadX) for peripheral register definitions &amp; hardware bring-up.
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">3. Physical Controls: 3 Buttons (Count CONFIRMED, Layout TBD)</div>
+                    <div class="decision-title">3. BIO Core ISA: RV32IMC + Reserved x16-x31 MMIO</div>
                     <div class="decision-desc">
-                        Confirmed via Ryan: badge has <b>3 physical buttons</b>. Exact geometry/layout is TBD. Software uses layout-independent logical mapping (<code class="code-inline">Button 0</code> PREV, <code class="code-inline">Button 1</code> NEXT, <code class="code-inline">Button 2</code> SELECT).
+                        BIO cores run RV32IMC; registers <code class="code-inline">x16-x31</code> are reserved from compiler GPR allocation and hardwired to peripheral MMIO (FIFOs, GPIO, event masks).
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
+                    <div class="decision-title">4. ReRAM Partition &amp; Readback Verification</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (155 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
+                        Duke aligned ReRAM disk partitions around 2.5 MB (<code class="code-inline">0x20080000</code>) with unaligned access support and readback verification after sector traps.
                     </div>
                 </div>
 

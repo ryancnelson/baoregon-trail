@@ -106,3 +106,28 @@ ReRAM Offset     Size      Game Title
 ```
 
 A custom retro boot splash screen allows using the 3 physical badge buttons (`PREV`, `NEXT`, `SELECT`) to pick a game, pointing the disk controller trap to the selected ReRAM offset and resetting the 6502!
+
+---
+
+### 6. Discord #c-side Community Hardware Findings & SDK Integration
+
+#### A. Public Bare-Metal SDK References:
+* **`armstrongsubero/dabao-sdk`**: Real hardware-tested bare-metal C SDK containing 17 drivers and 26 verified examples (GPIO, UART, SPI, I2C, PWM, ADC, Timers, BIO, DMA, ReRAM, AES, SHA, TRNG, WDT, RTC, QSPI).
+* **`Cramiumlabs/daric-sdk`**: Crossbar's official peripheral SDK under ThreadX (referenced by bunnie).
+
+#### B. PL230 MDMA Hardware Erratum & Workaround:
+* **Erratum**: Config-register writes to the PL230 MDMA controller silently fail on physical Baochip-1x silicon.
+* **Workaround**: Dedicate **BIO Core 3** to a 700 MHz memory-copy DMA engine.
+* **BIO Coprocessor Cluster Map**:
+  * **BIO Core 0**: Video un-swizzling & display DMA (`src/bio_display.c`).
+  * **BIO Core 1**: Speaker PWM audio toggling (`src/bio_audio.S`).
+  * **BIO Core 2**: ReRAM disk sector fast-trap DMA.
+  * **BIO Core 3**: Dedicated 700 MHz fast memory-copy DMA engine.
+
+#### C. ReRAM Driver Guidance:
+* **Unaligned Access & Readback**: ReRAM drivers require unaligned access handling and readback verification after sector writes.
+* **Safe Partition Boundary**: Keep usable ReRAM disk partition space around 2.5 MB (`0x20080000`) to guarantee ample headroom for `.text`/`.rodata` program code.
+
+#### D. Silicon Peripheral Notes (ADC & SDIO):
+* **ADC**: Max input reference is 1.208V bandgap (requires 2.2k/1k voltage divider for 3.3V inputs; source impedance <= 3.2k). Enable ADC after analog block init + stabilization delay.
+* **SDIO**: 3 hardware silicon errata (hardcoded 38-cycle response timeout, clock stops in idle, `CMD2` fails). Workaround is SPI-mode SD access at 12.4 MHz.
