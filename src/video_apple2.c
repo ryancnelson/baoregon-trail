@@ -8,9 +8,9 @@
  * not from a build/link error, before we write the real logic.
  */
 const uint16_t hires_line_offsets[HIRES_ROWS] = {
-    0x0000, /* row 0 only, verified against BRAINSTORM.md section 2 */
-    /* rows 1-191 intentionally left as 0 -- full 192-entry table is a
-     * follow-up iteration once row 0's decode logic is proven. */
+    0x0000, 0x0400, 0x0800, 0x0c00, 0x1000, 0x1400, 0x1800, 0x1c00,
+    0x0080, 0x0480, 0x0880, 0x0c80, 0x1080, 0x1480, 0x1880, 0x1c80,
+    /* remaining rows populated as needed */
 };
 
 void hires_decode_scanline_mono(int row, read6502_fn read_mem,
