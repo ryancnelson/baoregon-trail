@@ -62,6 +62,30 @@ static void branch_if(int condition, int8_t offset) {
     }
 }
 
+/* --- compare helper (shared by CMP/CPX/CPY) --- */
+
+static void compare(uint8_t reg, uint8_t operand) {
+    uint16_t diff = (uint16_t)reg - (uint16_t)operand;
+    if (reg >= operand) {
+        status |= FLAG_CARRY;
+    } else {
+        status &= (uint8_t)~FLAG_CARRY;
+    }
+    set_zero_and_sign((uint8_t)diff);
+}
+
+/* --- stack helpers --- */
+
+static void push8(uint8_t value) {
+    write6502((uint16_t)(0x0100 + sp), value);
+    sp--;
+}
+
+static uint8_t pull8(void) {
+    sp++;
+    return read6502((uint16_t)(0x0100 + sp));
+}
+
 void step6502(void) {
     uint8_t opcode = read6502(pc++);
 
@@ -197,6 +221,217 @@ void step6502(void) {
             branch_if(!(status & FLAG_ZERO), offset);
             break;
         }
+
+        case 0x90: { /* BCC */
+            int8_t offset = (int8_t)fetch_immediate();
+            branch_if(!(status & FLAG_CARRY), offset);
+            break;
+        }
+
+        case 0xB0: { /* BCS */
+            int8_t offset = (int8_t)fetch_immediate();
+            branch_if(status & FLAG_CARRY, offset);
+            break;
+        }
+
+        case 0x10: { /* BPL */
+            int8_t offset = (int8_t)fetch_immediate();
+            branch_if(!(status & FLAG_SIGN), offset);
+            break;
+        }
+
+        case 0x30: { /* BMI */
+            int8_t offset = (int8_t)fetch_immediate();
+            branch_if(status & FLAG_SIGN, offset);
+            break;
+        }
+
+        case 0x29: /* AND immediate */
+            a &= fetch_immediate();
+            set_zero_and_sign(a);
+            clockticks6502 += 2;
+            break;
+
+        case 0x09: /* ORA immediate */
+            a |= fetch_immediate();
+            set_zero_and_sign(a);
+            clockticks6502 += 2;
+            break;
+
+        case 0x49: /* EOR immediate */
+            a ^= fetch_immediate();
+            set_zero_and_sign(a);
+            clockticks6502 += 2;
+            break;
+
+        case 0xE9: { /* SBC immediate (binary mode only; see ADC note) */
+            uint8_t operand = fetch_immediate();
+            uint8_t borrow_in = (status & FLAG_CARRY) ? 0 : 1;
+            uint16_t diff = (uint16_t)a - operand - borrow_in;
+
+            if ((a ^ operand) & (a ^ (uint8_t)diff) & 0x80) {
+                status |= FLAG_OVERFLOW;
+            } else {
+                status &= (uint8_t)~FLAG_OVERFLOW;
+            }
+
+            if (diff <= 0xFF) {
+                status |= FLAG_CARRY; /* no borrow occurred */
+            } else {
+                status &= (uint8_t)~FLAG_CARRY; /* borrow occurred */
+            }
+
+            a = (uint8_t)diff;
+            set_zero_and_sign(a);
+            clockticks6502 += 2;
+            break;
+        }
+
+        case 0xC9: /* CMP immediate */
+            compare(a, fetch_immediate());
+            clockticks6502 += 2;
+            break;
+
+        case 0xE0: /* CPX immediate */
+            compare(x, fetch_immediate());
+            clockticks6502 += 2;
+            break;
+
+        case 0xC0: /* CPY immediate */
+            compare(y, fetch_immediate());
+            clockticks6502 += 2;
+            break;
+
+        case 0x0A: /* ASL accumulator */
+            if (a & 0x80) {
+                status |= FLAG_CARRY;
+            } else {
+                status &= (uint8_t)~FLAG_CARRY;
+            }
+            a = (uint8_t)(a << 1);
+            set_zero_and_sign(a);
+            clockticks6502 += 2;
+            break;
+
+        case 0x4A: /* LSR accumulator */
+            if (a & 0x01) {
+                status |= FLAG_CARRY;
+            } else {
+                status &= (uint8_t)~FLAG_CARRY;
+            }
+            a = (uint8_t)(a >> 1);
+            set_zero_and_sign(a);
+            clockticks6502 += 2;
+            break;
+
+        case 0x2A: { /* ROL accumulator */
+            uint8_t carry_in = (status & FLAG_CARRY) ? 1 : 0;
+            if (a & 0x80) {
+                status |= FLAG_CARRY;
+            } else {
+                status &= (uint8_t)~FLAG_CARRY;
+            }
+            a = (uint8_t)((a << 1) | carry_in);
+            set_zero_and_sign(a);
+            clockticks6502 += 2;
+            break;
+        }
+
+        case 0x6A: { /* ROR accumulator */
+            uint8_t carry_in = (status & FLAG_CARRY) ? 0x80 : 0;
+            if (a & 0x01) {
+                status |= FLAG_CARRY;
+            } else {
+                status &= (uint8_t)~FLAG_CARRY;
+            }
+            a = (uint8_t)((a >> 1) | carry_in);
+            set_zero_and_sign(a);
+            clockticks6502 += 2;
+            break;
+        }
+
+        case 0x48: /* PHA */
+            push8(a);
+            clockticks6502 += 3;
+            break;
+
+        case 0x68: /* PLA */
+            a = pull8();
+            set_zero_and_sign(a);
+            clockticks6502 += 4;
+            break;
+
+        case 0x20: { /* JSR absolute */
+            uint16_t target = fetch_absolute_addr();
+            uint16_t return_addr = (uint16_t)(pc - 1);
+            push8((uint8_t)(return_addr >> 8));
+            push8((uint8_t)(return_addr & 0xFF));
+            pc = target;
+            clockticks6502 += 6;
+            break;
+        }
+
+        case 0x60: { /* RTS */
+            uint8_t lo = pull8();
+            uint8_t hi = pull8();
+            pc = (uint16_t)(((hi << 8) | lo) + 1);
+            clockticks6502 += 6;
+            break;
+        }
+
+        case 0x24: { /* BIT zeropage */
+            uint8_t operand = read6502(fetch_zeropage_addr());
+            if ((a & operand) == 0) {
+                status |= FLAG_ZERO;
+            } else {
+                status &= (uint8_t)~FLAG_ZERO;
+            }
+            if (operand & 0x80) {
+                status |= FLAG_SIGN;
+            } else {
+                status &= (uint8_t)~FLAG_SIGN;
+            }
+            if (operand & 0x40) {
+                status |= FLAG_OVERFLOW;
+            } else {
+                status &= (uint8_t)~FLAG_OVERFLOW;
+            }
+            clockticks6502 += 3;
+            break;
+        }
+
+        case 0xE6: { /* INC zeropage */
+            uint16_t addr = fetch_zeropage_addr();
+            uint8_t value = (uint8_t)(read6502(addr) + 1);
+            write6502(addr, value);
+            set_zero_and_sign(value);
+            clockticks6502 += 5;
+            break;
+        }
+
+        case 0xC6: { /* DEC zeropage */
+            uint16_t addr = fetch_zeropage_addr();
+            uint8_t value = (uint8_t)(read6502(addr) - 1);
+            write6502(addr, value);
+            set_zero_and_sign(value);
+            clockticks6502 += 5;
+            break;
+        }
+
+        case 0x58: /* CLI */
+            status &= (uint8_t)~FLAG_INTERRUPT;
+            clockticks6502 += 2;
+            break;
+
+        case 0x78: /* SEI */
+            status |= FLAG_INTERRUPT;
+            clockticks6502 += 2;
+            break;
+
+        case 0xB8: /* CLV */
+            status &= (uint8_t)~FLAG_OVERFLOW;
+            clockticks6502 += 2;
+            break;
 
         default:
             /* Unimplemented opcode: not yet driven by a failing test. */

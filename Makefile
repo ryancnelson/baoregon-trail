@@ -14,6 +14,7 @@ test: $(BUILD_DIR)/test_reset $(BUILD_DIR)/test_opcodes $(BUILD_DIR)/test_disk_s
 	@$(BUILD_DIR)/test_disk_trap
 	@$(BUILD_DIR)/test_video_apple2
 	@$(BUILD_DIR)/test_bunnie_audio
+	@python3 -m unittest tests.test_embed_disk -v
 
 $(BUILD_DIR)/test_reset: $(TEST_DIR)/test_reset.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/cpu6502.h
 	@mkdir -p $(BUILD_DIR)
