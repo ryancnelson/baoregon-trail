@@ -801,7 +801,6 @@ int main(void) {
     test_lc_bank1_and_bank2_are_independent_at_d000();
     test_lc_e000_ffff_is_shared_across_banks();
     test_lc_dfff_e000_exact_boundary_no_off_by_one();
-    test_lc_dfff_e000_exact_boundary_no_off_by_one();
     test_apple2_mem_reset_restores_lc_default_rom_state();
     test_display_mode_defaults_to_text_page1_lores();
     test_apple2_mem_reset_restores_display_mode_defaults();
