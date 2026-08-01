@@ -39,6 +39,9 @@
  * disk_trap_select_sector()/disk_trap_read_byte(). */
 void disk_trap_set_image(const uint8_t *image);
 
+/* Returns pointer to currently registered disk image, or NULL if unmounted. */
+const uint8_t *disk_trap_get_image_ptr(void);
+
 /* Unload the registered disk image pointer (sets to NULL) and reset selection state. */
 void disk_trap_clear_image(void);
 
