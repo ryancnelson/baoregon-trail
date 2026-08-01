@@ -18,6 +18,9 @@ static const uint16_t g_color_to_rgb565[] = {
 };
 
 uint16_t bio_display_color_to_rgb565(hires_color_t color) {
+    if (color < HIRES_COLOR_BLACK || color > HIRES_COLOR_WHITE) {
+        return 0x0000; /* out-of-range: black fallback, matches lores_color_to_rgb565() */
+    }
     return g_color_to_rgb565[color];
 }
 
@@ -28,6 +31,10 @@ void bio_display_render_frame(read6502_fn read_mem,
 
 void bio_display_render_frame_page(int page2, read6502_fn read_mem,
                                     uint16_t framebuffer[BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT]) {
+    if (!read_mem || !framebuffer) {
+        return; /* safe no-op on bad input */
+    }
+
     for (int row = 0; row < BIO_DISPLAY_HEIGHT; row++) {
         hires_color_t row_colors[BIO_DISPLAY_WIDTH];
         hires_decode_scanline_color_page(row, page2, read_mem, row_colors);
@@ -41,6 +48,10 @@ void bio_display_render_frame_page(int page2, read6502_fn read_mem,
 
 void bio_display_render_frame_mixed(int page2, int mixed_mode, read6502_fn read_mem,
                                      uint16_t framebuffer[BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT]) {
+    if (!read_mem || !framebuffer) {
+        return;
+    }
+
     int rows_to_render = mixed_mode ? HIRES_MIXED_MODE_GRAPHICS_ROWS : BIO_DISPLAY_HEIGHT;
 
     for (int row = 0; row < rows_to_render; row++) {
@@ -59,6 +70,10 @@ void bio_display_render_frame_mixed(int page2, int mixed_mode, read6502_fn read_
 
 void bio_display_render_lores_frame(int page2, read6502_fn read_mem,
                                      uint16_t framebuffer[BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT]) {
+    if (!read_mem || !framebuffer) {
+        return;
+    }
+
     uint8_t blocks[LORES_BLOCK_COLS * LORES_BLOCK_ROWS];
     lores_decode_screen_page(page2, read_mem, blocks);
 
@@ -81,6 +96,10 @@ void bio_display_render_lores_frame(int page2, read6502_fn read_mem,
 
 void bio_display_render_lores_frame_mixed(int page2, int mixed_mode, read6502_fn read_mem,
                                            uint16_t framebuffer[BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT]) {
+    if (!read_mem || !framebuffer) {
+        return;
+    }
+
     uint8_t blocks[LORES_BLOCK_COLS * LORES_BLOCK_ROWS];
     lores_decode_screen_page(page2, read_mem, blocks);
 

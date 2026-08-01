@@ -38,7 +38,10 @@
 #define BIO_DISPLAY_WIDTH  HIRES_PIXELS_WIDE  /* 280, native, no scaling yet */
 #define BIO_DISPLAY_HEIGHT HIRES_ROWS         /* 192, native, no scaling yet */
 
-/* Convert one hires_color_t to its RGB565 (5-6-5) approximation. */
+/* Convert one hires_color_t to its RGB565 (5-6-5) approximation.
+ * Safety: an out-of-range color value returns 0x0000 (black fallback)
+ * instead of an out-of-bounds array read, matching
+ * lores_color_to_rgb565()'s convention. */
 uint16_t bio_display_color_to_rgb565(hires_color_t color);
 
 /*
@@ -47,6 +50,10 @@ uint16_t bio_display_color_to_rgb565(hires_color_t color);
  * BIO_DISPLAY_HEIGHT entries, caller-allocated). Always renders Hi-Res
  * PAGE 1 -- see bio_display_render_frame_page() for page-2-aware
  * rendering, driven by apple2_mem_is_page2_selected().
+ *
+ * Safety: NULL read_mem or framebuffer is a silent no-op (matches
+ * video_apple2.c / lores_apple2.c's convention -- never crash on bad
+ * input).
  */
 void bio_display_render_frame(read6502_fn read_mem,
                                uint16_t framebuffer[BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT]);
@@ -58,6 +65,8 @@ void bio_display_render_frame(read6502_fn read_mem,
  * (e.g. the eventual BIO Core 0 render loop) can pass that value straight
  * through. bio_display_render_frame(read_mem, fb) is equivalent to
  * bio_display_render_frame_page(0, read_mem, fb).
+ *
+ * Safety: NULL read_mem or framebuffer is a silent no-op.
  */
 void bio_display_render_frame_page(int page2, read6502_fn read_mem,
                                     uint16_t framebuffer[BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT]);
