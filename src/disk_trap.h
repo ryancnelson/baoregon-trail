@@ -59,6 +59,10 @@ void disk_trap_reset(void);
  * 0 otherwise (post-init, or post-reset before a new sector selection). */
 int disk_trap_has_selection(void);
 
+/* Returns the byte offset into the mounted disk image for the currently
+ * selected sector (or 0 if no selection has been made yet / post-reset). */
+uint32_t disk_trap_get_selected_offset(void);
+
 /* Select the (track, sector) that subsequent disk_trap_read_byte() calls
  * will serve from, mirroring how DOS 3.3 writes track/sector registers to
  * the $C0E0-$C0EF soft-switch range before reading sector data back.
