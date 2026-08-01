@@ -63,4 +63,7 @@ extern const cartridge_slot_t cartridge_slots[CARTRIDGE_SLOT_COUNT];
  * -- i.e. doesn't run off the end of the physical 4 MiB ReRAM. */
 #define CARTRIDGE_TOTAL_SIZE ((uint32_t)CARTRIDGE_SLOT_COUNT * CARTRIDGE_SLOT_SIZE)
 
+/* Safe accessor: returns pointer to slot at index, or NULL if index < 0 or index >= CARTRIDGE_SLOT_COUNT. */
+const cartridge_slot_t *cartridge_layout_get_slot(int index);
+
 #endif /* CARTRIDGE_LAYOUT_H */

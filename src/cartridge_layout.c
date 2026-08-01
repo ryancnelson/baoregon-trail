@@ -11,3 +11,10 @@ const cartridge_slot_t cartridge_slots[CARTRIDGE_SLOT_COUNT] = {
     { "Prince of Persia (Disk 1)",                CARTRIDGE_RERAM_BASE + 4 * CARTRIDGE_SLOT_SIZE },
     { "Ultima IV",                                CARTRIDGE_RERAM_BASE + 5 * CARTRIDGE_SLOT_SIZE },
 };
+
+const cartridge_slot_t *cartridge_layout_get_slot(int index) {
+    if (index < 0 || index >= CARTRIDGE_SLOT_COUNT) {
+        return 0;
+    }
+    return &cartridge_slots[index];
+}

@@ -972,3 +972,20 @@ b4a9111 Update dashboard.html: 333 tests GREEN, 14.1 KB RISC-V binary, Disk Sect
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  
 [2026-08-01 07:08:03] --- checking Duke ---
+[2026-08-01 07:13:52] Duke reply (truncated): ��───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 
+[2026-08-01 07:13:52] --- checking baochip ---
+[2026-08-01 07:14:38] baochip reply (truncated): ────────────────────────────
+>
+────────────────────────────────────────────────────────────────────────────────────────
+  ● [07:14:23] rtk make test && make test-firmware && make test-biosim && mak... running
+────────────────────────────────────────────────────────────────────────────────────────
+? for shortcuts                             Gemini 3.6 Flash · high · 1 task(s) · /tasks
+[2026-08-01 07:14:38] recent commits: 3a6c96d rram_driver: document page-alignment precondition for backing-store size
+4f5474c Update ralph-loop.log with latest pass 121-122 status
+dfa3496 Update dashboard.html: 334 tests GREEN, 14.1 KB RISC-V binary, NMOS Decimal Flag Reset Parity Test landed
+10cf953 cpu6502: add test_reset_does_not_clear_decimal_flag (NMOS hardware parity, 334 tests GREEN)
+66c5efc Update ralph-loop.log with latest pass 117-118 status
+[2026-08-01 07:14:38] sleeping 300s...
