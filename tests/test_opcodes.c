@@ -2052,6 +2052,86 @@ static void test_bit_absolute_sets_flags_from_memory(void) {
           "test_bit_absolute_sets_flags_from_memory");
 }
 
+static void test_and_absolute_x_masks_accumulator_with_index(void) {
+    /* Found via Klaus Dormann's functional_test.bin integration run:
+     * AND/ORA/EOR absolute,X and absolute,Y were all missing. */
+    setup();
+    a = 0xF0;
+    x = 0x04;
+    test_ram[0x0400] = 0x3D; /* AND $5000,X */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x50;
+    test_ram[0x5004] = 0x0F;
+    step6502();
+    CHECK(a == 0x00 && pc == 0x0403 && clockticks6502 == 4,
+          "test_and_absolute_x_masks_accumulator_with_index");
+}
+
+static void test_and_absolute_y_masks_accumulator_with_index(void) {
+    setup();
+    a = 0xF0;
+    y = 0x04;
+    test_ram[0x0400] = 0x39; /* AND $5000,Y */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x50;
+    test_ram[0x5004] = 0x0F;
+    step6502();
+    CHECK(a == 0x00 && pc == 0x0403 && clockticks6502 == 4,
+          "test_and_absolute_y_masks_accumulator_with_index");
+}
+
+static void test_ora_absolute_x_sets_bits_with_index(void) {
+    setup();
+    a = 0x0F;
+    x = 0x04;
+    test_ram[0x0400] = 0x1D; /* ORA $5000,X */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x50;
+    test_ram[0x5004] = 0xF0;
+    step6502();
+    CHECK(a == 0xFF && pc == 0x0403 && clockticks6502 == 4,
+          "test_ora_absolute_x_sets_bits_with_index");
+}
+
+static void test_ora_absolute_y_sets_bits_with_index(void) {
+    setup();
+    a = 0x0F;
+    y = 0x04;
+    test_ram[0x0400] = 0x19; /* ORA $5000,Y */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x50;
+    test_ram[0x5004] = 0xF0;
+    step6502();
+    CHECK(a == 0xFF && pc == 0x0403 && clockticks6502 == 4,
+          "test_ora_absolute_y_sets_bits_with_index");
+}
+
+static void test_eor_absolute_x_toggles_bits_with_index(void) {
+    setup();
+    a = 0xFF;
+    x = 0x04;
+    test_ram[0x0400] = 0x5D; /* EOR $5000,X */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x50;
+    test_ram[0x5004] = 0x0F;
+    step6502();
+    CHECK(a == 0xF0 && pc == 0x0403 && clockticks6502 == 4,
+          "test_eor_absolute_x_toggles_bits_with_index");
+}
+
+static void test_eor_absolute_y_toggles_bits_with_index(void) {
+    setup();
+    a = 0xFF;
+    y = 0x04;
+    test_ram[0x0400] = 0x59; /* EOR $5000,Y */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x50;
+    test_ram[0x5004] = 0x0F;
+    step6502();
+    CHECK(a == 0xF0 && pc == 0x0403 && clockticks6502 == 4,
+          "test_eor_absolute_y_toggles_bits_with_index");
+}
+
 int main(void) {
     test_nop_advances_pc_and_takes_2_cycles();
     test_lda_immediate_loads_value();
@@ -2223,6 +2303,12 @@ int main(void) {
     test_sbc_indirect_indexed_subtracts_value();
     test_cmp_indirect_indexed_compares_value();
     test_bit_absolute_sets_flags_from_memory();
+    test_and_absolute_x_masks_accumulator_with_index();
+    test_and_absolute_y_masks_accumulator_with_index();
+    test_ora_absolute_x_sets_bits_with_index();
+    test_ora_absolute_y_sets_bits_with_index();
+    test_eor_absolute_x_toggles_bits_with_index();
+    test_eor_absolute_y_toggles_bits_with_index();
 
     if (failures > 0) {
         printf("\n%d test(s) FAILED\n", failures);

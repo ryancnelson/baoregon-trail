@@ -1210,6 +1210,54 @@ void step6502(void) {
             clockticks6502 += 4;
             break;
 
+        case 0x3D: { /* AND absolute,X */
+            int page_crossed;
+            a &= read6502(fetch_absolute_indexed_addr(x, &page_crossed));
+            set_zero_and_sign(a);
+            clockticks6502 += page_crossed ? 5 : 4;
+            break;
+        }
+
+        case 0x39: { /* AND absolute,Y */
+            int page_crossed;
+            a &= read6502(fetch_absolute_indexed_addr(y, &page_crossed));
+            set_zero_and_sign(a);
+            clockticks6502 += page_crossed ? 5 : 4;
+            break;
+        }
+
+        case 0x1D: { /* ORA absolute,X */
+            int page_crossed;
+            a |= read6502(fetch_absolute_indexed_addr(x, &page_crossed));
+            set_zero_and_sign(a);
+            clockticks6502 += page_crossed ? 5 : 4;
+            break;
+        }
+
+        case 0x19: { /* ORA absolute,Y */
+            int page_crossed;
+            a |= read6502(fetch_absolute_indexed_addr(y, &page_crossed));
+            set_zero_and_sign(a);
+            clockticks6502 += page_crossed ? 5 : 4;
+            break;
+        }
+
+        case 0x5D: { /* EOR absolute,X */
+            int page_crossed;
+            a ^= read6502(fetch_absolute_indexed_addr(x, &page_crossed));
+            set_zero_and_sign(a);
+            clockticks6502 += page_crossed ? 5 : 4;
+            break;
+        }
+
+        case 0x59: { /* EOR absolute,Y */
+            int page_crossed;
+            a ^= read6502(fetch_absolute_indexed_addr(y, &page_crossed));
+            set_zero_and_sign(a);
+            clockticks6502 += page_crossed ? 5 : 4;
+            break;
+        }
+
         default:
             /* Unimplemented opcode: not yet driven by a failing test. */
             clockticks6502 += 2;
