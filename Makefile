@@ -338,6 +338,22 @@ fb-view: $(BUILD_DIR)/dump_framebuffer $(BUILD_DIR)/fb_terminal_viewer
 terminal-play: $(BUILD_DIR)/terminal_emulator
 	@$(BUILD_DIR)/terminal_emulator
 
+$(BUILD_DIR)/hires_demo_runner: $(TOOLS_DIR)/hires_demo_runner.c $(TOOLS_DIR)/fb_terminal_viewer.c $(SRC_DIR)/apple2_mem.c $(SRC_DIR)/apple2_mem.h $(SRC_DIR)/cpu6502.c $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_trap.c $(SRC_DIR)/bunnie_audio.c $(SRC_DIR)/video_apple2.c $(SRC_DIR)/bio_display.c $(SRC_DIR)/lores_apple2.c
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -DFB_TERMINAL_VIEWER_NO_MAIN -o $@ $(TOOLS_DIR)/hires_demo_runner.c $(TOOLS_DIR)/fb_terminal_viewer.c $(SRC_DIR)/apple2_mem.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_trap.c $(SRC_DIR)/bunnie_audio.c $(SRC_DIR)/video_apple2.c $(SRC_DIR)/bio_display.c $(SRC_DIR)/lores_apple2.c
+
+disks/hires_demo.dsk: tools/create_hires_demo_dsk.py
+	@mkdir -p disks
+	python3 tools/create_hires_demo_dsk.py disks/hires_demo.dsk
+
+# Live Hi-Res color pipeline demo -- bypasses the boot-splash menu and
+# boots disks/hires_demo.dsk's hand-assembled bootloader directly, since
+# TEXT mode (the splash's current default) renders black pending a
+# character-ROM renderer (see bio_display.c's documented gap).
+.PHONY: hires-demo
+hires-demo: $(BUILD_DIR)/hires_demo_runner disks/hires_demo.dsk
+	@$(BUILD_DIR)/hires_demo_runner
+
 disks/dos33_sample.dsk: tools/create_sample_boot_dsk.py
 	@mkdir -p disks
 	python3 tools/create_sample_boot_dsk.py disks/dos33_sample.dsk
