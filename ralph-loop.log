@@ -349,3 +349,9 @@ d22f68f boot_perf: add null safety and overflow cycle count protection with boot
 31009ae Update dashboard.html: 304 tests GREEN, 13.8 KB RISC-V binary, Emulator Loop Framebuffer Margin Bounds landed
 23d14f6 emulator_loop: document 320x240 framebuffer margin caveats and add test_emulator_loop_framebuffer_bounds (304 tests GREEN)
 [2026-08-01 02:05:20] sleeping 300s...
+[2026-08-01 02:10:20] --- checking Woz ---
+[2026-08-01 02:14:42] Woz reply (truncated): ��───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 
+[2026-08-01 02:14:42] --- checking Bunnie ---

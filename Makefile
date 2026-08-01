@@ -74,6 +74,18 @@ $(BUILD_DIR)/test_opcodes: $(TEST_DIR)/test_opcodes.c $(SRC_DIR)/cpu6502.c $(SRC
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_opcodes.c $(SRC_DIR)/cpu6502.c
 
+$(BUILD_DIR)/test_interrupts: $(TEST_DIR)/test_interrupts.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/cpu6502.h
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_interrupts.c $(SRC_DIR)/cpu6502.c
+
+$(BUILD_DIR)/test_stack_wraparound: $(TEST_DIR)/test_stack_wraparound.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/cpu6502.h
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_stack_wraparound.c $(SRC_DIR)/cpu6502.c
+
+$(BUILD_DIR)/test_exec6502: $(TEST_DIR)/test_exec6502.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/cpu6502.h
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_exec6502.c $(SRC_DIR)/cpu6502.c
+
 $(BUILD_DIR)/test_disk_sector_layout: $(TEST_DIR)/test_disk_sector_layout.c $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_sector_layout.h
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_disk_sector_layout.c $(SRC_DIR)/disk_sector_layout.c
@@ -281,18 +293,6 @@ test-functional: $(BUILD_DIR)/test_functional_suite
 $(BUILD_DIR)/test_functional_suite: $(TEST_DIR)/test_functional_suite.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/cpu6502.h
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_functional_suite.c $(SRC_DIR)/cpu6502.c
-
-$(BUILD_DIR)/test_interrupts: $(TEST_DIR)/test_interrupts.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/cpu6502.h
-	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_interrupts.c $(SRC_DIR)/cpu6502.c
-
-$(BUILD_DIR)/test_stack_wraparound: $(TEST_DIR)/test_stack_wraparound.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/cpu6502.h
-	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_stack_wraparound.c $(SRC_DIR)/cpu6502.c
-
-$(BUILD_DIR)/test_exec6502: $(TEST_DIR)/test_exec6502.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/cpu6502.h
-	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_exec6502.c $(SRC_DIR)/cpu6502.c
 
 # Firmware-level tests requiring a RISC-V cross-compiler + QEMU (not part of
 # the default host `test` target, which should have zero extra toolchain
