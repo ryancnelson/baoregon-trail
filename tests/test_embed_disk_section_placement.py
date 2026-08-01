@@ -40,12 +40,12 @@ class TestDskImagesSectionPlacement(unittest.TestCase):
         # definition, not merely present as a comment anywhere in the file.)
         pattern = re.compile(
             r"const\s+uint8_t\s+oregon_trail_dsk\s*\[\s*\d+\s*\]\s*"
-            r"__attribute__\s*\(\(\s*section\s*\(\s*\"\.dsk_images\"\s*\)\s*\)\)\s*=",
+            r"DSK_SECTION\s*=",
         )
         self.assertRegex(
             header, pattern,
             "embed_to_c_header() output must place the array in the "
-            ".dsk_images linker section via __attribute__((section(...))) "
+            ".dsk_images linker section via DSK_SECTION macro "
             "-- otherwise it silently falls into .rodata, defeating "
             "linker.ld's dedicated .dsk_images output section.",
         )
@@ -67,16 +67,16 @@ class TestDskImagesSectionPlacement(unittest.TestCase):
         appears, attached to the array, not the length declaration."""
         original = make_synthetic_disk_image()
         header = embed_disk.embed_to_c_header(original, "oregon_trail_dsk")
-        occurrences = header.count("__attribute__((section(\".dsk_images\")))")
-        self.assertEqual(
-            occurrences, 1,
-            "expected exactly one .dsk_images section attribute (on the "
-            "array), found a different count",
+        array_line = next(
+            line for line in header.splitlines()
+            if "oregon_trail_dsk[" in line
         )
+        self.assertIn("DSK_SECTION", array_line)
         len_line = next(
             line for line in header.splitlines()
             if "oregon_trail_dsk_len" in line
         )
+        self.assertNotIn("DSK_SECTION", len_line)
         self.assertNotIn("__attribute__", len_line)
 
 

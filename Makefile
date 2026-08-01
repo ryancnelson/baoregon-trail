@@ -8,7 +8,7 @@ BUILD_DIR = build
 
 .PHONY: test clean
 
-test: $(BUILD_DIR)/test_reset $(BUILD_DIR)/test_opcodes $(BUILD_DIR)/test_functional_suite $(BUILD_DIR)/test_interrupts $(BUILD_DIR)/test_stack_wraparound $(BUILD_DIR)/test_exec6502 $(BUILD_DIR)/test_disk_sector_layout $(BUILD_DIR)/test_disk_sector_layout_null_safety $(BUILD_DIR)/test_disk_trap $(BUILD_DIR)/test_disk_trap_safe_defaults $(BUILD_DIR)/test_disk_trap_unload_image $(BUILD_DIR)/test_video_apple2 $(BUILD_DIR)/test_video_apple2_safety $(BUILD_DIR)/test_video_apple2_color $(BUILD_DIR)/test_video_apple2_color_edges $(BUILD_DIR)/test_video_apple2_fullframe $(BUILD_DIR)/test_video_apple2_realbus $(BUILD_DIR)/test_video_apple2_page2 $(BUILD_DIR)/test_video_apple2_color_page2 $(BUILD_DIR)/test_lores_apple2 $(BUILD_DIR)/test_lores_apple2_palette $(BUILD_DIR)/test_lores_apple2_safety $(BUILD_DIR)/test_bunnie_audio $(BUILD_DIR)/test_bunnie_audio_null_safety $(BUILD_DIR)/test_apple2_mem $(BUILD_DIR)/test_apple2_mem_button_getter $(BUILD_DIR)/test_apple2_mem_clear_buttons $(BUILD_DIR)/test_apple2_mem_clear_annunciators $(BUILD_DIR)/test_bio_display $(BUILD_DIR)/test_bio_display_page2 $(BUILD_DIR)/test_bio_display_mixed $(BUILD_DIR)/test_bio_display_auto $(BUILD_DIR)/test_bio_display_lores_mixed $(BUILD_DIR)/test_bio_display_safety $(BUILD_DIR)/test_bio_display_text_mode $(BUILD_DIR)/test_fb_terminal_viewer $(BUILD_DIR)/test_rram_driver $(BUILD_DIR)/test_rram_driver_read_bounds $(BUILD_DIR)/test_rram_driver_docstring_accuracy $(BUILD_DIR)/test_cartridge_layout $(BUILD_DIR)/test_rram_cartridge_integration $(BUILD_DIR)/test_rram_disk_trap_pipeline $(BUILD_DIR)/test_boot_splash $(BUILD_DIR)/test_boot_splash_apple2_mem_poll $(BUILD_DIR)/test_boot_splash_multibutton_tiebreak $(BUILD_DIR)/test_boot_splash_null_safety $(BUILD_DIR)/test_emulator_loop $(BUILD_DIR)/test_emulator_loop_reset_combo $(BUILD_DIR)/test_emulator_loop_reset_combo_no_spurious_nav $(BUILD_DIR)/test_emulator_loop_reset_combo_partial_release $(BUILD_DIR)/test_emulator_loop_video_mode $(BUILD_DIR)/test_emulator_loop_copy_framebuffer $(BUILD_DIR)/test_emulator_loop_framebuffer_bounds $(BUILD_DIR)/test_emulator_loop_current_slot $(BUILD_DIR)/test_emulator_loop_reset_to_splash $(BUILD_DIR)/test_emulator_loop_reset_to_splash_cycles $(BUILD_DIR)/test_emulator_loop_init_reset_parity $(BUILD_DIR)/test_emulator_loop_no_stale_framebuffer $(BUILD_DIR)/test_emulator_loop_no_stale_framebuffer_combo_reset $(BUILD_DIR)/test_emulator_loop_total_cycles $(BUILD_DIR)/test_emulator_loop_audio_active $(BUILD_DIR)/test_emulator_loop_cycles_per_frame $(BUILD_DIR)/test_boot_perf $(BUILD_DIR)/test_boot_perf_safety $(BUILD_DIR)/test_main_boot_perf $(BUILD_DIR)/test_main_boot_metrics_getter
+test: $(BUILD_DIR)/test_reset $(BUILD_DIR)/test_opcodes $(BUILD_DIR)/test_functional_suite $(BUILD_DIR)/test_interrupts $(BUILD_DIR)/test_stack_wraparound $(BUILD_DIR)/test_exec6502 $(BUILD_DIR)/test_disk_sector_layout $(BUILD_DIR)/test_disk_sector_layout_null_safety $(BUILD_DIR)/test_disk_trap $(BUILD_DIR)/test_disk_trap_safe_defaults $(BUILD_DIR)/test_disk_trap_unload_image $(BUILD_DIR)/test_video_apple2 $(BUILD_DIR)/test_video_apple2_safety $(BUILD_DIR)/test_video_apple2_color $(BUILD_DIR)/test_video_apple2_color_edges $(BUILD_DIR)/test_video_apple2_fullframe $(BUILD_DIR)/test_video_apple2_realbus $(BUILD_DIR)/test_video_apple2_page2 $(BUILD_DIR)/test_video_apple2_color_page2 $(BUILD_DIR)/test_lores_apple2 $(BUILD_DIR)/test_lores_apple2_palette $(BUILD_DIR)/test_lores_apple2_safety $(BUILD_DIR)/test_bunnie_audio $(BUILD_DIR)/test_bunnie_audio_null_safety $(BUILD_DIR)/test_apple2_mem $(BUILD_DIR)/test_apple2_mem_button_getter $(BUILD_DIR)/test_apple2_mem_clear_buttons $(BUILD_DIR)/test_apple2_mem_clear_annunciators $(BUILD_DIR)/test_bio_display $(BUILD_DIR)/test_bio_display_page2 $(BUILD_DIR)/test_bio_display_mixed $(BUILD_DIR)/test_bio_display_auto $(BUILD_DIR)/test_bio_display_lores_mixed $(BUILD_DIR)/test_bio_display_safety $(BUILD_DIR)/test_bio_display_text_mode $(BUILD_DIR)/test_fb_terminal_viewer $(BUILD_DIR)/test_rram_driver $(BUILD_DIR)/test_rram_driver_read_bounds $(BUILD_DIR)/test_rram_driver_docstring_accuracy $(BUILD_DIR)/test_cartridge_layout $(BUILD_DIR)/test_rram_cartridge_integration $(BUILD_DIR)/test_rram_disk_trap_pipeline $(BUILD_DIR)/test_boot_splash $(BUILD_DIR)/test_boot_splash_apple2_mem_poll $(BUILD_DIR)/test_boot_splash_multibutton_tiebreak $(BUILD_DIR)/test_boot_splash_null_safety $(BUILD_DIR)/test_emulator_loop $(BUILD_DIR)/test_emulator_loop_reset_combo $(BUILD_DIR)/test_emulator_loop_reset_combo_no_spurious_nav $(BUILD_DIR)/test_emulator_loop_reset_combo_partial_release $(BUILD_DIR)/test_emulator_loop_video_mode $(BUILD_DIR)/test_emulator_loop_copy_framebuffer $(BUILD_DIR)/test_emulator_loop_framebuffer_bounds $(BUILD_DIR)/test_emulator_loop_current_slot $(BUILD_DIR)/test_emulator_loop_reset_to_splash $(BUILD_DIR)/test_emulator_loop_reset_to_splash_cycles $(BUILD_DIR)/test_emulator_loop_init_reset_parity $(BUILD_DIR)/test_emulator_loop_no_stale_framebuffer $(BUILD_DIR)/test_emulator_loop_no_stale_framebuffer_combo_reset $(BUILD_DIR)/test_emulator_loop_total_cycles $(BUILD_DIR)/test_emulator_loop_audio_active $(BUILD_DIR)/test_emulator_loop_cycles_per_frame $(BUILD_DIR)/test_boot_perf $(BUILD_DIR)/test_boot_perf_safety $(BUILD_DIR)/test_main_boot_perf $(BUILD_DIR)/test_main_boot_metrics_getter $(BUILD_DIR)/test_dos33_composed_boot
 	@$(BUILD_DIR)/test_reset
 	@$(BUILD_DIR)/test_opcodes
 	@./tests/fetch_functional_test.sh
@@ -76,6 +76,7 @@ test: $(BUILD_DIR)/test_reset $(BUILD_DIR)/test_opcodes $(BUILD_DIR)/test_functi
 	@$(BUILD_DIR)/test_boot_perf_safety
 	@$(BUILD_DIR)/test_main_boot_perf
 	@$(BUILD_DIR)/test_main_boot_metrics_getter
+	@$(BUILD_DIR)/test_dos33_composed_boot
 	@python3 -m unittest tests.test_embed_disk -v
 	@python3 -m unittest tests.test_embed_disk_section_placement -v
 	@python3 -m unittest tests.test_embed_disk_missing_file -v
@@ -231,14 +232,29 @@ $(BUILD_DIR)/dump_framebuffer: $(TOOLS_DIR)/dump_framebuffer.c $(SRC_DIR)/emulat
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ $(TOOLS_DIR)/dump_framebuffer.c $(SRC_DIR)/emulator_loop.c $(SRC_DIR)/boot_splash.c $(SRC_DIR)/cartridge_layout.c $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_trap.c $(SRC_DIR)/apple2_mem.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/bunnie_audio.c $(SRC_DIR)/video_apple2.c $(SRC_DIR)/bio_display.c $(SRC_DIR)/lores_apple2.c
 
-# Convenience target: run the real emulator for a frame, dump its
-# framebuffer, and render it in the terminal via ANSI truecolor
-# half-blocks. Closes NEXT_STEPS.md Step 4's "verify rendering of Apple
-# II screen buffers" checklist item without an SDL2 dependency.
-.PHONY: fb-view
+$(BUILD_DIR)/terminal_emulator: $(TOOLS_DIR)/terminal_emulator.c $(TOOLS_DIR)/fb_terminal_viewer.c $(SRC_DIR)/emulator_loop.c $(SRC_DIR)/boot_splash.c $(SRC_DIR)/cartridge_layout.c $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_trap.c $(SRC_DIR)/apple2_mem.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/bunnie_audio.c $(SRC_DIR)/video_apple2.c $(SRC_DIR)/bio_display.c $(SRC_DIR)/lores_apple2.c
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -DFB_TERMINAL_VIEWER_NO_MAIN -o $@ $(TOOLS_DIR)/terminal_emulator.c $(TOOLS_DIR)/fb_terminal_viewer.c $(SRC_DIR)/emulator_loop.c $(SRC_DIR)/boot_splash.c $(SRC_DIR)/cartridge_layout.c $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_trap.c $(SRC_DIR)/apple2_mem.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/bunnie_audio.c $(SRC_DIR)/video_apple2.c $(SRC_DIR)/bio_display.c $(SRC_DIR)/lores_apple2.c
+
+# Interactive Playable Terminal Runner target (Fable-5 Item 2)
+.PHONY: fb-view terminal-play
 fb-view: $(BUILD_DIR)/dump_framebuffer $(BUILD_DIR)/fb_terminal_viewer
 	@$(BUILD_DIR)/dump_framebuffer /tmp/baoregon_fb.raw
 	@$(BUILD_DIR)/fb_terminal_viewer /tmp/baoregon_fb.raw
+
+terminal-play: $(BUILD_DIR)/terminal_emulator
+	@$(BUILD_DIR)/terminal_emulator
+
+disks/dos33_sample.dsk: tools/create_sample_boot_dsk.py
+	@mkdir -p disks
+	python3 tools/create_sample_boot_dsk.py disks/dos33_sample.dsk
+
+src/embedded_disk_dos33.h: disks/dos33_sample.dsk tools/embed_disk.py
+	python3 tools/embed_disk.py disks/dos33_sample.dsk g_dos33_sample_dsk -o src/embedded_disk_dos33.h
+
+$(BUILD_DIR)/test_dos33_composed_boot: $(TEST_DIR)/test_dos33_composed_boot.c src/embedded_disk_dos33.h $(SRC_DIR)/apple2_mem.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_trap.c $(SRC_DIR)/bunnie_audio.c
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_dos33_composed_boot.c $(SRC_DIR)/apple2_mem.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_trap.c $(SRC_DIR)/bunnie_audio.c
 
 $(BUILD_DIR)/test_rram_driver: $(TEST_DIR)/test_rram_driver.c $(SRC_DIR)/rram_driver.c $(SRC_DIR)/rram_driver.h $(SRC_DIR)/cartridge_layout.c $(SRC_DIR)/cartridge_layout.h
 	@mkdir -p $(BUILD_DIR)

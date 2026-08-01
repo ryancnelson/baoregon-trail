@@ -563,3 +563,21 @@ db3d467 rram_driver.h: fix rram_read() docstring to match actual bounds-checked 
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  
 [2026-08-01 04:05:26] --- checking baochip ---
+[2026-08-01 04:06:19] baochip reply (truncated): �────
+  ###    Repository Sync
+
+  All commits pushed to Gitea origin main at http://biggie:3000/ryan/baoregon-
+  trail.git.
+  Live Status Dashboard: **dashboard.html**.
+
+────────────────────────────────────────────────────────────────────────────────────────
+>
+────────────────────────────────────────────────────────────────────────────────────────
+? for shortcuts                                                  Gemini 3.6 Flash · high
+[2026-08-01 04:06:19] recent commits: 0ad4701 Update dashboard.html: 317 tests GREEN, 14.1 KB RISC-V binary, Clear Annunciator States Helper landed
+18af254 apple2_mem: add apple2_mem_clear_annunciator_states helper with unit tests (317 tests GREEN)
+48ba738 Update ralph-loop.log with latest pass 79 status
+16a7823 emulator_loop: fix spurious splash-menu navigation after 3-button-combo reset
+eb6e113 Update ralph-loop.log with latest pass 77/78 status
+[2026-08-01 04:06:19] sleeping 300s...
+[2026-08-01 04:11:19] --- checking Woz ---

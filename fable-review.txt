@@ -116,3 +116,101 @@ identical failure mode reappeared once, in the highest-stakes possible
 location: the CPU core's actual ISA correctness, one week before hardware
 arrives. Fix the BCD gap or make its failure visible in `make test` before
 anyone treats the 6502 core as done.
+
+===========================================================================
+FOLLOW-UP REVIEW — 2026-08-01, HEAD=71c6cc1 (197 commits, up from 44)
+===========================================================================
+BCD/Dormann gap from the prior section: FIXED, verified by direct execution.
+Ran tests/test_functional_suite standalone: "PASS: test_functional_suite_
+reaches_success_trap (trapped at $3469 after 30646178 steps)", exit 0. Now
+wired into the default `make test` target (confirmed in Makefile, not just
+claimed). Full suite: 484 PASS / 0 FAIL, ~8.8s, run directly.
+
+RISC-V cross-build re-verified from a clean `rm -rf build-riscv`: genuinely
+compiles and links, 14,030 bytes .text -- matches dashboard's "14.0 KB"
+claim exactly.
+
+Dashboard accuracy: no overclaiming found this pass. Current claim ("STEP 2
+PASSED 100%... trapped at $3469 after 30.6M steps") matches my independent
+run number for number.
+
+Spot-checked the ~200 new commits (emulator_loop.c, boot_splash.c,
+boot_perf.c, lores_apple2.c, IRQ/NMI, cartridge tooling) for the same two
+failure shapes found twice before (doc/reality mismatch; real test silently
+excluded from CI) -- found neither recurring. Cycle-counter overflow fix
+(exec6502 uses elapsed-tick difference, not an absolute target) is correct
+and well-reasoned. Null-safety additions are real guards with real tests,
+not just naming. No sprintf/strcpy/unsafe memcpy anywhere in src/.
+
+VERDICT: project is now materially sound. 6502 core is verified-correct
+against the reference suite, not just claimed-correct. Remaining risk is
+hardware-dependent unknowns (BIO timing/DMA, real button geometry, power)
+that no host-side testing can close -- correctly labeled unconfirmed in
+BRAINSTORM.md rather than guessed at.
+
+---------------------------------------------------------------------------
+Integration-test gap identified (not yet fixed, real open item)
+---------------------------------------------------------------------------
+No .dsk file exists anywhere in the repo. cartridge_slots[] is an address
+table, not content. The Dormann suite and all 484 unit tests exercise
+components in isolation or against synthetic bytes -- none of them boot a
+real disk image through the composed system (cpu6502 + apple2_mem +
+disk_trap + emulator_loop together). This is the one class of bug unit
+tests structurally cannot catch.
+
+Recommended "hello world": a stock DOS 3.3 system master .dsk (boot to `]`
+prompt, zero game logic) embedded via tools/embed_disk.py and driven
+through the real emulator_loop.c -- not a game, not Oregon Trail yet, pure
+disk-controller+CPU+ROM validation of the composed system.
+
+---------------------------------------------------------------------------
+Simulator-rig question -- no full-system rig exists, and building a guessed
+one is not recommended
+---------------------------------------------------------------------------
+Three separate simulation tools exist, none of them a system simulator:
+1. bio-sim (Verilator RTL sim of real BIO_bdma hardware) -- BIO firmware
+   only, external checkout, real silicon behavior.
+2. QEMU (qemu-system-riscv32 -M virt) -- used only for bio_audio.S RV32E
+   instruction-level checks via a SiFive test-finisher device. Generic RV32
+   core, no Baochip-specific memory map or peripherals.
+3. Host-native C harness (make test) -- where all real TDD work lives;
+   mocked/synthetic buses, not a hardware simulation at all.
+
+Tried running the real build-riscv/baoregon.elf under QEMU virt as a raw
+boot smoke test. Result: inconclusive by design, not a pass -- linker.ld
+places code at 0x20000000 (Baochip's real ReRAM address) while virt's
+convention differs, and with -nographic and no UART wired up, a 5s timeout
+with no crash is indistinguishable from "did nothing." Confirmed via
+`-d guest_errors,unimp`: zero output logged. A guessed Baochip-shaped QEMU
+machine (fake peripherals, fake memory map) was considered and rejected --
+it would duplicate logic already correctly modeled in apple2_mem.c, has no
+honest way to represent the BIO cluster (bio-sim already gives real RTL
+behavior instead), and risks recreating the exact "trusted a plausible
+artifact that didn't match reality" failure this project already hit twice
+on documentation. Recommendation: do not build a guessed hardware target.
+
+---------------------------------------------------------------------------
+Framebuffer + 3-button host loop -- feasible, and mostly already built
+---------------------------------------------------------------------------
+Narrower ask (just a framebuffer + 3 buttons for host-side testing, not a
+full peripheral simulator) is well-scoped and largely already exists in
+this repo, verified directly:
+- Framebuffer: bio_display_render_frame*() already produces real RGB565
+  output; tools/fb_terminal_viewer.c already renders any RGB565 dump to
+  the terminal via ANSI truecolor half-blocks (U+2580), no SDL2 needed.
+  Confirmed working, reads a raw dump file and prints real pixels.
+- Buttons: apple2_mem.c already maps $C061/$C062/$C063 to a 3-element
+  pressed-state array; apple2_mem_set_button_state() is explicitly
+  documented in its own header as "the test/host-side hook standing in for"
+  real button GPIO. No new soft-switch plumbing needed.
+
+Missing piece is glue only, not new architecture: a small interactive host
+program (stdin key read -> apple2_mem_set_button_state() -> one
+baoregon_emulator_run_frame() -> dump framebuffer -> fb_terminal_viewer_
+print(), looped) would produce an actually-playable-in-terminal build using
+only already-tested, already-real modules. This directly satisfies
+NEXT_STEPS.md's own unchecked "host SDL2 or terminal viewer" item -- the
+viewer tool's own header comment confirms this glue is "not yet done
+anywhere in this codebase." Recommend bundling this with the disk-boot
+integration test above (same missing piece: something that actually runs
+the composed system end-to-end and lets a human watch it).
