@@ -740,3 +740,9 @@ c19ba09 disk_trap: add disk_trap_get_selected_offset getter with unit tests (323
 a45d58a apple2_mem: lock in reset() clearing stale pending-track staging register with regression test
 f3b1e76 Update ralph-loop.log with latest pass 94 status
 [2026-08-01 05:26:36] sleeping 300s...
+[2026-08-01 05:31:36] --- checking Woz ---
+[2026-08-01 05:34:30] Woz reply (truncated): ��───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 
+[2026-08-01 05:34:30] --- checking Bunnie ---
