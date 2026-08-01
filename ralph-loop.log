@@ -1055,3 +1055,4 @@ df21e30 lores_apple2: add test_lores_apple2_color_bounds unit test (337 tests GR
 8e8232b cpu6502: lock in BRK/RTI stack-wraparound round-trip with regression test
 e866932 Update ralph-loop.log with latest pass 127 status
 [2026-08-01 07:37:12] sleeping 300s...
+[2026-08-01 07:42:12] --- checking Woz ---
