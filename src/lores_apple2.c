@@ -33,3 +33,34 @@ void lores_decode_screen_page(int page2, read6502_fn read_mem,
         }
     }
 }
+
+uint16_t lores_color_to_rgb565(uint8_t color) {
+    /* Standard Apple II Lo-Res 16-color palette, RGB565 approximation
+     * (5-6-5 bits). Same "not yet calibrated against real hardware"
+     * caveat as bio_display_color_to_rgb565() -- see MEMORY.md
+     * 2026-07-31's host-simulator-first note. Palette order and names
+     * per the standard, widely-documented Apple II Lo-Res color table. */
+    static const uint16_t palette[16] = {
+        0x0000, /*  0 Black       */
+        0x9000, /*  1 Deep Red    */
+        0x000D, /*  2 Dark Blue   */
+        0xA0B8, /*  3 Purple      */
+        0x0320, /*  4 Dark Green  */
+        0x738E, /*  5 Gray 1      */
+        0x055F, /*  6 Medium Blue */
+        0x7BFF, /*  7 Light Blue  */
+        0x5300, /*  8 Brown       */
+        0xFC60, /*  9 Orange      */
+        0xC618, /* 10 Gray 2      */
+        0xFB56, /* 11 Pink        */
+        0x07E0, /* 12 Green       */
+        0xFFA0, /* 13 Yellow      */
+        0x7FF5, /* 14 Aqua        */
+        0xFFFF, /* 15 White       */
+    };
+
+    if (color >= 16) {
+        return 0x0000; /* out-of-range: black fallback */
+    }
+    return palette[color];
+}

@@ -54,4 +54,14 @@ extern const uint16_t lores_byte_row_offsets[LORES_BYTE_ROWS];
 void lores_decode_screen_page(int page2, read6502_fn read_mem,
                                uint8_t out_blocks[LORES_BLOCK_COLS * LORES_BLOCK_ROWS]);
 
+/*
+ * Convert a 4-bit Lo-Res color index (0-15, standard Apple II Lo-Res
+ * palette order) to its RGB565 (5-6-5) approximation. Same
+ * "approximate, not yet calibrated against real hardware" caveat as
+ * bio_display_color_to_rgb565() -- see MEMORY.md 2026-07-31's
+ * host-simulator-first note. color must be in [0, 15]; out-of-range
+ * input returns black (0x0000).
+ */
+uint16_t lores_color_to_rgb565(uint8_t color);
+
 #endif /* LORES_APPLE2_H */

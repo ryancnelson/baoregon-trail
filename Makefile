@@ -22,6 +22,7 @@ test: $(BUILD_DIR)/test_reset $(BUILD_DIR)/test_opcodes $(BUILD_DIR)/test_functi
 	@$(BUILD_DIR)/test_video_apple2_page2
 	@$(BUILD_DIR)/test_video_apple2_color_page2
 	@$(BUILD_DIR)/test_lores_apple2
+	@$(BUILD_DIR)/test_lores_apple2_palette
 	@$(BUILD_DIR)/test_bunnie_audio
 	@$(BUILD_DIR)/test_apple2_mem
 	@$(BUILD_DIR)/test_apple2_mem_button_getter
@@ -82,6 +83,10 @@ $(BUILD_DIR)/test_video_apple2_color_page2: $(TEST_DIR)/test_video_apple2_color_
 $(BUILD_DIR)/test_lores_apple2: $(TEST_DIR)/test_lores_apple2.c $(SRC_DIR)/lores_apple2.c $(SRC_DIR)/lores_apple2.h $(SRC_DIR)/video_apple2.c $(SRC_DIR)/video_apple2.h
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_lores_apple2.c $(SRC_DIR)/lores_apple2.c $(SRC_DIR)/video_apple2.c
+
+$(BUILD_DIR)/test_lores_apple2_palette: $(TEST_DIR)/test_lores_apple2_palette.c $(SRC_DIR)/lores_apple2.c $(SRC_DIR)/lores_apple2.h $(SRC_DIR)/video_apple2.c $(SRC_DIR)/video_apple2.h
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_lores_apple2_palette.c $(SRC_DIR)/lores_apple2.c $(SRC_DIR)/video_apple2.c
 
 $(BUILD_DIR)/test_bunnie_audio: $(TEST_DIR)/test_bunnie_audio.c $(SRC_DIR)/bunnie_audio.c $(SRC_DIR)/bunnie_audio.h
 	@mkdir -p $(BUILD_DIR)
