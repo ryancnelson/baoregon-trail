@@ -1557,6 +1557,41 @@ static void test_bvs_does_not_branch_when_overflow_flag_clear(void) {
           "test_bvs_does_not_branch_when_overflow_flag_clear");
 }
 
+static void test_ldx_zeropage_loads_value(void) {
+    /* Found via Klaus Dormann's functional_test.bin integration run:
+     * LDX/LDY zeropage were both missing. */
+    setup();
+    test_ram[0x0400] = 0xA6; /* LDX $10 */
+    test_ram[0x0401] = 0x10;
+    test_ram[0x0010] = 0x3D;
+    step6502();
+    CHECK(x == 0x3D && pc == 0x0402 && clockticks6502 == 3,
+          "test_ldx_zeropage_loads_value");
+}
+
+static void test_ldy_zeropage_loads_value(void) {
+    setup();
+    test_ram[0x0400] = 0xA4; /* LDY $10 */
+    test_ram[0x0401] = 0x10;
+    test_ram[0x0010] = 0x4E;
+    step6502();
+    CHECK(y == 0x4E && pc == 0x0402 && clockticks6502 == 3,
+          "test_ldy_zeropage_loads_value");
+}
+
+static void test_ldy_zeropage_x_loads_value_with_index(void) {
+    /* Found via Klaus Dormann's functional_test.bin integration run:
+     * LDY zeropage,X was missing. */
+    setup();
+    x = 0x03;
+    test_ram[0x0400] = 0xB4; /* LDY $10,X */
+    test_ram[0x0401] = 0x10;
+    test_ram[0x0013] = 0x5F; /* $10 + X = $13 */
+    step6502();
+    CHECK(y == 0x5F && pc == 0x0402 && clockticks6502 == 4,
+          "test_ldy_zeropage_x_loads_value_with_index");
+}
+
 int main(void) {
     test_nop_advances_pc_and_takes_2_cycles();
     test_lda_immediate_loads_value();
@@ -1691,6 +1726,9 @@ int main(void) {
     test_bvc_does_not_branch_when_overflow_flag_set();
     test_bvs_branches_when_overflow_flag_set();
     test_bvs_does_not_branch_when_overflow_flag_clear();
+    test_ldx_zeropage_loads_value();
+    test_ldy_zeropage_loads_value();
+    test_ldy_zeropage_x_loads_value_with_index();
 
     if (failures > 0) {
         printf("\n%d test(s) FAILED\n", failures);

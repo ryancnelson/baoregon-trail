@@ -82,9 +82,10 @@ def main():
     dst_cfg = os.path.join(bio_sim_dir, "configs", "bio_display_palette.jsonc")
     shutil.copy(src_cfg, dst_cfg)
 
-    # Build the BIO binary with ziglang (needs a venv with ziglang
-    # installed -- see bio-sim-tests/README.md).
-    ziglang_python = os.environ.get("ZIGLANG_PYTHON", sys.executable)
+    # Build the BIO binary with ziglang python module.
+    biovenv_python = "/tmp/biovenv/bin/python3"
+    default_python = biovenv_python if os.path.exists(biovenv_python) else sys.executable
+    ziglang_python = os.environ.get("ZIGLANG_PYTHON", default_python)
     build_cmd = [
         ziglang_python,
         "-m",

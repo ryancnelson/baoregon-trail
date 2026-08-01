@@ -250,10 +250,28 @@ void step6502(void) {
             clockticks6502 += 2;
             break;
 
+        case 0xA6: /* LDX zeropage */
+            x = read6502(fetch_zeropage_addr());
+            set_zero_and_sign(x);
+            clockticks6502 += 3;
+            break;
+
         case 0xA0: /* LDY immediate */
             y = fetch_immediate();
             set_zero_and_sign(y);
             clockticks6502 += 2;
+            break;
+
+        case 0xA4: /* LDY zeropage */
+            y = read6502(fetch_zeropage_addr());
+            set_zero_and_sign(y);
+            clockticks6502 += 3;
+            break;
+
+        case 0xB4: /* LDY zeropage,X */
+            y = read6502(fetch_zeropage_x_addr());
+            set_zero_and_sign(y);
+            clockticks6502 += 4;
             break;
 
         case 0x85: /* STA zeropage */
