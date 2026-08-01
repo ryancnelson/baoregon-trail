@@ -39,6 +39,7 @@ void baoregon_emulator_reset_to_splash(void) {
     boot_splash_init(&g_splash_state);
     boot_splash_button_edge_state_init(&g_edge_state);
     g_in_splash_menu = 1;
+    g_total_cycles = 0ULL;
 }
 
 void baoregon_emulator_poll_input(void) {
