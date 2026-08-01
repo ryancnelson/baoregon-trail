@@ -48,8 +48,13 @@ void disk_trap_set_image(const uint8_t *image);
 int disk_trap_select_sector(uint8_t track, uint8_t sector);
 
 /* Read one byte at the given offset (0-255) within the currently selected
- * sector. Behavior is undefined if disk_trap_select_sector() has not been
- * called successfully first, or if byte_offset >= DOS33_SECTOR_SIZE. */
+ * sector. byte_offset's uint8_t type makes it always < DOS33_SECTOR_SIZE
+ * (256), so that range is never actually out of bounds. If
+ * disk_trap_select_sector() has not yet been called successfully (or its
+ * last call failed/was rejected), this safely returns 0x00 rather than
+ * reading uninitialized/stale offset state -- see
+ * tests/test_disk_trap_safe_defaults.c for the regression proof of this
+ * documented-and-tested safe-default behavior. */
 uint8_t disk_trap_read_byte(uint8_t byte_offset);
 
 #endif /* DISK_TRAP_H */
