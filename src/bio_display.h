@@ -152,6 +152,16 @@ void bio_display_render_frame_auto(int hires_mode, int page2, int mixed_mode,
  * bio_display_last_dma_push() for host-test inspection; performs no real
  * hardware I/O (there is no SPI/DMA peripheral to talk to yet -- see
  * module doc comment above).
+ *
+ * Architecture update (BRAINSTORM.md section 6B/6C, bunnie huang
+ * confirmed): the real hardware path will NOT use the PL230 MDMA
+ * controller -- it's a confirmed dead end on physical Baochip-1x
+ * silicon (config-register writes silently fail). Real display refresh
+ * will instead hand off to BIO Core 3 (a dedicated 700 MHz memcopy DMA
+ * engine, per the BIO Coprocessor Cluster Map), not a direct SPI/DMA
+ * write from BIO Core 0 itself. Still deferred pending baochip's actual
+ * BIO Core 3 register map/hardware-init sequence -- cross-domain
+ * dependency, not something to invent solo.
  */
 void bio_display_dma_push(const uint16_t *framebuffer, uint32_t pixel_count);
 
