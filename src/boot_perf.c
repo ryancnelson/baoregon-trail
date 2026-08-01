@@ -31,3 +31,10 @@ int boot_perf_is_sub_50ms(const boot_perf_metrics_t *metrics) {
     if (!metrics) return 0;
     return metrics->is_sub_50ms;
 }
+
+uint32_t boot_perf_cycles_to_us(uint64_t cycles) {
+    if ((cycles >> 32) != 0) {
+        return 0xFFFFFFFFu;
+    }
+    return ((uint32_t)cycles) / 350u;
+}

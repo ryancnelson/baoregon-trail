@@ -20,4 +20,8 @@ void boot_perf_init(boot_perf_metrics_t *metrics);
 void boot_perf_record_boot(boot_perf_metrics_t *metrics, uint64_t cycles);
 int boot_perf_is_sub_50ms(const boot_perf_metrics_t *metrics);
 
+/* Convert raw CPU cycle count to microseconds at 350 MHz (350 cycles/us).
+ * Safely clamps to UINT32_MAX on overflow. */
+uint32_t boot_perf_cycles_to_us(uint64_t cycles);
+
 #endif /* BOOT_PERF_H */
