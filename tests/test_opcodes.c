@@ -1592,6 +1592,83 @@ static void test_ldy_zeropage_x_loads_value_with_index(void) {
           "test_ldy_zeropage_x_loads_value_with_index");
 }
 
+static void test_and_zeropage_x_masks_accumulator_with_index(void) {
+    /* Found via Klaus Dormann's functional_test.bin integration run:
+     * AND/ORA/EOR/ADC/SBC/CMP zeropage,X were all missing. */
+    setup();
+    a = 0xF0;
+    x = 0x02;
+    test_ram[0x0400] = 0x35; /* AND $10,X */
+    test_ram[0x0401] = 0x10;
+    test_ram[0x0012] = 0x0F;
+    step6502();
+    CHECK(a == 0x00 && pc == 0x0402 && clockticks6502 == 4,
+          "test_and_zeropage_x_masks_accumulator_with_index");
+}
+
+static void test_ora_zeropage_x_sets_bits_with_index(void) {
+    setup();
+    a = 0x0F;
+    x = 0x02;
+    test_ram[0x0400] = 0x15; /* ORA $10,X */
+    test_ram[0x0401] = 0x10;
+    test_ram[0x0012] = 0xF0;
+    step6502();
+    CHECK(a == 0xFF && pc == 0x0402 && clockticks6502 == 4,
+          "test_ora_zeropage_x_sets_bits_with_index");
+}
+
+static void test_eor_zeropage_x_toggles_bits_with_index(void) {
+    setup();
+    a = 0xFF;
+    x = 0x02;
+    test_ram[0x0400] = 0x55; /* EOR $10,X */
+    test_ram[0x0401] = 0x10;
+    test_ram[0x0012] = 0x0F;
+    step6502();
+    CHECK(a == 0xF0 && pc == 0x0402 && clockticks6502 == 4,
+          "test_eor_zeropage_x_toggles_bits_with_index");
+}
+
+static void test_adc_zeropage_x_adds_value_with_index(void) {
+    setup();
+    status &= (uint8_t)~FLAG_CARRY;
+    a = 0x10;
+    x = 0x02;
+    test_ram[0x0400] = 0x75; /* ADC $10,X */
+    test_ram[0x0401] = 0x10;
+    test_ram[0x0012] = 0x05;
+    step6502();
+    CHECK(a == 0x15 && pc == 0x0402 && clockticks6502 == 4,
+          "test_adc_zeropage_x_adds_value_with_index");
+}
+
+static void test_sbc_zeropage_x_subtracts_value_with_index(void) {
+    setup();
+    status |= FLAG_CARRY;
+    a = 0x10;
+    x = 0x02;
+    test_ram[0x0400] = 0xF5; /* SBC $10,X */
+    test_ram[0x0401] = 0x10;
+    test_ram[0x0012] = 0x05;
+    step6502();
+    CHECK(a == 0x0B && pc == 0x0402 && clockticks6502 == 4,
+          "test_sbc_zeropage_x_subtracts_value_with_index");
+}
+
+static void test_cmp_zeropage_x_compares_value_with_index(void) {
+    setup();
+    a = 0x30;
+    x = 0x02;
+    test_ram[0x0400] = 0xD5; /* CMP $10,X */
+    test_ram[0x0401] = 0x10;
+    test_ram[0x0012] = 0x30;
+    step6502();
+    CHECK((status & FLAG_ZERO) != 0 && (status & FLAG_CARRY) != 0 &&
+          pc == 0x0402 && clockticks6502 == 4,
+          "test_cmp_zeropage_x_compares_value_with_index");
+}
+
 int main(void) {
     test_nop_advances_pc_and_takes_2_cycles();
     test_lda_immediate_loads_value();
@@ -1729,6 +1806,12 @@ int main(void) {
     test_ldx_zeropage_loads_value();
     test_ldy_zeropage_loads_value();
     test_ldy_zeropage_x_loads_value_with_index();
+    test_and_zeropage_x_masks_accumulator_with_index();
+    test_ora_zeropage_x_sets_bits_with_index();
+    test_eor_zeropage_x_toggles_bits_with_index();
+    test_adc_zeropage_x_adds_value_with_index();
+    test_sbc_zeropage_x_subtracts_value_with_index();
+    test_cmp_zeropage_x_compares_value_with_index();
 
     if (failures > 0) {
         printf("\n%d test(s) FAILED\n", failures);
