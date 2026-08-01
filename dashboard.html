@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">8/8 Test Targets (84 Tests) GREEN</span>
+                    <span class="pill pill-green">8 Host + 1 RISC-V Target GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -394,8 +394,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: <code class="code-inline">linker.ld</code> &amp; <code class="code-inline">Makefile.riscv</code></span>
-                        <span class="pill pill-amber">In Progress (Days 3-4)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: <code class="code-inline">linker.ld</code>, <code class="code-inline">crt0.S</code> &amp; <code class="code-inline">Makefile.riscv</code></span>
+                        <span class="pill pill-green">GREEN (3.3 KB Binary)</span>
                     </div>
                 </div>
 
@@ -410,7 +410,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 4: NTSC 6-Color Decoder &amp; $C030 PWM</span>
-                        <span class="pill pill-green">GREEN (6 PASS)</span>
+                        <span class="pill pill-green">GREEN (8 PASS)</span>
                     </div>
                 </div>
 
@@ -467,7 +467,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">📅 DEF CON 34 Bring-Up Sprint</div>
-                    <span class="pill pill-green">Days 1-2 GREEN</span>
+                    <span class="pill pill-green">Days 1-4 GREEN</span>
                 </div>
                 <div class="timeline">
                     <div class="timeline-item active">
@@ -480,15 +480,15 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 3 – 4: RISC-V Cross-Compilation &amp; Linker Script (IN PROGRESS)</h4>
-                            <p>Build <code class="code-inline">linker.ld</code> mapping ReRAM (<code class="code-inline">0x20000000</code>) &amp; SRAM (<code class="code-inline">0x40000000</code>) for <code class="code-inline">baosec-lite</code> target. Package <code class="code-inline">baoregon.bin</code>.</p>
+                            <h4>Days 3 – 4: RISC-V Cross-Compilation &amp; Linker Script (COMPLETE)</h4>
+                            <p><code class="code-inline">linker.ld</code>, <code class="code-inline">crt0.S</code>, and <code class="code-inline">Makefile.riscv</code> complete! Built <code class="code-inline">baoregon.bin</code> (3.3 KB ReRAM Flash image) with verified section placement.</p>
                         </div>
                     </div>
-                    <div class="timeline-item">
+                    <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 5 – 6: BIO Sim (<code class="code-inline">baochip/bio-sim</code>) &amp; Firmware Validation</h4>
-                            <p>Bunnie compiles BIO assembly for RV32E (<code class="code-inline">-march=rv32e</code>) and validates PicoRV32 execution &amp; DMA using Verilator <code class="code-inline">bio-sim</code> harness.</p>
+                            <h4>Days 5 – 6: BIO Sim (<code class="code-inline">baochip/bio-sim</code>) &amp; Firmware Validation (IN PROGRESS)</h4>
+                            <p>Bunnie compiling BIO assembly for RV32E (<code class="code-inline">-march=rv32e</code>) and validating PicoRV32 execution &amp; DMA using Verilator <code class="code-inline">bio-sim</code> harness.</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,30 +510,30 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. Official Target Naming: <code class="code-inline">baosec-lite</code></div>
+                    <div class="decision-title">1. RISC-V Cross-Compilation Pipeline (<code class="code-inline">baoregon.bin</code>)</div>
+                    <div class="decision-desc">
+                        <code class="code-inline">Makefile.riscv</code> produces <code class="code-inline">build-riscv/baoregon.bin</code> (3.3 KB raw ReRAM Flash image) using <code class="code-inline">riscv64-elf-gcc -march=rv32imac -mabi=ilp32 -ffreestanding</code>.
+                    </div>
+                </div>
+
+                <div class="decision-item">
+                    <div class="decision-title">2. Memory Section Placement Verified</div>
+                    <div class="decision-desc">
+                        <code class="code-inline">linker.ld</code> places <code class="code-inline">.text</code> in ReRAM XIP (<code class="code-inline">0x20000000</code>) and <code class="code-inline">.bss</code> (64KB RAM) in SRAM (<code class="code-inline">0x40000000</code>). Verified by <code class="code-inline">check_linker_placement.py</code>.
+                    </div>
+                </div>
+
+                <div class="decision-item">
+                    <div class="decision-title">3. Official Target Naming: <code class="code-inline">baosec-lite</code></div>
                     <div class="decision-desc">
                         Confirmed via bunnie huang: the DEF CON 34 badge core is derived from <code class="code-inline">baosec</code>, named <code class="code-inline">baosec-lite</code>. Out-of-tree app payload <code class="code-inline">baoregon.bin</code> maps cleanly to this target.
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Out-of-Tree Tooling Not Blocking Us</div>
-                    <div class="decision-desc">
-                        Standard RISC-V GCC toolchain (<code class="code-inline">riscv32-unknown-elf-gcc</code>), <code class="code-inline">linker.ld</code>, and <code class="code-inline">baochip/bio-sim</code> are 100% public today. We build payload now, ready for out-of-tree drop next week.
-                    </div>
-                </div>
-
-                <div class="decision-item">
-                    <div class="decision-title">3. BIO Core ISA Correction (RV32E) &amp; <code class="code-inline">bio-sim</code> Roadmap</div>
-                    <div class="decision-desc">
-                        BIO PicoRV32 cores use 16-register <b>RV32E</b>. Verilator-based <code class="code-inline">baochip/bio-sim</code> will be used in Stage 3 (Days 5-6) by Bunnie to test BIO firmware before hardware flash.
-                    </div>
-                </div>
-
-                <div class="decision-item">
                     <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (84 PASS), and auto-pushes to Gitea (<code class="code-inline">origin main</code>).
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
