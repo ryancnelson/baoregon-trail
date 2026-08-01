@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">STEP 5 CLEAR BUTTON STATES HELPER (316 Tests) GREEN</span>
+                    <span class="pill pill-green">STEP 5 CLEAR ANNUNCIATOR STATES HELPER (317 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -394,8 +394,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Clear Button States Helper (<code class="code-inline">apple2_mem.c</code>)</span>
-                        <span class="pill pill-green">GREEN (14.0 KB Binary)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Clear Annunciator States Helper (<code class="code-inline">apple2_mem.c</code>)</span>
+                        <span class="pill pill-green">GREEN (14.1 KB Binary)</span>
                     </div>
                 </div>
 
@@ -410,7 +410,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Text Mode Aware Display Rendering (<code class="code-inline">bio_display.c</code>)</span>
-                        <span class="pill pill-green">GREEN (316 PASS)</span>
+                        <span class="pill pill-green">GREEN (317 PASS)</span>
                     </div>
                 </div>
 
@@ -487,8 +487,8 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 5 – 6: Clear Button States Helper (<code class="code-inline">apple2_mem.c</code>) (COMPLETE)</h4>
-                            <p>Duke added <code class="code-inline">apple2_mem_clear_button_states()</code> with unit tests in <code class="code-inline">tests/test_apple2_mem_clear_buttons.c</code> (316 tests GREEN)!</p>
+                            <h4>Days 5 – 6: Clear Annunciator States Helper (<code class="code-inline">apple2_mem.c</code>) (COMPLETE)</h4>
+                            <p>Duke added <code class="code-inline">apple2_mem_clear_annunciator_states()</code> with unit tests in <code class="code-inline">tests/test_apple2_mem_clear_annunciators.c</code> (317 tests GREEN)!</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,30 +510,30 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. Clear Button States Helper Landed (<code class="code-inline">apple2_mem.c</code>)</div>
+                    <div class="decision-title">1. Clear Annunciator States Helper Landed (<code class="code-inline">apple2_mem.c</code>)</div>
                     <div class="decision-desc">
-                        Duke added <code class="code-inline">apple2_mem_clear_button_states()</code> with unit tests in <code class="code-inline">tests/test_apple2_mem_clear_buttons.c</code> (316 tests GREEN)!
+                        Duke added <code class="code-inline">apple2_mem_clear_annunciator_states()</code> with unit tests in <code class="code-inline">tests/test_apple2_mem_clear_annunciators.c</code> (317 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Cycles Per Frame Getter Landed (<code class="code-inline">emulator_loop.c</code>)</div>
+                    <div class="decision-title">2. Clear Button States Helper Landed (<code class="code-inline">apple2_mem.c</code>)</div>
                     <div class="decision-desc">
-                        Duke added <code class="code-inline">baoregon_emulator_get_cycles_per_frame()</code> with unit tests in <code class="code-inline">tests/test_emulator_loop_cycles_per_frame.c</code> (316 tests GREEN)!
+                        Duke added <code class="code-inline">apple2_mem_clear_button_states()</code> with unit tests in <code class="code-inline">tests/test_apple2_mem_clear_buttons.c</code> (317 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">3. Init/Reset Parity Refactor (<code class="code-inline">emulator_loop.c</code>)</div>
+                    <div class="decision-title">3. Cycles Per Frame Getter Landed (<code class="code-inline">emulator_loop.c</code>)</div>
                     <div class="decision-desc">
-                        Duke extracted <code class="code-inline">reset_to_splash_menu()</code> helper in <code class="code-inline">src/emulator_loop.c</code> ensuring 100% state parity between init and reset with unit tests in <code class="code-inline">tests/test_emulator_loop_init_reset_parity.c</code> (316 tests GREEN)!
+                        Duke added <code class="code-inline">baoregon_emulator_get_cycles_per_frame()</code> with unit tests in <code class="code-inline">tests/test_emulator_loop_cycles_per_frame.c</code> (317 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
                     <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (316 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (317 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
