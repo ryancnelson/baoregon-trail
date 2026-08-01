@@ -911,3 +911,20 @@ c59d5ac build_cartridge_image.py: handle output write failures gracefully
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  
 [2026-08-01 06:47:00] --- checking baochip ---
+[2026-08-01 06:48:33] baochip reply (truncated): �────
+  ###    Repository Sync
+
+  All commits pushed to Gitea origin main at http://biggie:3000/ryan/baoregon-
+  trail.git.
+  Live Status Dashboard: **dashboard.html**.
+
+────────────────────────────────────────────────────────────────────────────────────────
+>
+────────────────────────────────────────────────────────────────────────────────────────
+? for shortcuts                                                  Gemini 3.6 Flash · high
+[2026-08-01 06:48:33] recent commits: b4a9111 Update dashboard.html: 333 tests GREEN, 14.1 KB RISC-V binary, Disk Sector Layout Boundary Cases Test landed
+548e424 disk_sector_layout: add test_disk_sector_layout_boundary_cases unit test (333 tests GREEN)
+5f15c93 Update dashboard.html: 332 tests GREEN, 14.1 KB RISC-V binary, Sample Boot DSK Write Error Test landed
+8c40533 tools: add test_create_sample_boot_dsk_write_error python unit test (332 tests GREEN)
+4bbdbf7 apple2_mem: lock in $C000-$C0FF softswitch region exact boundary with regression test
+[2026-08-01 06:48:33] sleeping 300s...
