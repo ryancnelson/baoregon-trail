@@ -1285,3 +1285,33 @@ void exec6502(uint32_t tickcount) {
         step6502();
     }
 }
+
+void irq6502(void) {
+    if (status & FLAG_INTERRUPT) {
+        return; /* masked: real 6502 IRQ pin behavior while I-flag is set */
+    }
+    push8((uint8_t)(pc >> 8));
+    push8((uint8_t)(pc & 0xFF));
+    push8((uint8_t)((status & (uint8_t)~FLAG_BREAK) | FLAG_CONSTANT));
+    status |= FLAG_INTERRUPT;
+    {
+        uint16_t lo = read6502(0xFFFE);
+        uint16_t hi = read6502(0xFFFF);
+        pc = (uint16_t)(lo | (hi << 8));
+    }
+    clockticks6502 += 7;
+}
+
+void nmi6502(void) {
+    /* Non-maskable: fires regardless of FLAG_INTERRUPT, unlike irq6502(). */
+    push8((uint8_t)(pc >> 8));
+    push8((uint8_t)(pc & 0xFF));
+    push8((uint8_t)((status & (uint8_t)~FLAG_BREAK) | FLAG_CONSTANT));
+    status |= FLAG_INTERRUPT;
+    {
+        uint16_t lo = read6502(0xFFFA);
+        uint16_t hi = read6502(0xFFFB);
+        pc = (uint16_t)(lo | (hi << 8));
+    }
+    clockticks6502 += 7;
+}

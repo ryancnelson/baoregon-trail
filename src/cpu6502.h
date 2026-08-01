@@ -39,4 +39,16 @@ void reset6502(void);
 void exec6502(uint32_t tickcount);
 void step6502(void);
 
+/* Real hardware interrupt entry points -- distinct from the software BRK
+ * opcode. Call these to model an asynchronous peripheral interrupt (a
+ * future VBL/timer signal, etc.) firing between instructions:
+ *   irq6502(): maskable, ignored while FLAG_INTERRUPT is set. Pushes the
+ *     unmodified PC (no BRK-style +1 padding-byte skip) and status with
+ *     the B flag clear, sets FLAG_INTERRUPT, jumps through the shared
+ *     IRQ/BRK vector at $FFFE/$FFFF.
+ *   nmi6502(): identical stack/vector mechanics but through the dedicated
+ *     NMI vector at $FFFA/$FFFB, and NEVER masked by FLAG_INTERRUPT. */
+void irq6502(void);
+void nmi6502(void);
+
 #endif /* CPU6502_H */
