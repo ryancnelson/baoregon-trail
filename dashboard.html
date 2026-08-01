@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">STEP 3 ALL SOFTSWITCHES (253 Tests) GREEN</span>
+                    <span class="pill pill-green">STEP 5 HARDWARE WIRING (261 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -379,8 +379,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 3: Paddle Timers ($C070/$C064) + Annunciators ($C058-$C05F)</span>
-                        <span class="pill pill-green">GREEN (50/50 PASS)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 3: Softswitch Matrix + Button Getter (<code class="code-inline">apple2_mem.c</code>)</span>
+                        <span class="pill pill-green">GREEN (51/51 PASS)</span>
                     </div>
                 </div>
 
@@ -394,8 +394,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Retro Boot-Splash Selector (<code class="code-inline">boot_splash.c</code>) &amp; 3-Button Nav</span>
-                        <span class="pill pill-green">GREEN (12.0 KB Binary)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Boot-Splash Badge Button Polling (<code class="code-inline">boot_splash.c</code>)</span>
+                        <span class="pill pill-green">GREEN (12.2 KB Binary)</span>
                     </div>
                 </div>
 
@@ -487,8 +487,8 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 5 – 6: BIO Sim (<code class="code-inline">baochip/bio-sim</code>) &amp; Boot Selector (IN PROGRESS)</h4>
-                            <p>Duke landed <code class="code-inline">boot_splash.c</code> 3-button game menu selector; Bunnie landed PAGE2 video DMA (<code class="code-inline">bio_display.c</code>) and Verilator <code class="code-inline">bio-sim</code> palette tests.</p>
+                            <h4>Days 5 – 6: Boot Selector &amp; Hardware Button Polling (COMPLETE)</h4>
+                            <p>Duke &amp; Woz wired physical badge 3-button polling (<code class="code-inline">apple2_mem_get_button_state</code>) to <code class="code-inline">boot_splash.c</code>! Bunnie landed PAGE2 video DMA (<code class="code-inline">bio_display.c</code>) and Verilator <code class="code-inline">bio-sim</code> palette tests.</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,30 +510,30 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. BIO Core 0 PAGE2 Video DMA Unswizzling Landed (<code class="code-inline">bio_display.c</code>)</div>
+                    <div class="decision-title">1. Boot-Splash Badge Button Polling Landed (<code class="code-inline">boot_splash.c</code>)</div>
+                    <div class="decision-desc">
+                        Duke and Woz wired <code class="code-inline">boot_splash_poll_apple2_mem_buttons()</code> to poll physical badge button state from <code class="code-inline">apple2_mem_get_button_state()</code> for 3-button PREV/NEXT/SELECT game cartridge navigation!
+                    </div>
+                </div>
+
+                <div class="decision-item">
+                    <div class="decision-title">2. BIO Core 0 PAGE2 Video DMA Unswizzling Landed (<code class="code-inline">bio_display.c</code>)</div>
                     <div class="decision-desc">
                         Bunnie landed PAGE2 video DMA unswizzling (<code class="code-inline">$0800-$0BFF</code> Text Page 2 &amp; <code class="code-inline">$4000-$7FFF</code> Hi-Res Page 2) in <code class="code-inline">src/bio_display.c</code> for BIO Core 0 hardware scanline rendering!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Full Apple II Memory Softswitch Matrix Complete (253 Tests)</div>
+                    <div class="decision-title">3. Full Apple II Memory Softswitch Matrix Complete (261 Tests)</div>
                     <div class="decision-desc">
                         Woz landed Paddle Timers ($C070 PDRIVE countdown, $C064-$C067 PADDLE0-3) and Annunciator outputs AN0-AN3 ($C058-$C05F), completing 100% of the Apple II I/O softswitch matrix!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">3. Boot-Splash Game Selector Landed (<code class="code-inline">boot_splash.c</code>)</div>
-                    <div class="decision-desc">
-                        Duke landed <code class="code-inline">src/boot_splash.c</code> with 3-button navigation (PREV/NEXT/SELECT), cycling 6 game slots and pointing <code class="code-inline">disk_trap_set_image()</code> at selected ReRAM offset.
-                    </div>
-                </div>
-
-                <div class="decision-item">
                     <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (253 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (261 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
