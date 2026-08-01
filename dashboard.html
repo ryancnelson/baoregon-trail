@@ -302,7 +302,7 @@
 
         /* Hardware Specs Box */
         .spec-grid {
-            display grid;
+            display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 1rem;
         }
@@ -379,8 +379,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 2: 130 Opcodes + Klaus Dormann Harness</span>
-                        <span class="pill pill-green">GREEN (130 PASS)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 2: Full BCD Decimal-Mode ADC/SBC Landed</span>
+                        <span class="pill pill-green">GREEN (BCD PASS)</span>
                     </div>
                 </div>
 
@@ -395,7 +395,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Retro Boot-Splash Selector (<code class="code-inline">boot_splash.c</code>) &amp; 3-Button Nav</span>
-                        <span class="pill pill-green">GREEN (9.4 KB Binary)</span>
+                        <span class="pill pill-green">GREEN (9.5 KB Binary)</span>
                     </div>
                 </div>
 
@@ -474,14 +474,14 @@
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
                             <h4>Days 1 – 2: 6502 Core, Memory Router, Audio &amp; Disk Generator (COMPLETE)</h4>
-                            <p>Woz: 130 CPU Opcodes GREEN + Klaus Dormann harness. Duke: Memory router (<code class="code-inline">apple2_mem.c</code>), traps &amp; <code class="code-inline">embed_disk.py</code> GREEN. Bunnie: 192-line un-swizzler &amp; $C030 PWM GREEN.</p>
+                            <p>Woz: Full 6502 CPU + BCD decimal-mode ADC/SBC GREEN + Klaus Dormann harness. Duke: Memory router (<code class="code-inline">apple2_mem.c</code>), traps &amp; <code class="code-inline">embed_disk.py</code> GREEN. Bunnie: 192-line un-swizzler &amp; $C030 PWM GREEN.</p>
                         </div>
                     </div>
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
                             <h4>Days 3 – 4: RISC-V Cross-Compilation &amp; Linker Script (COMPLETE)</h4>
-                            <p><code class="code-inline">linker.ld</code>, <code class="code-inline">crt0.S</code>, and <code class="code-inline">Makefile.riscv</code> complete! Built <code class="code-inline">baoregon.bin</code> (9.4 KB ReRAM Flash image) with verified section placement.</p>
+                            <p><code class="code-inline">linker.ld</code>, <code class="code-inline">crt0.S</code>, and <code class="code-inline">Makefile.riscv</code> complete! Built <code class="code-inline">baoregon.bin</code> (9.5 KB ReRAM Flash image) with verified section placement.</p>
                         </div>
                     </div>
                     <div class="timeline-item active">
@@ -510,23 +510,23 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. Boot-Splash Game Selector Landed (<code class="code-inline">boot_splash.c</code>)</div>
+                    <div class="decision-title">1. BCD Decimal-Mode ADC/SBC Landed (Woz)</div>
+                    <div class="decision-desc">
+                        Woz implemented full BCD decimal-mode arithmetic in <code class="code-inline">src/cpu6502.c</code> for accurate Apple II gaming math (scores, dates, inventory calculations in <i>The Oregon Trail</i>).
+                    </div>
+                </div>
+
+                <div class="decision-item">
+                    <div class="decision-title">2. Boot-Splash Game Selector Landed (<code class="code-inline">boot_splash.c</code>)</div>
                     <div class="decision-desc">
                         Duke landed <code class="code-inline">src/boot_splash.c</code> with 3-button navigation (PREV/NEXT/SELECT), cycling 6 game slots and pointing <code class="code-inline">disk_trap_set_image()</code> at selected ReRAM offset.
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Authoritative Power &amp; BIO Independent Execution (bunnie huang)</div>
+                    <div class="decision-title">3. Authoritative Power &amp; BIO Independent Execution (bunnie huang)</div>
                     <div class="decision-desc">
                         Full on ~40 mA; WFI sleep ~12–14 mA; Deep sleep &lt;1 mA. BIO cores execute 100% independently while main CPU is in WFI sleep.
-                    </div>
-                </div>
-
-                <div class="decision-item">
-                    <div class="decision-title">3. PL230 MDMA Erratum &amp; BIO3 DMA Engine (CONFIRMED)</div>
-                    <div class="decision-desc">
-                        bunnie huang confirmed PL230 MDMA config writes silently fail on silicon. Workaround: BIO Core 3 dedicated as a 700 MHz memory-copy DMA engine.
                     </div>
                 </div>
 
