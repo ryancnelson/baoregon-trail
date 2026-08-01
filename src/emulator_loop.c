@@ -85,6 +85,10 @@ int baoregon_emulator_is_splash_menu_active(void) {
     return baoregon_emulator_is_in_splash_menu();
 }
 
+int baoregon_emulator_is_game_running(void) {
+    return !baoregon_emulator_is_in_splash_menu();
+}
+
 void baoregon_emulator_reset_to_splash(void) {
     reset_to_splash_menu();
 }

@@ -17,6 +17,7 @@ uint32_t baoregon_emulator_run_frame(void);
 void baoregon_emulator_poll_input(void);
 int baoregon_emulator_is_in_splash_menu(void);
 int baoregon_emulator_is_splash_menu_active(void);
+int baoregon_emulator_is_game_running(void);
 void baoregon_emulator_reset_to_splash(void);
 uint64_t baoregon_emulator_get_total_cycles(void);
 int baoregon_emulator_is_audio_active(void);
