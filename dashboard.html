@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">FABLE-5 ITEMS LANDED (318 Tests) GREEN</span>
+                    <span class="pill pill-green">STEP 5 SPLASH MENU ACTIVE GETTER (319 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -394,7 +394,7 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Sample Boot .dsk Generator &amp; Header Embedder</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Splash Menu Active Getter (<code class="code-inline">emulator_loop.c</code>)</span>
                         <span class="pill pill-green">GREEN (14.1 KB Binary)</span>
                     </div>
                 </div>
@@ -410,7 +410,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Interactive Terminal Runner (<code class="code-inline">make terminal-play</code>)</span>
-                        <span class="pill pill-green">GREEN (318 PASS)</span>
+                        <span class="pill pill-green">GREEN (319 PASS)</span>
                     </div>
                 </div>
 
@@ -487,8 +487,8 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 5 – 6: Fable-5 Composed System Boot &amp; Playable Terminal (COMPLETE)</h4>
-                            <p>Duke &amp; Bunnie landed <code class="code-inline">test_dos33_composed_boot.c</code> and interactive <code class="code-inline">make terminal-play</code> runner (318 tests GREEN)!</p>
+                            <h4>Days 5 – 6: Splash Menu Active Getter (<code class="code-inline">emulator_loop.c</code>) (COMPLETE)</h4>
+                            <p>Duke &amp; Bunnie added <code class="code-inline">baoregon_emulator_is_splash_menu_active()</code> with unit tests in <code class="code-inline">tests/test_emulator_loop_splash_active.c</code> (319 tests GREEN)!</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,30 +510,30 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. Composed System Disk Boot Integration Test (<code class="code-inline">test_dos33_composed_boot.c</code>)</div>
+                    <div class="decision-title">1. Splash Menu Active Getter Landed (<code class="code-inline">emulator_loop.c</code>)</div>
                     <div class="decision-desc">
-                        Fable-5 Item 1: Created <code class="code-inline">tools/create_sample_boot_dsk.py</code> generating <code class="code-inline">disks/dos33_sample.dsk</code> (140 KiB flat DOS 3.3 image) embedded into <code class="code-inline">src/embedded_disk_dos33.h</code>, driven through composed <code class="code-inline">cpu6502+apple2_mem+disk_trap</code> (318 tests GREEN)!
+                        Duke added <code class="code-inline">baoregon_emulator_is_splash_menu_active()</code> with unit tests in <code class="code-inline">tests/test_emulator_loop_splash_active.c</code> (319 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Playable Terminal Runner Landed (<code class="code-inline">make terminal-play</code>)</div>
+                    <div class="decision-title">2. Composed System Disk Boot Integration Test (<code class="code-inline">test_dos33_composed_boot.c</code>)</div>
+                    <div class="decision-desc">
+                        Fable-5 Item 1: Created <code class="code-inline">tools/create_sample_boot_dsk.py</code> generating <code class="code-inline">disks/dos33_sample.dsk</code> (140 KiB flat DOS 3.3 image) embedded into <code class="code-inline">src/embedded_disk_dos33.h</code>, driven through composed <code class="code-inline">cpu6502+apple2_mem+disk_trap</code> (319 tests GREEN)!
+                    </div>
+                </div>
+
+                <div class="decision-item">
+                    <div class="decision-title">3. Playable Terminal Runner Landed (<code class="code-inline">make terminal-play</code>)</div>
                     <div class="decision-desc">
                         Fable-5 Item 2: Built interactive host terminal runner <code class="code-inline">tools/terminal_emulator.c</code> (<code class="code-inline">build/terminal_emulator</code>) reading live non-blocking key inputs, updating pushbutton states/keyboard latches, and rendering 320x240 RGB565 framebuffers via ANSI truecolor half-blocks!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">3. Clear Annunciator &amp; Button States Helpers (<code class="code-inline">apple2_mem.c</code>)</div>
-                    <div class="decision-desc">
-                        Duke added <code class="code-inline">apple2_mem_clear_annunciator_states()</code> and <code class="code-inline">apple2_mem_clear_button_states()</code> with unit tests (318 tests GREEN)!
-                    </div>
-                </div>
-
-                <div class="decision-item">
                     <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (318 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (319 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
