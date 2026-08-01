@@ -52,7 +52,9 @@ void disk_trap_set_image(const uint8_t *image);
  * reset (e.g. the 3-button soft-reset combo, or a failed boot retry)
  * can never leak into a fresh boot attempt -- see
  * tests/test_apple2_mem_reset_clears_disk_trap_selection.c for the
- * real bug this fixes. */
+ * end-to-end regression proof (exercises the real apple2_mem_reset() ->
+ * disk_trap_reset() wiring through the actual $C0E0/$C0E1/$C0EC
+ * softswitch path, not just this module in isolation). */
 void disk_trap_reset(void);
 
 /* Returns 1 if a valid (track, sector) selection is currently active,
