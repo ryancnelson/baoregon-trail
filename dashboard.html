@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">5/5 Test Targets GREEN</span>
+                    <span class="pill pill-green">6/6 Test Targets GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -379,8 +379,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 2: <code class="code-inline">cpu6502.c</code> 25 Opcodes &amp; Reset</span>
-                        <span class="pill pill-green">GREEN (100% PASS)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 2: <code class="code-inline">cpu6502.c</code> 49 Opcodes + Reset</span>
+                        <span class="pill pill-green">GREEN (49 PASS)</span>
                     </div>
                 </div>
 
@@ -394,8 +394,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 3: <code class="code-inline">disk_sector_layout.c</code> &amp; <code class="code-inline">disk_trap.c</code></span>
-                        <span class="pill pill-green">GREEN (100% PASS)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 3: Sector Layout, Fast Trap &amp; <code class="code-inline">embed_disk.py</code></span>
+                        <span class="pill pill-green">GREEN (8 PASS)</span>
                     </div>
                 </div>
 
@@ -409,8 +409,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 4: <code class="code-inline">video_apple2.c</code> 192-Line Un-Swizzler</span>
-                        <span class="pill pill-green">GREEN (100% PASS)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 4: Un-Swizzler &amp; <code class="code-inline">bunnie_audio.c</code> $C030 PWM</span>
+                        <span class="pill pill-green">GREEN (6 PASS)</span>
                     </div>
                 </div>
 
@@ -473,8 +473,8 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 1 – 2: 6502 Core, Memory &amp; Video Decoding (COMPLETE)</h4>
-                            <p>Woz: 25 CPU Opcodes &amp; Reset tests GREEN. Duke: Sector layout &amp; ReRAM disk read traps GREEN. Bunnie: 192-line un-swizzler GREEN.</p>
+                            <h4>Days 1 – 2: 6502 Core, Memory &amp; Audio Traps (COMPLETE)</h4>
+                            <p>Woz: 49 CPU Opcodes &amp; Reset GREEN. Duke: Sector layout &amp; ReRAM disk read traps GREEN. Bunnie: 192-line un-swizzler &amp; $C030 speaker PWM GREEN.</p>
                         </div>
                     </div>
                     <div class="timeline-item active">
@@ -531,9 +531,9 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">4. Zero Blockers Currently Flagged</div>
+                    <div class="decision-title">4. Bunnie's $C030 Speaker PWM Trap Landed</div>
                     <div class="decision-desc">
-                        All 5 test binaries in <code class="code-inline">make test</code> compiling cleanly and passing 100%. Remote synced to Gitea (<code class="code-inline">origin main</code>).
+                        Fire-and-forget memory-mapped flag mechanism implemented in <code class="code-inline">src/bunnie_audio.c</code>. BIO Core 1 polls flag and toggles PWM pin without stalling main 6502 loop.
                     </div>
                 </div>
 
