@@ -46,7 +46,8 @@ SOURCES = \
     $(SRC_DIR)/cartridge_layout.c \
     $(SRC_DIR)/rram_driver.c \
     $(SRC_DIR)/boot_splash.c \
-    $(SRC_DIR)/emulator_loop.c
+    $(SRC_DIR)/emulator_loop.c \
+    $(SRC_DIR)/boot_perf.c
 
 OBJECTS = $(patsubst $(SRC_DIR)/%.S,$(BUILD_DIR)/%.o,\
             $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SOURCES)))
