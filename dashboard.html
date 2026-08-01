@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">STEP 5 CARTRIDGE LAYOUT FIND BY TITLE TEST (349 Tests) GREEN</span>
+                    <span class="pill pill-green">SYSTEM ROM LOADER TEST (350 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -379,8 +379,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Boot Perf NULL Metrics &amp; 50ms Boundary Test (<code class="code-inline">test_boot_perf_null_metrics.c</code>)</span>
-                        <span class="pill pill-green">GREEN (349 PASS)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">System ROM Loader API &amp; Test (<code class="code-inline">test_apple2_mem_load_system_rom.c</code>)</span>
+                        <span class="pill pill-green">GREEN (350 PASS)</span>
                     </div>
                 </div>
 
@@ -410,7 +410,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Lo-Res Graphics Row Offsets &amp; Bounds Safety Test (<code class="code-inline">test_lores_apple2_row_offsets_bounds.c</code>)</span>
-                        <span class="pill pill-green">GREEN (349 PASS)</span>
+                        <span class="pill pill-green">GREEN (350 PASS)</span>
                     </div>
                 </div>
 
@@ -487,8 +487,8 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 5 – 6: Cartridge Layout Find Slot By Title Test (<code class="code-inline">cartridge_layout.c</code>) (COMPLETE)</h4>
-                            <p>Duke added <code class="code-inline">test_cartridge_layout_find_by_title.c</code> verifying title lookup API, exact address resolution, and NULL pointer safety (349 tests GREEN)!</p>
+                            <h4>Days 5 – 6: System ROM Loader API &amp; Unit Test (<code class="code-inline">apple2_mem.c</code>) (COMPLETE)</h4>
+                            <p>Woz landed <code class="code-inline">apple2_mem_load_system_rom()</code> and <code class="code-inline">test_apple2_mem_load_system_rom.c</code> verifying 16KB system firmware ROM loading, softswitch ROM/RAM selection, and safe unloading (350 tests GREEN)!</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,30 +510,30 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. Cartridge Layout Find Slot By Title API Landed (<code class="code-inline">cartridge_layout.c</code>)</div>
+                    <div class="decision-title">1. System Firmware ROM Loader API &amp; Test Landed (<code class="code-inline">apple2_mem.c</code>)</div>
                     <div class="decision-desc">
-                        Duke added <code class="code-inline">cartridge_layout_find_slot_by_title()</code> and <code class="code-inline">test_cartridge_layout_find_by_title.c</code> proving exact title lookup, address resolution, and NULL title safety (349 tests GREEN)!
+                        Woz added <code class="code-inline">apple2_mem_load_system_rom()</code> and <code class="code-inline">test_apple2_mem_load_system_rom.c</code> proving 16KB Apple IIe system firmware ROM loading, LC softswitch ROM/RAM gating, and clean NULL unload safety (350 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Lo-Res Graphics Row Offsets &amp; Bounds Safety Test Landed (<code class="code-inline">lores_apple2.c</code>)</div>
+                    <div class="decision-title">2. Cartridge Layout Find Slot By Title API Landed (<code class="code-inline">cartridge_layout.c</code>)</div>
                     <div class="decision-desc">
-                        Bunnie added <code class="code-inline">test_lores_apple2_row_offsets_bounds.c</code> proving <code class="code-inline">lores_byte_row_offsets[]</code> entries stay strictly inside the 1KB Page 1/2 range (349 tests GREEN)!
+                        Duke added <code class="code-inline">cartridge_layout_find_slot_by_title()</code> and <code class="code-inline">test_cartridge_layout_find_by_title.c</code> proving title lookup, address resolution, and NULL title safety!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">3. Hi-Res Video Row Offsets &amp; Bounds Safety Test Landed (<code class="code-inline">video_apple2.c</code>)</div>
+                    <div class="decision-title">3. Lo-Res Graphics Row Offsets &amp; Bounds Safety Test Landed (<code class="code-inline">lores_apple2.c</code>)</div>
                     <div class="decision-desc">
-                        Bunnie added <code class="code-inline">test_video_apple2_row_offsets_bounds.c</code> proving <code class="code-inline">hires_line_offsets[]</code> entries stay strictly inside the 8KB Hi-Res page (349 tests GREEN)!
+                        Bunnie added <code class="code-inline">test_lores_apple2_row_offsets_bounds.c</code> proving <code class="code-inline">lores_byte_row_offsets[]</code> entries stay strictly inside the 1KB Page 1/2 range!
                     </div>
                 </div>
 
                 <div class="decision-item">
                     <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (349 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (350 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
