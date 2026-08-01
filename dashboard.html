@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">STEP 5 LORES COLOR BOUNDS SAFETY TEST (337 Tests) GREEN</span>
+                    <span class="pill pill-green">STEP 5 EMULATOR LOOP COPY FRAMEBUFFER NULL SAFETY TEST (338 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -380,7 +380,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: NMOS Decimal Flag Reset Parity (<code class="code-inline">test_reset_does_not_clear_decimal_flag</code>)</span>
-                        <span class="pill pill-green">GREEN (337 PASS)</span>
+                        <span class="pill pill-green">GREEN (338 PASS)</span>
                     </div>
                 </div>
 
@@ -409,8 +409,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Lo-Res Color Palette & Bounds Safety Test (<code class="code-inline">test_lores_apple2_color_bounds.c</code>)</span>
-                        <span class="pill pill-green">GREEN (337 PASS)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Emulator Loop Copy Framebuffer Safety Test (<code class="code-inline">test_emulator_loop_copy_framebuffer_null_safety.c</code>)</span>
+                        <span class="pill pill-green">GREEN (338 PASS)</span>
                     </div>
                 </div>
 
@@ -487,8 +487,8 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 5 – 6: Lo-Res Color Palette &amp; Bounds Safety Test (<code class="code-inline">lores_apple2.c</code>) (COMPLETE)</h4>
-                            <p>Bunnie added <code class="code-inline">test_lores_apple2_color_bounds.c</code> verifying valid 16-color RGB565 decoding and black fallback for out-of-bounds indices (337 tests GREEN)!</p>
+                            <h4>Days 5 – 6: Emulator Loop Copy Framebuffer Safety Test (<code class="code-inline">emulator_loop.c</code>) (COMPLETE)</h4>
+                            <p>Bunnie added <code class="code-inline">test_emulator_loop_copy_framebuffer_null_safety.c</code> verifying safe rejection of NULL destination pointers and insufficient capacities (338 tests GREEN)!</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,30 +510,30 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. Lo-Res Color Bounds Test Landed (<code class="code-inline">lores_apple2.c</code>)</div>
+                    <div class="decision-title">1. Copy Framebuffer Null Safety Test Landed (<code class="code-inline">emulator_loop.c</code>)</div>
                     <div class="decision-desc">
-                        Bunnie added <code class="code-inline">test_lores_apple2_color_bounds.c</code> proving <code class="code-inline">lores_color_to_rgb565()</code> safely handles valid colors (0..15) and out-of-bounds inputs (337 tests GREEN)!
+                        Bunnie added <code class="code-inline">test_emulator_loop_copy_framebuffer_null_safety.c</code> proving <code class="code-inline">baoregon_emulator_copy_framebuffer()</code> safely returns -1 on NULL, 0, or insufficient buffer count (338 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Disk Trap Unmounted Image Safety Test Landed (<code class="code-inline">disk_trap.c</code>)</div>
+                    <div class="decision-title">2. Lo-Res Color Bounds Test Landed (<code class="code-inline">lores_apple2.c</code>)</div>
                     <div class="decision-desc">
-                        Duke added <code class="code-inline">test_disk_trap_unmounted_image_safety.c</code> proving <code class="code-inline">disk_trap_read_byte()</code> safely returns 0x00 when unmounted/NULL (337 tests GREEN)!
+                        Bunnie added <code class="code-inline">test_lores_apple2_color_bounds.c</code> proving <code class="code-inline">lores_color_to_rgb565()</code> safely handles valid colors (0..15) and out-of-bounds inputs (338 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">3. Composed System Disk Boot Integration Test (<code class="code-inline">test_dos33_composed_boot.c</code>)</div>
+                    <div class="decision-title">3. Disk Trap Unmounted Image Safety Test Landed (<code class="code-inline">disk_trap.c</code>)</div>
                     <div class="decision-desc">
-                        Fable-5 Item 1: Created <code class="code-inline">tools/create_sample_boot_dsk.py</code> generating <code class="code-inline">disks/dos33_sample.dsk</code> (140 KiB flat DOS 3.3 image) embedded into <code class="code-inline">src/embedded_disk_dos33.h</code>, driven through composed <code class="code-inline">cpu6502+apple2_mem+disk_trap</code> (337 tests GREEN)!
+                        Duke added <code class="code-inline">test_disk_trap_unmounted_image_safety.c</code> proving <code class="code-inline">disk_trap_read_byte()</code> safely returns 0x00 when unmounted/NULL (338 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
                     <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (337 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (338 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
