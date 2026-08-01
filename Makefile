@@ -1,5 +1,5 @@
 CC = cc
-CFLAGS = -std=c99 -Wall -Wextra -g -Isrc
+CFLAGS = -std=c99 -Wall -Wextra -Isrc
 
 SRC_DIR = src
 TEST_DIR = tests
