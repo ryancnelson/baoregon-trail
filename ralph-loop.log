@@ -1319,3 +1319,9 @@ b1f1e15 disk_trap: add missing regression test for offset-unchanged-on-reject
 020478b Update ralph-loop.log with latest pass 147 status
 3928a28 Update ralph-loop.log with latest pass 146 status
 [2026-08-01 09:10:52] sleeping 300s...
+[2026-08-01 09:15:52] --- checking Woz ---
+[2026-08-01 09:19:15] Woz reply (truncated): ��───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 
+[2026-08-01 09:19:15] --- checking Bunnie ---
