@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "error: cannot open %s (run: python3 tools/create_hires_demo_dsk.py)\n", disk_path);
         return 1;
     }
-    static uint8_t boot_sector[1024];
+    static uint8_t boot_sector[9000];
     size_t got = fread(boot_sector, 1, sizeof(boot_sector), f);
     fclose(f);
     if (got < 256) {
@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
         bio_display_render_frame_auto_text_aware(is_hires, is_page2, is_mixed, is_text, read6502, framebuffer);
 
         if (is_interactive) {
-            printf("\x1b[H");
+            printf("\x1b[2J\x1b[H");
             fb_terminal_viewer_print(framebuffer);
             fflush(stdout);
             usleep(16666);
