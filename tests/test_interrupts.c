@@ -268,6 +268,34 @@ static void test_irq_and_nmi_round_trip_survives_stack_wraparound(void) {
           "test_irq_and_nmi_round_trip_survives_stack_wraparound: NMI leg");
 }
 
+static void test_irq_correctly_pushes_and_restores_pc_at_top_of_address_space(void) {
+    /* Intersection of two previously-separately-tested classes: PC
+     * wraparound at the $FFFF/$0000 boundary (test_pc_wraps_from_0xffff_
+     * to_0x0000_on_single_byte_opcode in test_opcodes.c) and interrupt
+     * push/RTI semantics -- never tested TOGETHER. If the interrupted PC
+     * is exactly $FFFF (the boundary value itself, not yet wrapped)
+     * when an IRQ fires, the pushed PC bytes (hi=0xFF, lo=0xFF) must
+     * round-trip through RTI back to exactly $FFFF, not get corrupted
+     * by any wraparound-adjacent arithmetic in the push/pull path. */
+    setup();
+    test_ram[0xFFFE] = 0x00;
+    test_ram[0xFFFF] = 0x09; /* IRQ/BRK vector -> $0900 (overlaps the same
+                                 vector bytes read here, but that's fine --
+                                 the vector read happens AFTER the push,
+                                 using the just-pushed pc's old value is
+                                 what's under test, not what's stored at
+                                 $FFFF as data) */
+    pc = 0xFFFF; /* the interrupted PC is the boundary value itself */
+    test_ram[0x0900] = 0x40; /* RTI */
+
+    irq6502();
+    CHECK(pc == 0x0900, "test_irq_correctly_pushes_and_restores_pc_at_top_of_address_space: jumped to vector");
+
+    step6502(); /* RTI: pulls the pushed PC back */
+    CHECK(pc == 0xFFFF,
+          "test_irq_correctly_pushes_and_restores_pc_at_top_of_address_space: PC=0xFFFF round-tripped intact");
+}
+
 int main(void) {
     test_irq_jumps_through_irq_brk_vector();
     test_irq_pushes_unmodified_pc_not_pc_plus_1();
@@ -281,6 +309,7 @@ int main(void) {
     test_nmi_then_rti_returns_to_interrupted_pc();
     test_nmi_fires_during_a_masked_irq_situation_unaffected();
     test_irq_and_nmi_round_trip_survives_stack_wraparound();
+    test_irq_correctly_pushes_and_restores_pc_at_top_of_address_space();
 
     if (failures == 0) {
         printf("All tests passed.\n");
