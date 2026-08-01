@@ -98,3 +98,23 @@ int boot_splash_poll_apple2_mem_buttons(boot_splash_state_t *state,
 
     return reset_needed;
 }
+
+int boot_splash_select_slot_by_index(boot_splash_state_t *state, int slot_index,
+                                       boot_splash_disk_image_setter_fn on_select) {
+    if (!state || !on_select) return 0;
+
+    if (slot_index < 0) {
+        slot_index = 0;
+    } else if (slot_index >= CARTRIDGE_SLOT_COUNT) {
+        slot_index = CARTRIDGE_SLOT_COUNT - 1;
+    }
+
+    state->selected_index = slot_index;
+    const cartridge_slot_t *slot = boot_splash_current_slot(state);
+    if (slot) {
+        on_select((const uint8_t *)(uintptr_t)slot->reram_addr);
+        return 1;
+    }
+
+    return 0;
+}

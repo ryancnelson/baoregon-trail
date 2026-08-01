@@ -1457,3 +1457,25 @@ cae98d8 apple2_mem: lock in out-of-range index guard clauses for buttons/annunci
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  
 [2026-08-01 10:23:37] --- checking Bunnie ---
+[2026-08-01 10:25:30] Bunnie reply (truncated): ��───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 
+[2026-08-01 10:25:30] --- checking Duke ---
+[2026-08-01 10:27:26] Duke reply (truncated): ��───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 
+[2026-08-01 10:27:26] --- checking baochip ---
+[2026-08-01 10:28:02] baochip reply (truncated): ────────────────────────────
+>
+────────────────────────────────────────────────────────────────────────────────────────
+  ● [10:27:47] rtk make test && make test-firmware && make test-biosim && mak... running
+────────────────────────────────────────────────────────────────────────────────────────
+? for shortcuts                             Gemini 3.6 Flash · high · 1 task(s) · /tasks
+[2026-08-01 10:28:02] recent commits: 84b0816 Update ralph-loop.log with latest pass 165 status
+b48ebfc tests: remove duplicate #include in test_apple2_mem_load_system_rom.c
+94be9b1 Update dashboard.html: 350 tests GREEN, 14.2 KB RISC-V binary, System Firmware ROM Loader Test landed
+f5556b1 apple2_mem: add load system rom unit test (350 tests GREEN)
+23c9320 Update ralph-loop.log with latest pass 163 status
+[2026-08-01 10:28:02] sleeping 300s...

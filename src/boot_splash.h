@@ -112,4 +112,10 @@ int boot_splash_poll_apple2_mem_buttons(boot_splash_state_t *state,
                                          boot_splash_button_edge_state_t *edge_state,
                                          boot_splash_disk_image_setter_fn on_select);
 
+/* Directly select a game slot by index (clamping out-of-bounds indices to valid range)
+ * and trigger on_select callback. Returns 1 if game selected (caller must reset6502()),
+ * 0 if state or on_select is NULL. */
+int boot_splash_select_slot_by_index(boot_splash_state_t *state, int slot_index,
+                                       boot_splash_disk_image_setter_fn on_select);
+
 #endif /* BOOT_SPLASH_H */
