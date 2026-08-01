@@ -161,11 +161,34 @@ static void fw_cfg_write_be64(uint64_t v) {
  *     byte order so QEMU's DEVICE_BIG_ENDIAN engine reconstructs 0x0019 cleanly.
  *   - VERIFIED under live QEMU execution (`qemu-system-riscv32 -M virt -bios none -device ramfb`):
  *     `FW_CFG_FILE_DIR` returns count = 9 files, "etc/ramfb" is found at selector
- *     key 0x0025, and ramfb_display_init() completes successfully with 100% PASS!
+ *     key 0x0025 -- BUT this initial verification missed a second, separate
+ *     bug: the first data-register read immediately after ANY selector
+ *     write returns stale/zero data, corrupting the directory walk
+ *     itself (all entries read back as select=0, name=""). Found via a
+ *     systematic-debugging UART-output repro (tools/test_ramfb_fwcfg.c)
+ *     after a live QEMU cocoa-display screendump showed no image ever
+ *     appeared; see ramfb_find_selector()'s own comment for the
+ *     re-select-before-walking workaround.
  */
 static uint16_t ramfb_find_selector(void) {
     fw_cfg_select(FW_CFG_FILE_DIR);
     uint32_t count = fw_cfg_read_be32();
+
+    /* WORKAROUND (found via systematic-debugging, 2026-08-01): the very
+     * first data-register read immediately after a selector write
+     * returns stale/zero data on this QEMU version -- confirmed via an
+     * isolated UART-output repro (tools/test_ramfb_fwcfg.c) showing the
+     * raw first 16 bytes of the directory all-zero on the first pass,
+     * but correct on a second pass after re-selecting. Re-selecting
+     * FILE_DIR (which resets fw_cfg's internal read cursor) before
+     * actually walking the directory works around it -- cheap (one
+     * extra 16-bit MMIO write), reliable (confirmed PASS across repeated
+     * runs). This may be a QEMU quirk/bug rather than documented
+     * behavior; if a future QEMU version fixes the underlying timing,
+     * this workaround is still correct, just technically redundant. */
+    fw_cfg_select(FW_CFG_FILE_DIR);
+    (void)fw_cfg_read_be32(); /* re-read (and discard) the count */
+
     if (count > RAMFB_MAX_FILES) {
         count = RAMFB_MAX_FILES; /* defensive cap, not a real-world case */
     }

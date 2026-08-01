@@ -25,6 +25,18 @@
 #include "bio_display.h"
 #include "oregon_trail_bitmap_data.h"
 
+/* Diagnostic UART output (systematic-debugging tight loop) -- confirms
+ * ramfb_display_init()'s actual return value and loop path without
+ * needing a screendump/vision check each time. Safe to leave in
+ * permanently: real Baochip-1x hardware has no UART at this address
+ * either, so this is purely a QEMU-dev-harness diagnostic, same
+ * category as the rest of this file. */
+#define UART0_BASE 0x10000000u
+static volatile uint8_t *const uart_thr = (volatile uint8_t *)UART0_BASE;
+static void uart_puts(const char *s) {
+    while (*s) *uart_thr = (uint8_t)(*s++);
+}
+
 /* From tools/ramfb_display.c -- not declared in a shared header since
  * this is a QEMU-dev-only consumer, same pattern as
  * fb_terminal_viewer_print()'s forward declaration in the other demo
@@ -49,6 +61,7 @@ int main(void) {
     write6502(0xC054, 0x00); /* PAGE2 off (page 1) */
 
     int have_ramfb = ramfb_display_init();
+    uart_puts(have_ramfb ? "have_ramfb=1\n" : "have_ramfb=0\n");
 
     for (;;) {
         if (have_ramfb) {
