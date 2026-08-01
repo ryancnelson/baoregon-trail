@@ -172,3 +172,13 @@ int baoregon_emulator_is_audio_active(void) {
 uint32_t baoregon_emulator_get_cycles_per_frame(void) {
     return BAOREGON_CYCLES_PER_FRAME;
 }
+
+int baoregon_emulator_select_slot_by_index(int slot_index) {
+    int selected = boot_splash_select_slot_by_index(&g_splash_state, slot_index, disk_trap_set_image);
+    if (selected) {
+        g_in_splash_menu = 0;
+        reset6502();
+        return 1;
+    }
+    return 0;
+}

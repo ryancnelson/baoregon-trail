@@ -64,4 +64,8 @@ int baoregon_emulator_copy_framebuffer(uint16_t *dest, size_t dest_count);
  * internal state struct directly. */
 const cartridge_slot_t *baoregon_emulator_get_current_slot(void);
 
+/* Directly select a game slot by index and launch it immediately (exits splash menu,
+ * updates disk trap, and resets 6502). Returns 1 on success, 0 on failure. */
+int baoregon_emulator_select_slot_by_index(int slot_index);
+
 #endif /* EMULATOR_LOOP_H */
