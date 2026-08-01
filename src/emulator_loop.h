@@ -14,4 +14,10 @@ uint32_t baoregon_emulator_run_frame(void);
 void baoregon_emulator_poll_input(void);
 int baoregon_emulator_is_in_splash_menu(void);
 
+/* Test/inspection hook: read-only access to the internal framebuffer
+ * baoregon_emulator_run_frame() renders into. Not for hardware use (the
+ * real BIO Core 0 DMA path reads it directly once the SPI DMA peripheral
+ * exists -- see bio_display.h). */
+const uint16_t *baoregon_emulator_get_framebuffer(void);
+
 #endif /* EMULATOR_LOOP_H */

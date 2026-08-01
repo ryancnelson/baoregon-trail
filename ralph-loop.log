@@ -152,3 +152,8 @@ a3389e9 emulator_loop: land 3-button soft reset combo to exit game and return to
 f0e6e3b tools: land build_cartridge_image.py multi-slot game packager tool and unit tests (289 tests GREEN)
 [2026-08-01 00:13:35] sleeping 300s...
 [2026-08-01 00:18:35] --- checking Woz ---
+[2026-08-01 00:22:54] Woz reply (truncated): ��───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 
+[2026-08-01 00:22:54] --- checking Bunnie ---
