@@ -319,6 +319,7 @@ test-firmware:
 .PHONY: test-biosim
 test-biosim:
 	@python3 tools/run_bio_display_palette_biosim.py
+	@python3 tools/run_lores_palette_biosim.py
 
 clean:
 	rm -rf $(BUILD_DIR)

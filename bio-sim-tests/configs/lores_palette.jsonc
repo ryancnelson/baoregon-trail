@@ -1,0 +1,94 @@
+{
+  // BIO Core 0 fw: Lo-Res 4-bit color-index -> RGB565 palette lookup.
+  // Ports and verifies src/lores_apple2.c's lores_color_to_rgb565()
+  // against real bio-sim (Verilator sim of actual bio_bdma RTL), driving
+  // inputs via FIFO0 and reading results back via FIFO1.
+  "fclk_mhz": 350,
+  "sw": "lores_palette",
+  "load_core": 0,
+  "commands": [
+    { "cmd": "poke", "name": "sfr_config",  "value": "0x000" },
+    { "cmd": "poke", "name": "sfr_qdiv0",   "value": "0x00010000" },
+    { "cmd": "start", "cores": [0], "restart": true, "clkdiv_restart": true },
+
+    // Case 0: Black -> 0x0000
+    { "cmd": "fifo_write", "bank": 0, "value": "0x00000000" },
+    { "cmd": "run", "cycles": 2000, "stop_on_trap": true },
+    { "cmd": "fifo_read", "bank": 1, "count": 1 },
+
+    // Case 1: Deep Red -> 0x9000
+    { "cmd": "fifo_write", "bank": 0, "value": "0x00000001" },
+    { "cmd": "run", "cycles": 2000, "stop_on_trap": true },
+    { "cmd": "fifo_read", "bank": 1, "count": 1 },
+
+    // Case 2: Dark Blue -> 0x000D
+    { "cmd": "fifo_write", "bank": 0, "value": "0x00000002" },
+    { "cmd": "run", "cycles": 2000, "stop_on_trap": true },
+    { "cmd": "fifo_read", "bank": 1, "count": 1 },
+
+    // Case 3: Purple -> 0xA0B8
+    { "cmd": "fifo_write", "bank": 0, "value": "0x00000003" },
+    { "cmd": "run", "cycles": 2000, "stop_on_trap": true },
+    { "cmd": "fifo_read", "bank": 1, "count": 1 },
+
+    // Case 4: Dark Green -> 0x0320
+    { "cmd": "fifo_write", "bank": 0, "value": "0x00000004" },
+    { "cmd": "run", "cycles": 2000, "stop_on_trap": true },
+    { "cmd": "fifo_read", "bank": 1, "count": 1 },
+
+    // Case 5: Gray 1 -> 0x738E
+    { "cmd": "fifo_write", "bank": 0, "value": "0x00000005" },
+    { "cmd": "run", "cycles": 2000, "stop_on_trap": true },
+    { "cmd": "fifo_read", "bank": 1, "count": 1 },
+
+    // Case 6: Medium Blue -> 0x055F
+    { "cmd": "fifo_write", "bank": 0, "value": "0x00000006" },
+    { "cmd": "run", "cycles": 2000, "stop_on_trap": true },
+    { "cmd": "fifo_read", "bank": 1, "count": 1 },
+
+    // Case 7: Light Blue -> 0x7BFF
+    { "cmd": "fifo_write", "bank": 0, "value": "0x00000007" },
+    { "cmd": "run", "cycles": 2000, "stop_on_trap": true },
+    { "cmd": "fifo_read", "bank": 1, "count": 1 },
+
+    // Case 8: Brown -> 0x5300
+    { "cmd": "fifo_write", "bank": 0, "value": "0x00000008" },
+    { "cmd": "run", "cycles": 2000, "stop_on_trap": true },
+    { "cmd": "fifo_read", "bank": 1, "count": 1 },
+
+    // Case 9: Orange -> 0xFC60
+    { "cmd": "fifo_write", "bank": 0, "value": "0x00000009" },
+    { "cmd": "run", "cycles": 2000, "stop_on_trap": true },
+    { "cmd": "fifo_read", "bank": 1, "count": 1 },
+
+    // Case 10: Gray 2 -> 0xC618
+    { "cmd": "fifo_write", "bank": 0, "value": "0x0000000A" },
+    { "cmd": "run", "cycles": 2000, "stop_on_trap": true },
+    { "cmd": "fifo_read", "bank": 1, "count": 1 },
+
+    // Case 11: Pink -> 0xFB56
+    { "cmd": "fifo_write", "bank": 0, "value": "0x0000000B" },
+    { "cmd": "run", "cycles": 2000, "stop_on_trap": true },
+    { "cmd": "fifo_read", "bank": 1, "count": 1 },
+
+    // Case 12: Green -> 0x07E0
+    { "cmd": "fifo_write", "bank": 0, "value": "0x0000000C" },
+    { "cmd": "run", "cycles": 2000, "stop_on_trap": true },
+    { "cmd": "fifo_read", "bank": 1, "count": 1 },
+
+    // Case 13: Yellow -> 0xFFA0
+    { "cmd": "fifo_write", "bank": 0, "value": "0x0000000D" },
+    { "cmd": "run", "cycles": 2000, "stop_on_trap": true },
+    { "cmd": "fifo_read", "bank": 1, "count": 1 },
+
+    // Case 14: Aqua -> 0x7FF5
+    { "cmd": "fifo_write", "bank": 0, "value": "0x0000000E" },
+    { "cmd": "run", "cycles": 2000, "stop_on_trap": true },
+    { "cmd": "fifo_read", "bank": 1, "count": 1 },
+
+    // Case 15: White -> 0xFFFF
+    { "cmd": "fifo_write", "bank": 0, "value": "0x0000000F" },
+    { "cmd": "run", "cycles": 2000, "stop_on_trap": true },
+    { "cmd": "fifo_read", "bank": 1, "count": 1 }
+  ]
+}
