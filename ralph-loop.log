@@ -1479,3 +1479,9 @@ b48ebfc tests: remove duplicate #include in test_apple2_mem_load_system_rom.c
 f5556b1 apple2_mem: add load system rom unit test (350 tests GREEN)
 23c9320 Update ralph-loop.log with latest pass 163 status
 [2026-08-01 10:28:02] sleeping 300s...
+[2026-08-01 10:33:02] --- checking Woz ---
+[2026-08-01 10:34:48] Woz reply (truncated): ��───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 
+[2026-08-01 10:34:48] --- checking Bunnie ---
