@@ -629,3 +629,20 @@ d28e598 Update ralph-loop.log with latest pass 82 status
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  
 [2026-08-01 04:39:29] --- checking baochip ---
+[2026-08-01 04:40:31] baochip reply (truncated): �────
+  ###    Repository Sync
+
+  All commits pushed to Gitea origin main at http://biggie:3000/ryan/baoregon-
+  trail.git.
+  Live Status Dashboard: **dashboard.html**.
+
+────────────────────────────────────────────────────────────────────────────────────────
+>
+────────────────────────────────────────────────────────────────────────────────────────
+? for shortcuts                                                  Gemini 3.6 Flash · high
+[2026-08-01 04:40:31] recent commits: a4de7e1 Update dashboard.html: 320 tests GREEN, 14.1 KB RISC-V binary, Emulator Reset Helper landed
+7f68548 emulator_loop: add baoregon_emulator_reset helper with unit tests (320 tests GREEN)
+6c5385c emulator_loop: is_splash_menu_active() delegates to is_in_splash_menu()
+ef9c359 Update ralph-loop.log with latest pass 85 status
+ed94154 Update ralph-loop.log with latest pass 84 status
+[2026-08-01 04:40:31] sleeping 300s...
