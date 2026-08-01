@@ -1581,3 +1581,4 @@ d512b74 Update ralph-loop.log with latest pass 176 status
 [2026-08-01 11:24:35] --- checking Bunnie ---
 2026-08-01T21:40:16Z - Ralph Loop Pass 221 (355 host tests GREEN, ramfb_display landed, workspace clean)
 2026-08-01T21:50:08Z - Ralph Loop Pass 224 (355 host tests GREEN, Step 6 complete, workspace clean)
+2026-08-01T21:55:19Z - Ralph Loop Pass 225 (355 host tests GREEN, QEMU MMIO 16-bit selector fix committed)
