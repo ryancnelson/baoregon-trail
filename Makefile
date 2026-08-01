@@ -70,5 +70,13 @@ $(BUILD_DIR)/test_bio_display: $(TEST_DIR)/test_bio_display.c $(SRC_DIR)/bio_dis
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_bio_display.c $(SRC_DIR)/bio_display.c $(SRC_DIR)/video_apple2.c
 
+# Firmware-level tests requiring a RISC-V cross-compiler + QEMU (not part of
+# the default host `test` target, which should have zero extra toolchain
+# dependencies beyond a native C compiler + Python). Run explicitly via
+# `make test-firmware`.
+.PHONY: test-firmware
+test-firmware:
+	@./tools/run_bio_audio_qemu_test.sh
+
 clean:
 	rm -rf $(BUILD_DIR)
