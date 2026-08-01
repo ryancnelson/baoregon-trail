@@ -415,3 +415,4 @@ faad10c emulator_loop: add baoregon_emulator_reset_to_splash function with unit 
 546873c emulator_loop: include cartridge_layout.h header in emulator_loop.h (308 tests GREEN)
 d2df065 bio-sim-tests: extend real bio-sim RTL palette verification to Lo-Res (16 colors)
 [2026-08-01 02:39:47] sleeping 300s...
+[2026-08-01 02:44:47] --- checking Woz ---
