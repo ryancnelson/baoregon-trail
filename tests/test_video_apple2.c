@@ -21,9 +21,17 @@
  */
 
 static uint8_t g_mock_hires_row0[HIRES_COLS_BYTES];
+static uint8_t g_mock_hires_row8[HIRES_COLS_BYTES];
 
 static uint8_t mock_read6502(uint16_t address) {
-    /* Row 0 lives at HIRES_BASE_ADDR ($2000) per hires_line_offsets[0] == 0. */
+    /* Row 0 lives at HIRES_BASE_ADDR ($2000) per hires_line_offsets[0] == 0x0000.
+     * Row 8 lives at $2080 per hires_line_offsets[8] == 0x0080 (BRAINSTORM.md
+     * section 2's own worked example) -- this is the byte that actually
+     * exercises the interleave math, not just a table lookup returning 0.
+     */
+    if (address >= 0x2080 && address < 0x2080 + HIRES_COLS_BYTES) {
+        return g_mock_hires_row8[address - 0x2080];
+    }
     uint16_t offset = address - HIRES_BASE_ADDR;
     if (offset < HIRES_COLS_BYTES) {
         return g_mock_hires_row0[offset];
@@ -59,9 +67,34 @@ static int test_decode_scanline_mono_row0_single_byte(void) {
     return 0;
 }
 
+static int test_decode_scanline_mono_row8_uses_correct_offset(void) {
+    memset(g_mock_hires_row0, 0x00, sizeof(g_mock_hires_row0));
+    memset(g_mock_hires_row8, 0x00, sizeof(g_mock_hires_row8));
+    /* Byte 0x2A = 0b0010_1010 -> bits 0..6 = 0,1,0,1,0,1,0 */
+    g_mock_hires_row8[0] = 0x2A;
+
+    uint8_t out_pixels[HIRES_PIXELS_WIDE];
+    memset(out_pixels, 0xFF, sizeof(out_pixels));
+
+    hires_decode_scanline_mono(8, mock_read6502, out_pixels);
+
+    const uint8_t expected_first7[7] = {0, 1, 0, 1, 0, 1, 0};
+    for (int i = 0; i < 7; i++) {
+        if (out_pixels[i] != expected_first7[i]) {
+            fprintf(stderr,
+                    "FAIL: row8 pixel[%d] = %u, expected %u\n",
+                    i, out_pixels[i], expected_first7[i]);
+            return 1;
+        }
+    }
+    printf("PASS: test_decode_scanline_mono_row8_uses_correct_offset\n");
+    return 0;
+}
+
 int main(void) {
     int failures = 0;
     failures += test_decode_scanline_mono_row0_single_byte();
+    failures += test_decode_scanline_mono_row8_uses_correct_offset();
 
     if (failures == 0) {
         printf("All tests passed.\n");
