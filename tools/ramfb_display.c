@@ -101,6 +101,17 @@ static inline uint16_t bswap16(uint16_t x) {
     return (uint16_t)((x << 8) | (x >> 8));
 }
 
+static inline uint32_t bswap32(uint32_t x) {
+    return ((x & 0x000000FFu) << 24) |
+           ((x & 0x0000FF00u) << 8)  |
+           ((x & 0x00FF0000u) >> 8)  |
+           ((x & 0xFF000000u) >> 24);
+}
+
+static inline uint64_t bswap64(uint64_t x) {
+    return ((uint64_t)bswap32((uint32_t)x) << 32) | bswap32((uint32_t)(x >> 32));
+}
+
 static void fw_cfg_select(uint16_t key) {
     *fw_cfg_ctl = bswap16(key);
 }
@@ -129,17 +140,7 @@ static uint16_t fw_cfg_read_be16(void) {
     return v;
 }
 
-static void fw_cfg_write_be32(uint32_t v) {
-    fw_cfg_write_byte((uint8_t)((v >> 24) & 0xFF));
-    fw_cfg_write_byte((uint8_t)((v >> 16) & 0xFF));
-    fw_cfg_write_byte((uint8_t)((v >> 8) & 0xFF));
-    fw_cfg_write_byte((uint8_t)(v & 0xFF));
-}
 
-static void fw_cfg_write_be64(uint64_t v) {
-    fw_cfg_write_be32((uint32_t)(v >> 32));
-    fw_cfg_write_be32((uint32_t)(v & 0xFFFFFFFFu));
-}
 
 /* Walk FW_CFG_FILE_DIR looking for "etc/ramfb"; returns its selector key,
  * or 0xFFFF (FW_CFG_INVALID) if not found (e.g. QEMU launched without
@@ -216,27 +217,64 @@ static uint16_t ramfb_find_selector(void) {
     return 0xFFFFu; /* FW_CFG_INVALID */
 }
 
-/* One-time setup: find etc/ramfb, register g_ramfb_pixels as the live
- * display surface. Returns 1 on success, 0 if ramfb isn't present (no
- * -device ramfb on the QEMU command line) -- callers should treat 0 as
- * "skip the ramfb path, nothing to render into" rather than an error. */
+typedef struct __attribute__((packed)) {
+    uint64_t addr;   /* Framebuffer physical address (big endian uint64_t) */
+    uint32_t fourcc; /* DRM_FORMAT_* FourCC (big endian uint32_t) */
+    uint32_t flags;  /* 0 */
+    uint32_t width;  /* Framebuffer width in pixels (big endian uint32_t) */
+    uint32_t height; /* Framebuffer height in pixels (big endian uint32_t) */
+    uint32_t stride; /* Bytes per line = width * 4 (big endian uint32_t) */
+} ramfb_cfg_t;
+
+typedef struct __attribute__((packed)) {
+    uint32_t control; /* Big-endian: (selector << 16) | CTL_WRITE | CTL_SELECT */
+    uint32_t length;  /* Big-endian: bytes to transfer */
+    uint64_t address; /* Big-endian: physical address of source buffer */
+} fw_cfg_dma_access_t;
+
+#define FW_CFG_DMA_CTL_ERROR  0x01u
+#define FW_CFG_DMA_CTL_READ   0x02u
+#define FW_CFG_DMA_CTL_WRITE  0x04u
+#define FW_CFG_DMA_CTL_SELECT 0x08u
+
+static volatile uint32_t *const fw_cfg_dma_hi = (volatile uint32_t *)(FW_CFG_DATA_ADDR + 0x10u);
+static volatile uint32_t *const fw_cfg_dma_lo = (volatile uint32_t *)(FW_CFG_DATA_ADDR + 0x14u);
+
+volatile uint32_t g_dma_status = 0xDEADBEEF;
+
 int ramfb_display_init(void) {
     uint16_t selector = ramfb_find_selector();
     if (selector == 0xFFFFu) {
         return 0;
     }
 
-    fw_cfg_select(selector);
-    /* struct RAMFBCfg { uint64_t addr; uint32_t fourcc, flags, width,
-     * height, stride; } QEMU_PACKED -- 28 bytes total, all fields
-     * big-endian per hw/display/ramfb.c's own be32_to_cpu/be64_to_cpu
-     * reads in ramfb_fw_cfg_write(). */
-    fw_cfg_write_be64((uint64_t)(uintptr_t)g_ramfb_pixels);
-    fw_cfg_write_be32(0x34325258u); /* DRM_FORMAT_XRGB8888 ("XR24" fourcc) */
-    fw_cfg_write_be32(0);           /* flags: none */
-    fw_cfg_write_be32((uint32_t)BIO_DISPLAY_WIDTH);
-    fw_cfg_write_be32((uint32_t)BIO_DISPLAY_HEIGHT);
-    fw_cfg_write_be32((uint32_t)(BIO_DISPLAY_WIDTH * 4u)); /* stride: 4 bytes/pixel, no padding */
+    static ramfb_cfg_t cfg;
+    cfg.addr   = bswap64((uint64_t)(uintptr_t)g_ramfb_pixels);
+    cfg.fourcc = bswap32(0x34325258u); /* DRM_FORMAT_XRGB8888 ("XR24" fourcc) */
+    cfg.flags  = 0;
+    cfg.width  = bswap32((uint32_t)BIO_DISPLAY_WIDTH);
+    cfg.height = bswap32((uint32_t)BIO_DISPLAY_HEIGHT);
+    cfg.stride = bswap32((uint32_t)(BIO_DISPLAY_WIDTH * 4u));
+
+    static fw_cfg_dma_access_t dma;
+    dma.control = bswap32(((uint32_t)selector << 16) | FW_CFG_DMA_CTL_WRITE | FW_CFG_DMA_CTL_SELECT);
+    dma.length  = bswap32((uint32_t)sizeof(cfg));
+    dma.address = bswap64((uint64_t)(uintptr_t)&cfg);
+
+    /* Start DMA transfer by writing 64-bit physical address of `dma` struct */
+    *fw_cfg_dma_hi = 0;
+    *fw_cfg_dma_lo = bswap32((uint32_t)(uintptr_t)&dma);
+
+    /* Poll for completion (control is set to 0 by QEMU on success) */
+    while (bswap32(dma.control) & ~FW_CFG_DMA_CTL_ERROR) {
+        __asm__ volatile("" ::: "memory");
+    }
+
+    g_dma_status = bswap32(dma.control);
+
+    if (bswap32(dma.control) & FW_CFG_DMA_CTL_ERROR) {
+        return 0; /* DMA failed */
+    }
 
     return 1;
 }
