@@ -1026,6 +1026,39 @@ void step6502(void) {
             clockticks6502 += 4;
             break;
 
+        case 0x25: /* AND zeropage */
+            a &= read6502(fetch_zeropage_addr());
+            set_zero_and_sign(a);
+            clockticks6502 += 3;
+            break;
+
+        case 0x05: /* ORA zeropage */
+            a |= read6502(fetch_zeropage_addr());
+            set_zero_and_sign(a);
+            clockticks6502 += 3;
+            break;
+
+        case 0x45: /* EOR zeropage */
+            a ^= read6502(fetch_zeropage_addr());
+            set_zero_and_sign(a);
+            clockticks6502 += 3;
+            break;
+
+        case 0x65: /* ADC zeropage */
+            adc_with_operand(read6502(fetch_zeropage_addr()));
+            clockticks6502 += 3;
+            break;
+
+        case 0xE5: /* SBC zeropage */
+            sbc_with_operand(read6502(fetch_zeropage_addr()));
+            clockticks6502 += 3;
+            break;
+
+        case 0xC5: /* CMP zeropage */
+            compare(a, read6502(fetch_zeropage_addr()));
+            clockticks6502 += 3;
+            break;
+
         default:
             /* Unimplemented opcode: not yet driven by a failing test. */
             clockticks6502 += 2;
