@@ -1188,6 +1188,107 @@ static void test_dec_absolute_x_decrements_memory_with_index(void) {
           "test_dec_absolute_x_decrements_memory_with_index");
 }
 
+static void test_jmp_indirect_sets_pc_from_pointer(void) {
+    setup();
+    test_ram[0x0400] = 0x6C; /* JMP ($0300) */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x03;
+    test_ram[0x0300] = 0x34; /* pointer lo */
+    test_ram[0x0301] = 0x12; /* pointer hi -> target $1234 */
+    step6502();
+    CHECK(pc == 0x1234 && clockticks6502 == 5,
+          "test_jmp_indirect_sets_pc_from_pointer");
+}
+
+static void test_jmp_indirect_has_page_boundary_bug(void) {
+    /* Famous NMOS 6502 hardware bug: if the pointer address is at the end
+     * of a page ($xxFF), the high byte is fetched from $xx00 (same page)
+     * instead of correctly crossing into the next page. Real Apple II
+     * software (and Klaus Dormann's suite) depends on replicating this
+     * bug, not "fixing" it. */
+    setup();
+    test_ram[0x0400] = 0x6C; /* JMP ($02FF) */
+    test_ram[0x0401] = 0xFF;
+    test_ram[0x0402] = 0x02;
+    test_ram[0x02FF] = 0x00; /* pointer lo */
+    test_ram[0x0200] = 0x40; /* pointer hi -- WRONGLY read from $0200, not $0300 */
+    test_ram[0x0300] = 0x99; /* decoy: correct-but-wrong-per-hardware hi byte */
+    step6502();
+    CHECK(pc == 0x4000 && clockticks6502 == 5,
+          "test_jmp_indirect_has_page_boundary_bug");
+}
+
+static void test_php_pushes_status_with_break_and_constant_bits_set(void) {
+    setup();
+    status = FLAG_CARRY | FLAG_ZERO; /* plus FLAG_CONSTANT from setup() */
+    test_ram[0x0400] = 0x08; /* PHP */
+    step6502();
+    /* PHP always pushes status with bits 4 (B) and 5 (constant) forced to 1,
+     * per NMOS 6502 semantics -- the pushed byte differs from the live
+     * status register whenever B/constant aren't already set. */
+    CHECK(test_ram[0x0100 + sp + 1] == (FLAG_CARRY | FLAG_ZERO | FLAG_BREAK | FLAG_CONSTANT) &&
+          pc == 0x0401 && clockticks6502 == 3,
+          "test_php_pushes_status_with_break_and_constant_bits_set");
+}
+
+static void test_plp_pulls_status_but_ignores_break_bit(void) {
+    setup();
+    test_ram[0x0400] = 0x08; /* PHP: push CARRY|ZERO|BREAK|CONSTANT */
+    status = FLAG_CARRY | FLAG_ZERO;
+    step6502();
+    status = 0; /* clobber so we can prove PLP actually restores it */
+    test_ram[0x0401] = 0x28; /* PLP */
+    step6502();
+    /* PLP restores all flags except B, which stays a pushed/popped
+     * convention bit rather than live CPU state (constant bit does come
+     * back set since it was pushed set). */
+    CHECK((status & FLAG_CARRY) != 0 && (status & FLAG_ZERO) != 0 &&
+          pc == 0x0402 && clockticks6502 == 7,
+          "test_plp_pulls_status_but_ignores_break_bit");
+}
+
+static void test_brk_pushes_pc_and_status_then_jumps_to_irq_vector(void) {
+    setup();
+    test_ram[0xFFFE] = 0x00; /* IRQ/BRK vector lo */
+    test_ram[0xFFFF] = 0x09; /* IRQ/BRK vector hi -> $0900 */
+    status = FLAG_CARRY;
+    test_ram[0x0400] = 0x00; /* BRK */
+    step6502();
+    CHECK(pc == 0x0900 && (status & FLAG_INTERRUPT) != 0 &&
+          clockticks6502 == 7,
+          "test_brk_pushes_pc_and_status_then_jumps_to_irq_vector");
+}
+
+static void test_brk_pushed_return_address_is_pc_plus_2(void) {
+    /* BRK is a 1-byte opcode but the 6502 treats it as 2 bytes for the
+     * pushed return address (a padding/signature byte follows in real
+     * usage), so RTI lands 2 bytes past the BRK opcode, not 1. */
+    setup();
+    test_ram[0xFFFE] = 0x00;
+    test_ram[0xFFFF] = 0x09;
+    test_ram[0x0400] = 0x00; /* BRK at $0400 */
+    step6502();
+    uint8_t hi = test_ram[0x0100 + sp + 3];
+    uint8_t lo = test_ram[0x0100 + sp + 2];
+    uint16_t pushed_pc = (uint16_t)((hi << 8) | lo);
+    CHECK(pushed_pc == 0x0402,
+          "test_brk_pushed_return_address_is_pc_plus_2");
+}
+
+static void test_rti_restores_status_and_pc_from_stack(void) {
+    setup();
+    test_ram[0xFFFE] = 0x00;
+    test_ram[0xFFFF] = 0x09;
+    status = FLAG_CARRY;
+    test_ram[0x0400] = 0x00; /* BRK -> jumps to $0900 */
+    test_ram[0x0900] = 0x40; /* RTI */
+    step6502(); /* BRK */
+    step6502(); /* RTI */
+    CHECK(pc == 0x0402 && (status & FLAG_CARRY) != 0 &&
+          clockticks6502 == 13,
+          "test_rti_restores_status_and_pc_from_stack");
+}
+
 int main(void) {
     test_nop_advances_pc_and_takes_2_cycles();
     test_lda_immediate_loads_value();
@@ -1291,6 +1392,13 @@ int main(void) {
     test_dec_zeropage_x_decrements_memory_with_index();
     test_dec_absolute_decrements_memory();
     test_dec_absolute_x_decrements_memory_with_index();
+    test_jmp_indirect_sets_pc_from_pointer();
+    test_jmp_indirect_has_page_boundary_bug();
+    test_php_pushes_status_with_break_and_constant_bits_set();
+    test_plp_pulls_status_but_ignores_break_bit();
+    test_brk_pushes_pc_and_status_then_jumps_to_irq_vector();
+    test_brk_pushed_return_address_is_pc_plus_2();
+    test_rti_restores_status_and_pc_from_stack();
 
     if (failures > 0) {
         printf("\n%d test(s) FAILED\n", failures);

@@ -794,6 +794,63 @@ void step6502(void) {
             break;
         }
 
+        case 0x6C: { /* JMP indirect -- replicates the classic NMOS 6502
+                        page-boundary bug: if the pointer address's low
+                        byte is $FF, the high byte is (incorrectly) read
+                        from the start of the same page instead of
+                        crossing into the next page. Real Apple II/DOS
+                        code and Klaus Dormann's suite depend on this bug
+                        being replicated exactly, not "fixed". */
+            uint16_t ptr = fetch_absolute_addr();
+            uint16_t lo_addr = ptr;
+            uint16_t hi_addr = (uint16_t)((ptr & 0xFF00) | ((ptr + 1) & 0x00FF));
+            uint16_t lo = read6502(lo_addr);
+            uint16_t hi = read6502(hi_addr);
+            pc = (uint16_t)(lo | (hi << 8));
+            clockticks6502 += 5;
+            break;
+        }
+
+        case 0x08: /* PHP -- always pushes with B and constant bits set,
+                      per NMOS 6502 semantics (a software-visible push
+                      differs from an interrupt-triggered push). */
+            push8((uint8_t)(status | FLAG_BREAK | FLAG_CONSTANT));
+            clockticks6502 += 3;
+            break;
+
+        case 0x28: /* PLP -- restores all flags from the stack; the B bit
+                      pulled back is whatever was pushed (not forced), and
+                      constant is always 1 on a real 6502 regardless. */
+            status = (uint8_t)(pull8() | FLAG_CONSTANT);
+            clockticks6502 += 4;
+            break;
+
+        case 0x00: { /* BRK -- treated as a 2-byte instruction: pushes
+                        pc+2 (skipping a padding/signature byte), then
+                        status with B set, then jumps through the
+                        IRQ/BRK vector at $FFFE/$FFFF and sets the
+                        interrupt-disable flag. */
+            uint16_t return_addr = (uint16_t)(pc + 1);
+            push8((uint8_t)(return_addr >> 8));
+            push8((uint8_t)(return_addr & 0xFF));
+            push8((uint8_t)(status | FLAG_BREAK | FLAG_CONSTANT));
+            status |= FLAG_INTERRUPT;
+            pc = (uint16_t)(read6502(0xFFFE) | (read6502(0xFFFF) << 8));
+            clockticks6502 += 7;
+            break;
+        }
+
+        case 0x40: { /* RTI -- pulls status then pc (reverse push order of
+                        BRK), landing exactly at the pushed return address
+                        (no +1 adjustment, unlike RTS). */
+            status = (uint8_t)(pull8() | FLAG_CONSTANT);
+            uint8_t lo = pull8();
+            uint8_t hi = pull8();
+            pc = (uint16_t)((hi << 8) | lo);
+            clockticks6502 += 6;
+            break;
+        }
+
         default:
             /* Unimplemented opcode: not yet driven by a failing test. */
             clockticks6502 += 2;
