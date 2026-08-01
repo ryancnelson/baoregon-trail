@@ -172,6 +172,10 @@ $(BUILD_DIR)/test_disk2_controller: $(TEST_DIR)/test_disk2_controller.c $(SRC_DI
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_disk2_controller.c $(SRC_DIR)/disk2_controller.c
 
+$(BUILD_DIR)/test_disk2_controller_nibble_roundtrip: $(TEST_DIR)/test_disk2_controller_nibble_roundtrip.c $(TEST_DIR)/test_disk2_controller_nibble_roundtrip_encoder.c $(SRC_DIR)/disk2_controller.c $(SRC_DIR)/disk2_controller.h
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_disk2_controller_nibble_roundtrip.c $(TEST_DIR)/test_disk2_controller_nibble_roundtrip_encoder.c $(SRC_DIR)/disk2_controller.c
+
 $(BUILD_DIR)/test_disk_trap: $(TEST_DIR)/test_disk_trap.c $(SRC_DIR)/disk_trap.c $(SRC_DIR)/disk_trap.h $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_sector_layout.h
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_disk_trap.c $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_trap.c
