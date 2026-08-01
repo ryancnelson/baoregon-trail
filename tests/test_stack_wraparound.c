@@ -92,10 +92,41 @@ static void test_jsr_rts_round_trip_survives_stack_wraparound(void) {
     (void)sp_after_jsr;
 }
 
+static void test_brk_rti_round_trip_survives_stack_wraparound(void) {
+    /* BRK/interrupt handling pushes THREE bytes (PC hi, PC lo, status),
+     * a different combination than JSR's two-byte push above -- an
+     * intersection of two features hardened separately this session
+     * (interrupt B-flag/vector semantics, and push8()/pull8()
+     * wraparound) that was never tested TOGETHER. sp=0x02 means the
+     * 3-byte BRK push crosses through 0x01, 0x00, and wraps to 0xFF --
+     * confirms the full push/pull cycle round-trips cleanly through
+     * that boundary via a matching RTI, not just push8()/pull8() in
+     * isolation (test_push_wraps_from_0x00_to_0xff /
+     * test_pull_wraps_from_0xff_to_0x00 above) or JSR/RTS's two-byte
+     * case. */
+    setup();
+    sp = 0x02;
+    status = FLAG_CARRY; /* arbitrary non-zero status to round-trip */
+    test_ram[0xFFFE] = 0x00; /* IRQ/BRK vector -> $0500 */
+    test_ram[0xFFFF] = 0x05;
+    test_ram[0x0400] = 0x00; /* BRK */
+    test_ram[0x0401] = 0xEA; /* padding byte BRK skips over */
+    test_ram[0x0500] = 0x40; /* RTI */
+
+    step6502(); /* BRK: pushes PC=0x0402, status -- sp 0x02->0x01->0x00->0xFF */
+    uint8_t sp_after_brk = sp;
+    step6502(); /* RTI: pulls status, PC -- sp 0xFF->0x00->0x01->0x02 */
+
+    CHECK(sp_after_brk == 0xFF && pc == 0x0402 && sp == 0x02 &&
+          (status & FLAG_CARRY) != 0,
+          "test_brk_rti_round_trip_survives_stack_wraparound");
+}
+
 int main(void) {
     test_push_wraps_from_0x00_to_0xff();
     test_pull_wraps_from_0xff_to_0x00();
     test_jsr_rts_round_trip_survives_stack_wraparound();
+    test_brk_rti_round_trip_survives_stack_wraparound();
 
     if (failures == 0) {
         printf("All tests passed.\n");
