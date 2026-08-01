@@ -1,5 +1,11 @@
 # Bao-Oregon-Trail (baoregon-trail)
 
+> **How vibe-coded is this? VERY!** This is an AI-agent-assisted project
+> (Claude/Hermes-driven crew, human in the loop) built by someone who is
+> not a microcontroller/embedded-systems expert. Treat claims here with
+> appropriate skepticism, expect rough edges, and don't assume any of
+> this reflects professional embedded engineering practice.
+
 > **Goal:** get **The Oregon Trail** running natively on the **Baochip-1x** open-silicon RISC-V SoC for the DEF CON 34 badge. We're not there yet — this is a work in progress.
 
 ---
