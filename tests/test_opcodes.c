@@ -647,6 +647,25 @@ static void test_lda_indirect_indexed_loads_via_zp_pointer_plus_y(void) {
           "test_lda_indirect_indexed_loads_via_zp_pointer_plus_y");
 }
 
+static void test_lda_indirect_indexed_wraps_pointer_hi_byte_read_at_zp_0xff(void) {
+    /* Distinct wraparound from the X-indexed case: here the zeropage
+     * OPERAND itself (no index math involved -- (zp),Y has no X-offset
+     * on the pointer address) sits at $FF, so reading its hi byte at
+     * operand+1 must wrap to $00, not spill into $0100. Never covered
+     * before -- the existing (zp),Y test uses operand $30, nowhere near
+     * the zero-page boundary. */
+    setup();
+    y = 0x00;
+    test_ram[0x0400] = 0xB1; /* LDA ($FF),Y */
+    test_ram[0x0401] = 0xFF;
+    test_ram[0x00FF] = 0x00; /* pointer lo at $FF */
+    test_ram[0x0000] = 0x06; /* pointer hi wraps to $00, not $0100 -> $0600 */
+    test_ram[0x0600] = 0x99; /* base + Y(0) = $0600 */
+    step6502();
+    CHECK(a == 0x99 && pc == 0x0402,
+          "test_lda_indirect_indexed_wraps_pointer_hi_byte_read_at_zp_0xff");
+}
+
 static void test_lda_indirect_indexed_extra_cycle_when_page_crossed(void) {
     /* Page-crossing on the base+Y add costs one extra cycle (6 vs 5), a
      * real NMOS 6502 timing quirk relevant to Bunnie's audio-sync work. */
@@ -2309,6 +2328,7 @@ int main(void) {
     test_lda_indexed_indirect_loads_via_zp_x_pointer();
     test_lda_indexed_indirect_wraps_zeropage_pointer_address();
     test_lda_indirect_indexed_loads_via_zp_pointer_plus_y();
+    test_lda_indirect_indexed_wraps_pointer_hi_byte_read_at_zp_0xff();
     test_lda_indirect_indexed_extra_cycle_when_page_crossed();
     test_sta_indexed_indirect_stores_via_zp_x_pointer();
     test_sta_indirect_indexed_stores_via_zp_pointer_plus_y();
