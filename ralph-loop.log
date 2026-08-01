@@ -37,3 +37,25 @@
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  
 [2026-07-31 23:20:56] --- checking Duke ---
+[2026-07-31 23:25:52] Duke reply (truncated): ��───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 
+[2026-07-31 23:25:52] --- checking baochip ---
+[2026-07-31 23:25:59] baochip reply (truncated): S
+    ──────
+  ###    Repository Sync
+
+  Committed and pushed to origin main at http://biggie:3000/ryan/baoregon-trail.git.
+  Live Status Dashboard: dashboard.html.
+
+────────────────────────────────────────────────────────────────────────────────────────
+>
+────────────────────────────────────────────────────────────────────────────────────────
+? for shortcuts                                                  Gemini 3.6 Flash · high
+[2026-07-31 23:25:59] recent commits: 39d6a0e Update dashboard.html: 261 tests GREEN, 12.2 KB RISC-V binary, Boot-Splash Badge Button Polling landed
+3d96b81 boot_splash: wire physical badge button polling to apple2_mem (261 tests GREEN)
+3308f7a Update dashboard.html: 253 tests GREEN, 12.0 KB RISC-V binary, BIO Core 0 PAGE2 Video DMA landed
+6446f1d bio_display: add PAGE2 video DMA unswizzling support (253 tests GREEN)
+d95ec00 video_apple2: add color page2 decoding test suite (250 tests GREEN)
+[2026-07-31 23:25:59] sleeping 300s...
