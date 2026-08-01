@@ -23,9 +23,14 @@ uint16_t bio_display_color_to_rgb565(hires_color_t color) {
 
 void bio_display_render_frame(read6502_fn read_mem,
                                uint16_t framebuffer[BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT]) {
+    bio_display_render_frame_page(0, read_mem, framebuffer);
+}
+
+void bio_display_render_frame_page(int page2, read6502_fn read_mem,
+                                    uint16_t framebuffer[BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT]) {
     for (int row = 0; row < BIO_DISPLAY_HEIGHT; row++) {
         hires_color_t row_colors[BIO_DISPLAY_WIDTH];
-        hires_decode_scanline_color(row, read_mem, row_colors);
+        hires_decode_scanline_color_page(row, page2, read_mem, row_colors);
 
         int row_base = row * BIO_DISPLAY_WIDTH;
         for (int col = 0; col < BIO_DISPLAY_WIDTH; col++) {

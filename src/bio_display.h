@@ -43,10 +43,23 @@ uint16_t bio_display_color_to_rgb565(hires_color_t color);
 /*
  * Decode all HIRES_ROWS scanlines via hires_decode_scanline_color() and
  * write RGB565 pixels into framebuffer (row-major, BIO_DISPLAY_WIDTH *
- * BIO_DISPLAY_HEIGHT entries, caller-allocated).
+ * BIO_DISPLAY_HEIGHT entries, caller-allocated). Always renders Hi-Res
+ * PAGE 1 -- see bio_display_render_frame_page() for page-2-aware
+ * rendering, driven by apple2_mem_is_page2_selected().
  */
 void bio_display_render_frame(read6502_fn read_mem,
                                uint16_t framebuffer[BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT]);
+
+/*
+ * Page-aware variant of bio_display_render_frame(): page2 is 0 for Page 1
+ * ($2000-$3FFF) or nonzero for Page 2 ($4000-$5FFF), matching
+ * apple2_mem_is_page2_selected()'s return convention exactly so callers
+ * (e.g. the eventual BIO Core 0 render loop) can pass that value straight
+ * through. bio_display_render_frame(read_mem, fb) is equivalent to
+ * bio_display_render_frame_page(0, read_mem, fb).
+ */
+void bio_display_render_frame_page(int page2, read6502_fn read_mem,
+                                    uint16_t framebuffer[BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT]);
 
 /*
  * DMA push stub. Records that a push was requested (pointer + size) via

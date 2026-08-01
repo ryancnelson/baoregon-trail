@@ -57,14 +57,12 @@ void hires_decode_scanline_color(int row, read6502_fn read_mem,
 
 void hires_decode_scanline_color_page(int row, int page2, read6502_fn read_mem,
                                        hires_color_t out_colors[HIRES_PIXELS_WIDE]) {
-    /* RED phase stub -- deliberately ignores page2, always reads page 1,
-     * so the page-2 color tests fail for the right reason. */
-    (void)page2;
-    uint16_t row_base = HIRES_BASE_ADDR + hires_line_offsets[row];
+    uint16_t base_addr = page2 ? HIRES_PAGE2_BASE_ADDR : HIRES_BASE_ADDR;
+    uint16_t row_base = base_addr + hires_line_offsets[row];
     uint8_t mono[HIRES_PIXELS_WIDE];
     uint8_t palette_bit[HIRES_PIXELS_WIDE];
 
-    hires_decode_scanline_mono(row, read_mem, mono);
+    hires_decode_scanline_mono_page(row, page2, read_mem, mono);
 
     for (int byte_idx = 0; byte_idx < HIRES_COLS_BYTES; byte_idx++) {
         uint8_t byte = read_mem(row_base + byte_idx);
