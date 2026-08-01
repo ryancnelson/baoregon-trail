@@ -41,6 +41,7 @@ SOURCES = \
     $(SRC_DIR)/disk_trap.c \
     $(SRC_DIR)/bunnie_audio.c \
     $(SRC_DIR)/video_apple2.c \
+    $(SRC_DIR)/lores_apple2.c \
     $(SRC_DIR)/bio_display.c \
     $(SRC_DIR)/cartridge_layout.c \
     $(SRC_DIR)/rram_driver.c \
