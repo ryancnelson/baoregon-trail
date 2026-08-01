@@ -19,6 +19,10 @@ void disk_trap_reset(void) {
     g_have_selection = 0;
 }
 
+int disk_trap_has_selection(void) {
+    return g_have_selection;
+}
+
 int disk_trap_select_sector(uint8_t track, uint8_t sector) {
     uint32_t offset;
     if (dos33_sector_offset(track, sector, &offset) != 0) {

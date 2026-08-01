@@ -690,3 +690,20 @@ d66473e Update ralph-loop.log with latest pass 88 status
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  
 [2026-08-01 05:08:08] --- checking Duke ---
+[2026-08-01 05:14:38] Duke reply (truncated): ��───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 
+[2026-08-01 05:14:38] --- checking baochip ---
+[2026-08-01 05:15:12] baochip reply (truncated): ────────────────────────────
+>
+────────────────────────────────────────────────────────────────────────────────────────
+  ● [05:14:57] rtk make test && make test-firmware && make test-biosim && mak... running
+────────────────────────────────────────────────────────────────────────────────────────
+? for shortcuts                             Gemini 3.6 Flash · high · 1 task(s) · /tasks
+[2026-08-01 05:15:12] recent commits: 4600ff9 disk_trap: add disk_trap_reset and wire into apple2_mem_reset (321 tests GREEN)
+f91b178 Update ralph-loop.log with latest pass 91 status
+ce5c0c8 apple2_mem: lock in reset() clearing mid-stream disk cursor with regression test
+30dc4a1 Update ralph-loop.log with latest pass 90 status
+e271247 Update dashboard.html: 321 tests GREEN, 14.1 KB RISC-V binary, Game Running Predicate landed
+[2026-08-01 05:15:12] sleeping 300s...

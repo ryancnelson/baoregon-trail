@@ -55,6 +55,10 @@ void disk_trap_set_image(const uint8_t *image);
  * real bug this fixes. */
 void disk_trap_reset(void);
 
+/* Returns 1 if a valid (track, sector) selection is currently active,
+ * 0 otherwise (post-init, or post-reset before a new sector selection). */
+int disk_trap_has_selection(void);
+
 /* Select the (track, sector) that subsequent disk_trap_read_byte() calls
  * will serve from, mirroring how DOS 3.3 writes track/sector registers to
  * the $C0E0-$C0EF soft-switch range before reading sector data back.
