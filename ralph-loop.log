@@ -1253,3 +1253,9 @@ c3ff3cd Update ralph-loop.log with latest pass 142 status
 eebb968 cpu6502: lock in branch target full-address-space wraparound with regression test
 6c055f9 Update ralph-loop.log with latest pass 141 status
 [2026-08-01 08:43:00] sleeping 300s...
+[2026-08-01 08:48:00] --- checking Woz ---
+[2026-08-01 08:49:40] Woz reply (truncated): ��───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 
+[2026-08-01 08:49:40] --- checking Bunnie ---
