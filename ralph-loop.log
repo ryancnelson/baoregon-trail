@@ -596,3 +596,20 @@ eb6e113 Update ralph-loop.log with latest pass 77/78 status
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  
 [2026-08-01 04:24:39] --- checking baochip ---
+[2026-08-01 04:25:43] baochip reply (truncated): �────
+  ###    Repository Sync
+
+  All commits pushed to Gitea origin main at http://biggie:3000/ryan/baoregon-
+  trail.git.
+  Live Status Dashboard: **dashboard.html**.
+
+────────────────────────────────────────────────────────────────────────────────────────
+>
+────────────────────────────────────────────────────────────────────────────────────────
+? for shortcuts                                                  Gemini 3.6 Flash · high
+[2026-08-01 04:25:43] recent commits: 5ce6e48 Update dashboard.html: 319 tests GREEN, 14.1 KB RISC-V binary, Splash Menu Active Getter landed
+3b6839c emulator_loop: add baoregon_emulator_is_splash_menu_active getter with unit tests (319 tests GREEN)
+31e30a0 apple2_mem: reset() reuses clear_button_states/clear_annunciator_states helpers
+d28e598 Update ralph-loop.log with latest pass 82 status
+110ca43 Update dashboard.html: 318 tests GREEN, 14.1 KB RISC-V binary, Fable-5 items (1) composed boot & (2) terminal-play landed
+[2026-08-01 04:25:43] sleeping 300s...
