@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">STEP 5 BUNNIE AUDIO TOGGLE TRANSITION TEST (334 Tests) GREEN</span>
+                    <span class="pill pill-green">STEP 5 NMOS 6502 DECIMAL FLAG RESET TEST (334 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -379,7 +379,7 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: LC $DFFF/$E000 Boundary Test (<code class="code-inline">test_lc_dfff_e000_exact_boundary_no_off_by_one</code>)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: NMOS Decimal Flag Reset Parity (<code class="code-inline">test_reset_does_not_clear_decimal_flag</code>)</span>
                         <span class="pill pill-green">GREEN (334 PASS)</span>
                     </div>
                 </div>
@@ -487,8 +487,8 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 5 – 6: Audio Toggle Edge Transitions Test (<code class="code-inline">bunnie_audio.c</code>) (COMPLETE)</h4>
-                            <p>Bunnie added <code class="code-inline">test_bunnie_audio_toggle_toggle_no_lost_edges.c</code> verifying rapid speaker toggle and polling transitions (334 tests GREEN)!</p>
+                            <h4>Days 5 – 6: NMOS 6502 Decimal Flag Reset Parity (<code class="code-inline">test_reset.c</code>) (COMPLETE)</h4>
+                            <p>Woz added <code class="code-inline">test_reset_does_not_clear_decimal_flag</code> verifying RESET preserves D-flag (NMOS hardware parity, 334 tests GREEN)!</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,23 +510,23 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. Audio Toggle Edge Transitions Test Landed (<code class="code-inline">bunnie_audio.c</code>)</div>
+                    <div class="decision-title">1. NMOS 6502 Decimal Flag Reset Test Landed (<code class="code-inline">test_reset.c</code>)</div>
+                    <div class="decision-desc">
+                        Woz added <code class="code-inline">test_reset_does_not_clear_decimal_flag</code> verifying NMOS 6502 hardware preserves D-flag on RESET (334 tests GREEN)!
+                    </div>
+                </div>
+
+                <div class="decision-item">
+                    <div class="decision-title">2. Audio Toggle Edge Transitions Test Landed (<code class="code-inline">bunnie_audio.c</code>)</div>
                     <div class="decision-desc">
                         Bunnie added <code class="code-inline">test_bunnie_audio_toggle_toggle_no_lost_edges.c</code> proving PWM pin toggles correctly across consecutive trigger/poll operations (334 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Disk Sector Layout Boundary Cases Test Landed (<code class="code-inline">disk_sector_layout.c</code>)</div>
+                    <div class="decision-title">3. Disk Sector Layout Boundary Cases Test Landed (<code class="code-inline">disk_sector_layout.c</code>)</div>
                     <div class="decision-desc">
                         Duke added <code class="code-inline">test_disk_sector_layout_boundary_cases.c</code> verifying track 34 sector 15 (offset 143,104) and out-of-range track 35 / sector 16 (334 tests GREEN)!
-                    </div>
-                </div>
-
-                <div class="decision-item">
-                    <div class="decision-title">3. Composed System Disk Boot Integration Test (<code class="code-inline">test_dos33_composed_boot.c</code>)</div>
-                    <div class="decision-desc">
-                        Fable-5 Item 1: Created <code class="code-inline">tools/create_sample_boot_dsk.py</code> generating <code class="code-inline">disks/dos33_sample.dsk</code> (140 KiB flat DOS 3.3 image) embedded into <code class="code-inline">src/embedded_disk_dos33.h</code>, driven through composed <code class="code-inline">cpu6502+apple2_mem+disk_trap</code> (334 tests GREEN)!
                     </div>
                 </div>
 
