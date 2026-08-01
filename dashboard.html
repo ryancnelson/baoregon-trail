@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">STEP 5 HARDWARE WIRING (267 Tests) GREEN</span>
+                    <span class="pill pill-green">STEP 5 FULL EMULATOR LOOP (270 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -394,8 +394,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Boot-Splash Badge Button Polling (<code class="code-inline">boot_splash.c</code>)</span>
-                        <span class="pill pill-green">GREEN (12.5 KB Binary)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Full Frame-Driven Emulator Loop (<code class="code-inline">emulator_loop.c</code> &amp; <code class="code-inline">main.c</code>)</span>
+                        <span class="pill pill-green">GREEN (12.8 KB Binary)</span>
                     </div>
                 </div>
 
@@ -467,7 +467,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">📅 DEF CON 34 Bring-Up Sprint</div>
-                    <span class="pill pill-green">Days 1-4 GREEN</span>
+                    <span class="pill pill-green">Days 1-5 GREEN</span>
                 </div>
                 <div class="timeline">
                     <div class="timeline-item active">
@@ -487,8 +487,8 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 5 – 6: Boot Selector &amp; 16-Color LORES Decoder (COMPLETE)</h4>
-                            <p>Duke &amp; Woz wired physical badge 3-button polling to <code class="code-inline">boot_splash.c</code>; Bunnie landed 16-color Low-Res LORES decoder (<code class="code-inline">lores_apple2.c</code>) &amp; Verilator tests!</p>
+                            <h4>Days 5 – 6: Full Bare-Metal Emulator Main Loop (<code class="code-inline">emulator_loop.c</code> &amp; <code class="code-inline">main.c</code>) (COMPLETE)</h4>
+                            <p>Landed full frame-driven main emulation loop tying 6502 cycle execution (17,050 cycles/frame), audio polling, badge button polling, game boot selector, and dynamic video mode rendering together!</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,21 +510,21 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. Apple II 16-Color Low-Res LORES Decoder Landed (<code class="code-inline">lores_apple2.c</code>)</div>
+                    <div class="decision-title">1. Full Frame-Driven Emulator Loop Landed (<code class="code-inline">emulator_loop.c</code> &amp; <code class="code-inline">main.c</code>)</div>
+                    <div class="decision-desc">
+                        Landed <code class="code-inline">src/emulator_loop.c</code> and updated <code class="code-inline">src/main.c</code> to drive full 60Hz 17,050 6502 cycle steps, audio PWM polling, badge button edge-triggered input, boot-splash game selector, and mode-aware video DMA unswizzling!
+                    </div>
+                </div>
+
+                <div class="decision-item">
+                    <div class="decision-title">2. Apple II 16-Color Low-Res LORES Decoder Landed (<code class="code-inline">lores_apple2.c</code>)</div>
                     <div class="decision-desc">
                         Bunnie landed full 16-color Low-Res graphics decoding (40x48 full-screen &amp; 40x40 mixed mode) in <code class="code-inline">src/lores_apple2.c</code> mapping Apple II NTSC color nibbles to RGB565!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Boot-Splash Badge Button Polling Landed (<code class="code-inline">boot_splash.c</code>)</div>
-                    <div class="decision-desc">
-                        Duke and Woz wired <code class="code-inline">boot_splash_poll_apple2_mem_buttons()</code> to poll physical badge button state from <code class="code-inline">apple2_mem_get_button_state()</code> for 3-button PREV/NEXT/SELECT game cartridge navigation!
-                    </div>
-                </div>
-
-                <div class="decision-item">
-                    <div class="decision-title">3. Full Apple II Memory Softswitch Matrix Complete (267 Tests)</div>
+                    <div class="decision-title">3. Full Apple II Memory Softswitch Matrix Complete (270 Tests)</div>
                     <div class="decision-desc">
                         Woz landed Paddle Timers ($C070 PDRIVE countdown, $C064-$C067 PADDLE0-3) and Annunciator outputs AN0-AN3 ($C058-$C05F), completing 100% of the Apple II I/O softswitch matrix!
                     </div>
@@ -533,7 +533,7 @@
                 <div class="decision-item">
                     <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (267 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (270 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
