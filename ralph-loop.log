@@ -73,3 +73,19 @@ d95ec00 video_apple2: add color page2 decoding test suite (250 tests GREEN)
 ❯ 
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 [2026-07-31 23:42:34] --- checking baochip ---
+[2026-07-31 23:43:22] baochip reply (truncated): itory & Dashboard Sync
+
+  • Clean working tree on main pushed to origin main at
+  http://biggie:3000/ryan/baoregon-trail.git.
+  • Live Status Dashboard: **dashboard.html**.
+
+────────────────────────────────────────────────────────────────────────────────────────
+>
+────────────────────────────────────────────────────────────────────────────────────────
+? for shortcuts                                                  Gemini 3.6 Flash · high
+[2026-07-31 23:43:22] recent commits: ead7b92 Update dashboard.html: 270 tests GREEN, 12.8 KB RISC-V binary, Full Emulator Loop landed
+6931cf4 emulator_loop: land full frame-driven emulator main loop and unit tests (270 tests GREEN)
+4eaaa72 Update dashboard.html: 267 tests GREEN, 12.5 KB RISC-V binary, 16-color Low-Res LORES landed
+8b37b82 lores_apple2: add 16-color Low-Res graphics palette decoder (267 tests GREEN)
+dd7f28f lores_apple2: Apple II Lo-Res (40x48 block) graphics decoding
+[2026-07-31 23:43:22] sleeping 300s...
