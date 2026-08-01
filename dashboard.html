@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">STEP 3 IN PROGRESS (206 Tests) GREEN</span>
+                    <span class="pill pill-green">STEP 3 COMPLETE (223 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -379,8 +379,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 3: Language Card Bank-Switching ($C080-$C08F) Landed</span>
-                        <span class="pill pill-green">GREEN (21/21 PASS)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 3: Display Softswitches ($C050-$C057) + Keyboard ($C000/$C010)</span>
+                        <span class="pill pill-green">GREEN (33/33 PASS)</span>
                     </div>
                 </div>
 
@@ -395,7 +395,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Retro Boot-Splash Selector (<code class="code-inline">boot_splash.c</code>) &amp; 3-Button Nav</span>
-                        <span class="pill pill-green">GREEN (11.0 KB Binary)</span>
+                        <span class="pill pill-green">GREEN (11.4 KB Binary)</span>
                     </div>
                 </div>
 
@@ -480,8 +480,8 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 3 – 4: Memory Router &amp; Language Card Bank-Switching (IN PROGRESS)</h4>
-                            <p>Woz landed Apple II Language Card bank-switching (<code class="code-inline">$C080-$C08F</code>) with 4KB Bank 1/2 RAM and write-enable gating!</p>
+                            <h4>Days 3 – 4: Memory Router &amp; Softswitches (COMPLETE)</h4>
+                            <p>Woz landed Language Card (<code class="code-inline">$C080-$C08F</code>), Display Softswitches (<code class="code-inline">$C050-$C057</code>), and Keyboard Latch (<code class="code-inline">$C000/$C010</code>)!</p>
                         </div>
                     </div>
                     <div class="timeline-item active">
@@ -510,16 +510,16 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. Apple II Language Card Bank-Switching ($C080-$C08F) Landed</div>
+                    <div class="decision-title">1. Display Softswitches ($C050-$C057) &amp; Keyboard Latch ($C000/$C010) Landed</div>
                     <div class="decision-desc">
-                        Woz landed full Language Card softswitches in <code class="code-inline">src/apple2_mem.c</code>, implementing Bank 1 &amp; Bank 2 4KB RAM switching ($D000-$DFFF) plus read-RAM/write-enable gating across $D000-$FFFF.
+                        Woz landed GRAPHICS/TEXT, FULL/MIXED, PAGE1/PAGE2, LORES/HIRES softswitches plus $C000 keyboard ASCII latch (with 0x80 strobe bit) and $C010 strobe clear!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. STEP 2 GATE PASSED: Klaus Dormann Functional Suite (30.6M Steps)</div>
+                    <div class="decision-title">2. Apple II Language Card Bank-Switching ($C080-$C08F) Landed</div>
                     <div class="decision-desc">
-                        Woz achieved 100% end-to-end execution of Klaus Dormann's official 6502 hardware functional test suite (<code class="code-inline">6502_functional_test.bin</code>), trapping at the true success address <code class="code-inline">$3469</code> after 30,646,178 steps!
+                        Woz landed full Language Card softswitches in <code class="code-inline">src/apple2_mem.c</code>, implementing Bank 1 &amp; Bank 2 4KB RAM switching ($D000-$DFFF) plus read-RAM/write-enable gating across $D000-$FFFF.
                     </div>
                 </div>
 
@@ -533,7 +533,7 @@
                 <div class="decision-item">
                     <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (206 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (223 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
