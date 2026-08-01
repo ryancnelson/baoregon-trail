@@ -39,6 +39,24 @@ void bio_display_render_frame_page(int page2, read6502_fn read_mem,
     }
 }
 
+void bio_display_render_frame_mixed(int page2, int mixed_mode, read6502_fn read_mem,
+                                     uint16_t framebuffer[BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT]) {
+    int rows_to_render = mixed_mode ? HIRES_MIXED_MODE_GRAPHICS_ROWS : BIO_DISPLAY_HEIGHT;
+
+    for (int row = 0; row < rows_to_render; row++) {
+        hires_color_t row_colors[BIO_DISPLAY_WIDTH];
+        hires_decode_scanline_color_page(row, page2, read_mem, row_colors);
+
+        int row_base = row * BIO_DISPLAY_WIDTH;
+        for (int col = 0; col < BIO_DISPLAY_WIDTH; col++) {
+            framebuffer[row_base + col] = bio_display_color_to_rgb565(row_colors[col]);
+        }
+    }
+    /* Rows [rows_to_render, BIO_DISPLAY_HEIGHT) intentionally left
+     * untouched when mixed_mode is set -- owned by a future text-mode
+     * renderer, not this module (see bio_display.h doc comment). */
+}
+
 /* DMA push stub state -- see bio_display.h doc comment: no real SPI/DMA
  * peripheral exists yet, this just records the call for host-test
  * inspection until baochip's hardware-init sequence / register map lands. */
