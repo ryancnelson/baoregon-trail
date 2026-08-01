@@ -487,8 +487,8 @@
                     <div class="timeline-item">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 5 – 6: BIO Display &amp; Audio Integration</h4>
-                            <p>Bunnie connects BIO Core 0 SPI display DMA &amp; BIO Core 1 $C030 speaker PWM pin driver.</p>
+                            <h4>Days 5 – 6: BIO Sim (<code class="code-inline">baochip/bio-sim</code>) &amp; Firmware Validation</h4>
+                            <p>Bunnie compiles BIO assembly for RV32E (<code class="code-inline">-march=rv32e</code>) and validates PicoRV32 execution &amp; DMA using Verilator <code class="code-inline">bio-sim</code> harness.</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -524,9 +524,9 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">3. BIO Core ISA Correction (RV32E)</div>
+                    <div class="decision-title">3. BIO Core ISA Correction (RV32E) &amp; <code class="code-inline">bio-sim</code> Roadmap</div>
                     <div class="decision-desc">
-                        Danny confirmed BIO PicoRV32 cores use 16-register <b>RV32E</b>. Compiler flags set to <code class="code-inline">-march=rv32e -mabi=ilp32e</code>.
+                        BIO PicoRV32 cores use 16-register <b>RV32E</b>. Verilator-based <code class="code-inline">baochip/bio-sim</code> will be used in Stage 3 (Days 5-6) by Bunnie to test BIO firmware before hardware flash.
                     </div>
                 </div>
 
