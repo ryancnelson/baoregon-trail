@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">9 Host + 1 RISC-V Target (104 Tests) GREEN</span>
+                    <span class="pill pill-green">9 Host + 1 RISC-V Target (132 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -379,8 +379,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 2: <code class="code-inline">cpu6502.c</code> 74 Opcodes incl. <code class="code-inline">abs,X</code> / <code class="code-inline">abs,Y</code></span>
-                        <span class="pill pill-green">GREEN (74 PASS)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 2: <code class="code-inline">cpu6502.c</code> 102 Opcodes incl. Shift/Rotate/INC/DEC</span>
+                        <span class="pill pill-green">GREEN (102 PASS)</span>
                     </div>
                 </div>
 
@@ -394,8 +394,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Multi-Sector Track Boundary Traps &amp; Linker</span>
-                        <span class="pill pill-green">GREEN (4.0 KB Binary)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Multi-Sector Traps &amp; Linker Placement</span>
+                        <span class="pill pill-green">GREEN (4.1 KB Binary)</span>
                     </div>
                 </div>
 
@@ -474,14 +474,14 @@
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
                             <h4>Days 1 – 2: 6502 Core, Memory Router, Audio &amp; Disk Generator (COMPLETE)</h4>
-                            <p>Woz: 74 CPU Opcodes GREEN. Duke: Memory router (<code class="code-inline">apple2_mem.c</code>), traps &amp; <code class="code-inline">embed_disk.py</code> GREEN. Bunnie: 192-line un-swizzler &amp; $C030 PWM GREEN.</p>
+                            <p>Woz: 102 CPU Opcodes GREEN. Duke: Memory router (<code class="code-inline">apple2_mem.c</code>), traps &amp; <code class="code-inline">embed_disk.py</code> GREEN. Bunnie: 192-line un-swizzler &amp; $C030 PWM GREEN.</p>
                         </div>
                     </div>
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
                             <h4>Days 3 – 4: RISC-V Cross-Compilation &amp; Linker Script (COMPLETE)</h4>
-                            <p><code class="code-inline">linker.ld</code>, <code class="code-inline">crt0.S</code>, and <code class="code-inline">Makefile.riscv</code> complete! Built <code class="code-inline">baoregon.bin</code> (4.0 KB ReRAM Flash image) with verified section placement.</p>
+                            <p><code class="code-inline">linker.ld</code>, <code class="code-inline">crt0.S</code>, and <code class="code-inline">Makefile.riscv</code> complete! Built <code class="code-inline">baoregon.bin</code> (4.1 KB ReRAM Flash image) with verified section placement.</p>
                         </div>
                     </div>
                     <div class="timeline-item active">
@@ -517,23 +517,23 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Display Panel Spec: ASSUMED (TBD)</div>
+                    <div class="decision-title">2. 102 6502 Opcodes GREEN</div>
+                    <div class="decision-desc">
+                        Woz completed memory shift/rotate/inc/dec modes (<code class="code-inline">ASL</code>, <code class="code-inline">LSR</code>, <code class="code-inline">ROL</code>, <code class="code-inline">ROR</code>, <code class="code-inline">INC</code>, <code class="code-inline">DEC</code> zeropage/abs/indexed), bringing total test suite to 132 GREEN.
+                    </div>
+                </div>
+
+                <div class="decision-item">
+                    <div class="decision-title">3. Display Panel Spec: ASSUMED (TBD)</div>
                     <div class="decision-desc">
                         Display resolution/interface is ASSUMED in public docs (drops next week). Emulator outputs canonical 280x192 RGB565 buffer in SRAM; <code class="code-inline">bio_display.c</code> abstracts hardware panel DMA.
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">3. Official Target Naming: <code class="code-inline">baosec-lite</code></div>
-                    <div class="decision-desc">
-                        Confirmed via bunnie huang: the DEF CON 34 badge core is derived from <code class="code-inline">baosec</code>, named <code class="code-inline">baosec-lite</code>. Out-of-tree app payload <code class="code-inline">baoregon.bin</code> maps cleanly to this target.
-                    </div>
-                </div>
-
-                <div class="decision-item">
                     <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (104 PASS) and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (132 PASS) and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
