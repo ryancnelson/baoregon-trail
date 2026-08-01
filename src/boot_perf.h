@@ -18,5 +18,6 @@ typedef struct {
 
 void boot_perf_init(boot_perf_metrics_t *metrics);
 void boot_perf_record_boot(boot_perf_metrics_t *metrics, uint64_t cycles);
+int boot_perf_is_sub_50ms(const boot_perf_metrics_t *metrics);
 
 #endif /* BOOT_PERF_H */
