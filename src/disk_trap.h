@@ -1,0 +1,55 @@
+#ifndef DISK_TRAP_H
+#define DISK_TRAP_H
+
+#include <stdint.h>
+#include "disk_sector_layout.h"
+
+/*
+ * $C0E0-$C0EF Disk II fast-sector-read trap (Duke's domain).
+ *
+ * Bus interface contract locked 2026-07-31 (baochip/Woz/Bunnie/Duke):
+ *   uint8_t read6502(uint16_t address);
+ *   void    write6502(uint16_t address, uint8_t value);
+ *
+ * Per BRAINSTORM.md section 4, we do NOT emulate the physical Disk II
+ * stepper motor / raw GCR nibble tracks. Software (DOS 3.3/ProDOS) requests
+ * a (track, sector) via two soft-switch writes, then a subsequent access
+ * reads 256 bytes back. This trap copies the sector directly out of the
+ * ReRAM-resident disk image -- no cross-core signaling needed (unlike
+ * Bunnie's $C030 speaker trap): it's a synchronous bulk data substitution
+ * inline in read6502/write6502, executing in <10 RISC-V clock cycles per
+ * BRAINSTORM.md's target.
+ *
+ * Trap-notification mechanism decision (2026-07-31, Bunnie/baochip/Duke):
+ * settled on (b) memory-mapped flag/register for cross-core signaling
+ * (Bunnie's $C030 case). Duke's disk trap needs no such signal -- it's a
+ * same-core, same-call data copy, so it does not participate in that
+ * mechanism at all.
+ *
+ * apple2_mem.c is not written yet (blocked on Woz's cpu6502.c stubs
+ * landing, per NEXT_STEPS.md Step 3). Per Ryan's steer 2026-07-31: don't
+ * block on that -- develop and test this trap logic now against a mock
+ * bus matching the locked signatures, swap in the real read6502/write6502
+ * wiring once cpu6502.c lands.
+ */
+
+/* Register the ReRAM-resident disk image this trap should serve sectors
+ * from. image must point to a flat DOS-order buffer of at least
+ * DOS33_DISK_IMAGE_SIZE bytes and must outlive any calls to
+ * disk_trap_select_sector()/disk_trap_read_byte(). */
+void disk_trap_set_image(const uint8_t *image);
+
+/* Select the (track, sector) that subsequent disk_trap_read_byte() calls
+ * will serve from, mirroring how DOS 3.3 writes track/sector registers to
+ * the $C0E0-$C0EF soft-switch range before reading sector data back.
+ * Returns 0 on success, -1 if track/sector is out of range (matches
+ * dos33_sector_offset()'s contract) -- on error, the previously selected
+ * sector (if any) is left unchanged. */
+int disk_trap_select_sector(uint8_t track, uint8_t sector);
+
+/* Read one byte at the given offset (0-255) within the currently selected
+ * sector. Behavior is undefined if disk_trap_select_sector() has not been
+ * called successfully first, or if byte_offset >= DOS33_SECTOR_SIZE. */
+uint8_t disk_trap_read_byte(uint8_t byte_offset);
+
+#endif /* DISK_TRAP_H */
