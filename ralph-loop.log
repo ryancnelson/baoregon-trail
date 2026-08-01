@@ -1121,3 +1121,4 @@ fa1510e embed_disk.py: handle output write failures gracefully
 0ce62b1 Update ralph-loop.log with latest pass 133 status
 25c9804 Update ralph-loop.log with latest pass 132 status
 [2026-08-01 07:59:47] sleeping 300s...
+[2026-08-01 08:04:47] --- checking Woz ---
