@@ -162,6 +162,13 @@ int apple2_mem_get_annunciator_state(int annunciator_index) {
     return g_annunciator_on[annunciator_index];
 }
 
+void apple2_mem_clear_annunciator_states(void) {
+    g_annunciator_on[0] = 0;
+    g_annunciator_on[1] = 0;
+    g_annunciator_on[2] = 0;
+    g_annunciator_on[3] = 0;
+}
+
 void apple2_mem_set_paddle_value(int paddle_index, uint8_t value) {
     if (paddle_index < 0 || paddle_index > 1) {
         return; /* out of range: not PADDLE0/PADDLE1, silently ignored */

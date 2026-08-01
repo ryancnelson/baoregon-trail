@@ -146,5 +146,6 @@ void apple2_mem_set_paddle_value(int paddle_index, uint8_t value);
  * annunciator_index is 0-3 matching AN0-AN3; returns 1 = on, 0 = off.
  * Defaults to off (0) after apple2_mem_reset(), matching real hardware. */
 int apple2_mem_get_annunciator_state(int annunciator_index);
+void apple2_mem_clear_annunciator_states(void);
 
 #endif /* APPLE2_MEM_H */
