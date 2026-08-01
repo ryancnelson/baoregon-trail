@@ -41,6 +41,12 @@ extern const uint16_t hires_line_offsets[HIRES_ROWS];
  * row must be in [0, HIRES_ROWS). Always targets Hi-Res PAGE 1 ($2000) --
  * see hires_decode_scanline_mono_page() for page-2-aware decoding, driven
  * by apple2_mem_is_page2_selected() ($C054/$C055 soft-switch).
+ *
+ * Safety (matches the disk_trap.c / bunnie_audio.c convention of
+ * "safe no-op on bad input, never crash"): an out-of-range row or a NULL
+ * read_mem/out_pixels is a silent no-op -- out_pixels is left untouched
+ * (not even zeroed) rather than reading hires_line_offsets[] out of
+ * bounds or dereferencing a NULL function pointer.
  */
 void hires_decode_scanline_mono(int row, read6502_fn read_mem,
                                  uint8_t out_pixels[HIRES_PIXELS_WIDE]);
@@ -52,6 +58,9 @@ void hires_decode_scanline_mono(int row, read6502_fn read_mem,
  * can pass that value straight through. hires_decode_scanline_mono(row,
  * read_mem, out) is equivalent to
  * hires_decode_scanline_mono_page(row, 0, read_mem, out).
+ *
+ * Same safety contract as hires_decode_scanline_mono(): out-of-range row
+ * or NULL read_mem/out_pixels is a silent no-op.
  */
 void hires_decode_scanline_mono_page(int row, int page2, read6502_fn read_mem,
                                       uint8_t out_pixels[HIRES_PIXELS_WIDE]);
@@ -87,6 +96,9 @@ typedef enum {
  *
  * row must be in [0, HIRES_ROWS). Always targets Hi-Res PAGE 1 ($2000) --
  * see hires_decode_scanline_color_page() for page-2-aware decoding.
+ *
+ * Safety: out-of-range row or NULL read_mem/out_colors is a silent
+ * no-op, same convention as hires_decode_scanline_mono().
  */
 void hires_decode_scanline_color(int row, read6502_fn read_mem,
                                   hires_color_t out_colors[HIRES_PIXELS_WIDE]);
@@ -98,6 +110,9 @@ void hires_decode_scanline_color(int row, read6502_fn read_mem,
  * bits AND the palette (high) bit are read from the selected page.
  * hires_decode_scanline_color(row, read_mem, out) is equivalent to
  * hires_decode_scanline_color_page(row, 0, read_mem, out).
+ *
+ * Safety: out-of-range row or NULL read_mem/out_colors is a silent
+ * no-op.
  */
 void hires_decode_scanline_color_page(int row, int page2, read6502_fn read_mem,
                                        hires_color_t out_colors[HIRES_PIXELS_WIDE]);

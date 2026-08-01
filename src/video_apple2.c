@@ -38,6 +38,10 @@ void hires_decode_scanline_mono(int row, read6502_fn read_mem,
 
 void hires_decode_scanline_mono_page(int row, int page2, read6502_fn read_mem,
                                       uint8_t out_pixels[HIRES_PIXELS_WIDE]) {
+    if (row < 0 || row >= HIRES_ROWS || !read_mem || !out_pixels) {
+        return; /* safe no-op on bad input -- matches disk_trap.c / bunnie_audio.c convention */
+    }
+
     uint16_t base_addr = page2 ? HIRES_PAGE2_BASE_ADDR : HIRES_BASE_ADDR;
     uint16_t row_base = base_addr + hires_line_offsets[row];
 
@@ -57,6 +61,10 @@ void hires_decode_scanline_color(int row, read6502_fn read_mem,
 
 void hires_decode_scanline_color_page(int row, int page2, read6502_fn read_mem,
                                        hires_color_t out_colors[HIRES_PIXELS_WIDE]) {
+    if (row < 0 || row >= HIRES_ROWS || !read_mem || !out_colors) {
+        return; /* safe no-op on bad input */
+    }
+
     uint16_t base_addr = page2 ? HIRES_PAGE2_BASE_ADDR : HIRES_BASE_ADDR;
     uint16_t row_base = base_addr + hires_line_offsets[row];
     uint8_t mono[HIRES_PIXELS_WIDE];

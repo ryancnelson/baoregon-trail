@@ -251,3 +251,8 @@ e7b03e7 disk_trap: land default fallback safety documentation and unit tests (29
 0e662bb Update dashboard.html: 297 tests GREEN, 13.6 KB RISC-V binary, Lo-Res Mixed-Mode Frame Rendering landed
 [2026-08-01 01:12:25] sleeping 300s...
 [2026-08-01 01:17:25] --- checking Woz ---
+[2026-08-01 01:21:39] Woz reply (truncated): ��───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 
+[2026-08-01 01:21:39] --- checking Bunnie ---

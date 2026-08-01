@@ -15,6 +15,10 @@ const uint16_t lores_byte_row_offsets[LORES_BYTE_ROWS] = {
 
 void lores_decode_screen_page(int page2, read6502_fn read_mem,
                                uint8_t out_blocks[LORES_BLOCK_COLS * LORES_BLOCK_ROWS]) {
+    if (!read_mem || !out_blocks) {
+        return; /* safe no-op on bad input -- matches video_apple2.c's convention */
+    }
+
     uint16_t base_addr = page2 ? LORES_PAGE2_BASE_ADDR : LORES_PAGE1_BASE_ADDR;
 
     for (int byte_row = 0; byte_row < LORES_BYTE_ROWS; byte_row++) {
