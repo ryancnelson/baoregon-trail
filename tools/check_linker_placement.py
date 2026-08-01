@@ -16,6 +16,7 @@ Exits non-zero (with details) if any section is misplaced.
 import re
 import subprocess
 import sys
+import os
 
 RERAM_START = 0x20000000
 RERAM_END = RERAM_START + 4 * 1024 * 1024  # 4.0 MiB
@@ -110,7 +111,20 @@ def main(argv):
         return 2
 
     elf_path = argv[1]
-    sections = parse_readelf_sections(elf_path)
+    if not os.path.isfile(elf_path):
+        print(f"error: no such file: {elf_path}", file=sys.stderr)
+        return 1
+
+    try:
+        sections = parse_readelf_sections(elf_path)
+    except subprocess.CalledProcessError as exc:
+        stderr_tail = (exc.stderr or "").strip().splitlines()[-1:] or [""]
+        print(f"error: readelf failed on {elf_path}: {stderr_tail[0]}", file=sys.stderr)
+        return 1
+    except RuntimeError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+
     errors = check_placement(sections)
 
     if errors:
