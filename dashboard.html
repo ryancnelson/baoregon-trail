@@ -302,7 +302,7 @@
 
         /* Hardware Specs Box */
         .spec-grid {
-            display: grid;
+            display grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 1rem;
         }
@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">STEP 5 RRAM BOUNDS SAFETY (295 Tests) GREEN</span>
+                    <span class="pill pill-green">STEP 2 RESET FLAG &amp; EXEC HARDENING (297 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -379,8 +379,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 3: Mode-Aware Frame Rendering Integration (<code class="code-inline">emulator_loop.c</code>)</span>
-                        <span class="pill pill-green">GREEN (57/57 PASS)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 2: <code class="code-inline">reset6502()</code> Sets Interrupt-Disable Flag &amp; <code class="code-inline">exec6502()</code> Step Tests</span>
+                        <span class="pill pill-green">GREEN (60/60 PASS)</span>
                     </div>
                 </div>
 
@@ -487,8 +487,8 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 5 – 6: ReRAM Driver Out-of-Bounds Protection (<code class="code-inline">rram_driver.c</code>) (COMPLETE)</h4>
-                            <p>Duke added <code class="code-inline">addr_in_bounds()</code> safety validation to <code class="code-inline">rram_read()</code> in <code class="code-inline">src/rram_driver.c</code> preventing buffer overreads and out-of-range address accesses!</p>
+                            <h4>Days 5 – 6: RESET Interrupt-Disable Flag &amp; exec6502 Step Hardening (COMPLETE)</h4>
+                            <p>Woz fixed <code class="code-inline">reset6502()</code> to set <code class="code-inline">FLAG_INTERRUPT</code> matching real NMOS 6502 RESET behavior, and added unit tests for <code class="code-inline">exec6502()</code> frame cycle stepping!</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,30 +510,30 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. ReRAM Driver Out-of-Bounds Protection Landed (<code class="code-inline">rram_driver.c</code>)</div>
+                    <div class="decision-title">1. Real 6502 RESET Interrupt-Disable Flag Fixed (<code class="code-inline">cpu6502.c</code>)</div>
+                    <div class="decision-desc">
+                        Woz updated <code class="code-inline">reset6502()</code> to set <code class="code-inline">FLAG_INTERRUPT</code> on CPU reset, matching actual NMOS 6502 silicon specification!
+                    </div>
+                </div>
+
+                <div class="decision-item">
+                    <div class="decision-title">2. Frame Cycle Step Verification Landed (<code class="code-inline">cpu6502.c</code>)</div>
+                    <div class="decision-desc">
+                        Woz added unit test coverage in <code class="code-inline">tests/test_opcodes.c</code> for <code class="code-inline">exec6502()</code> verifying frame-granularity cycle step counting!
+                    </div>
+                </div>
+
+                <div class="decision-item">
+                    <div class="decision-title">3. ReRAM Driver Out-of-Bounds Protection Landed (<code class="code-inline">rram_driver.c</code>)</div>
                     <div class="decision-desc">
                         Duke added <code class="code-inline">addr_in_bounds()</code> safety validation to <code class="code-inline">rram_read()</code> in <code class="code-inline">src/rram_driver.c</code> preventing buffer overreads and out-of-range address accesses!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. ANSI Truecolor Terminal Framebuffer Viewer Landed (<code class="code-inline">tools/fb_terminal_viewer.py</code>)</div>
-                    <div class="decision-desc">
-                        Bunnie landed <code class="code-inline">tools/fb_terminal_viewer.py</code> to render 320x240 RGB565 framebuffers in terminal using ANSI 24-bit escape codes and Unicode half-block characters!
-                    </div>
-                </div>
-
-                <div class="decision-item">
-                    <div class="decision-title">3. Illegal Opcode Safety Hardening Landed (<code class="code-inline">cpu6502.c</code>)</div>
-                    <div class="decision-desc">
-                        Woz added regression tests in <code class="code-inline">tests/test_opcodes.c</code> locking in illegal/undocumented NMOS 6502 opcode fallback safety behavior!
-                    </div>
-                </div>
-
-                <div class="decision-item">
                     <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (295 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (297 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
