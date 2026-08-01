@@ -69,3 +69,13 @@ uint32_t baoregon_emulator_run_frame(void) {
 const uint16_t *baoregon_emulator_get_framebuffer(void) {
     return g_framebuffer;
 }
+
+int baoregon_emulator_copy_framebuffer(uint16_t *dest, size_t dest_count) {
+    if (!dest || dest_count < (320 * 240)) {
+        return -1;
+    }
+    for (size_t i = 0; i < (320 * 240); i++) {
+        dest[i] = g_framebuffer[i];
+    }
+    return 0;
+}
