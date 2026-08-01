@@ -7,7 +7,7 @@ BUILD_DIR = build
 
 .PHONY: test clean
 
-test: $(BUILD_DIR)/test_reset $(BUILD_DIR)/test_opcodes $(BUILD_DIR)/test_disk_sector_layout $(BUILD_DIR)/test_disk_trap $(BUILD_DIR)/test_video_apple2 $(BUILD_DIR)/test_video_apple2_color $(BUILD_DIR)/test_video_apple2_color_edges $(BUILD_DIR)/test_video_apple2_fullframe $(BUILD_DIR)/test_video_apple2_realbus $(BUILD_DIR)/test_bunnie_audio $(BUILD_DIR)/test_apple2_mem $(BUILD_DIR)/test_bio_display $(BUILD_DIR)/test_rram_driver $(BUILD_DIR)/test_cartridge_layout $(BUILD_DIR)/test_rram_cartridge_integration
+test: $(BUILD_DIR)/test_reset $(BUILD_DIR)/test_opcodes $(BUILD_DIR)/test_disk_sector_layout $(BUILD_DIR)/test_disk_trap $(BUILD_DIR)/test_video_apple2 $(BUILD_DIR)/test_video_apple2_color $(BUILD_DIR)/test_video_apple2_color_edges $(BUILD_DIR)/test_video_apple2_fullframe $(BUILD_DIR)/test_video_apple2_realbus $(BUILD_DIR)/test_bunnie_audio $(BUILD_DIR)/test_apple2_mem $(BUILD_DIR)/test_bio_display $(BUILD_DIR)/test_rram_driver $(BUILD_DIR)/test_cartridge_layout $(BUILD_DIR)/test_rram_cartridge_integration $(BUILD_DIR)/test_boot_splash
 	@$(BUILD_DIR)/test_reset
 	@$(BUILD_DIR)/test_opcodes
 	@$(BUILD_DIR)/test_disk_sector_layout
@@ -23,6 +23,7 @@ test: $(BUILD_DIR)/test_reset $(BUILD_DIR)/test_opcodes $(BUILD_DIR)/test_disk_s
 	@$(BUILD_DIR)/test_rram_driver
 	@$(BUILD_DIR)/test_cartridge_layout
 	@$(BUILD_DIR)/test_rram_cartridge_integration
+	@$(BUILD_DIR)/test_boot_splash
 	@python3 -m unittest tests.test_embed_disk -v
 
 $(BUILD_DIR)/test_reset: $(TEST_DIR)/test_reset.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/cpu6502.h
@@ -84,6 +85,27 @@ $(BUILD_DIR)/test_cartridge_layout: $(TEST_DIR)/test_cartridge_layout.c $(SRC_DI
 $(BUILD_DIR)/test_rram_cartridge_integration: $(TEST_DIR)/test_rram_cartridge_integration.c $(SRC_DIR)/rram_driver.c $(SRC_DIR)/rram_driver.h $(SRC_DIR)/cartridge_layout.c $(SRC_DIR)/cartridge_layout.h $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_sector_layout.h
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_rram_cartridge_integration.c $(SRC_DIR)/rram_driver.c $(SRC_DIR)/cartridge_layout.c $(SRC_DIR)/disk_sector_layout.c
+
+$(BUILD_DIR)/test_boot_splash: $(TEST_DIR)/test_boot_splash.c $(SRC_DIR)/boot_splash.c $(SRC_DIR)/boot_splash.h $(SRC_DIR)/cartridge_layout.c $(SRC_DIR)/cartridge_layout.h $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_trap.c $(SRC_DIR)/disk_trap.h
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_boot_splash.c $(SRC_DIR)/boot_splash.c $(SRC_DIR)/cartridge_layout.c $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_trap.c
+
+# Full 6502 functional-correctness integration test against Klaus Dormann's
+# 6502_functional_test.bin (see tests/test_functional_suite.c). Not yet part
+# of the default `test` target because it does not pass yet (BCD/decimal-mode
+# ADC/SBC gap, in progress) -- run explicitly via `make test-functional` so
+# CI/local runs get visibility into this gap instead of it being silently
+# absent from `make test`. Promote into the main `test` target once green.
+# Requires the fixture binary: run tests/fetch_functional_test.sh once
+# (downloads to tests/fixtures/, gitignored).
+.PHONY: test-functional
+test-functional: $(BUILD_DIR)/test_functional_suite
+	@./tests/fetch_functional_test.sh
+	@$(BUILD_DIR)/test_functional_suite
+
+$(BUILD_DIR)/test_functional_suite: $(TEST_DIR)/test_functional_suite.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/cpu6502.h
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_functional_suite.c $(SRC_DIR)/cpu6502.c
 
 # Firmware-level tests requiring a RISC-V cross-compiler + QEMU (not part of
 # the default host `test` target, which should have zero extra toolchain
