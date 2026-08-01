@@ -18,3 +18,24 @@ const cartridge_slot_t *cartridge_layout_get_slot(int index) {
     }
     return &cartridge_slots[index];
 }
+
+const cartridge_slot_t *cartridge_layout_find_slot_by_title(const char *title) {
+    if (!title) {
+        return 0;
+    }
+    for (int i = 0; i < CARTRIDGE_SLOT_COUNT; i++) {
+        const char *t = cartridge_slots[i].title;
+        if (t) {
+            const char *p1 = title;
+            const char *p2 = t;
+            while (*p1 && (*p1 == *p2)) {
+                p1++;
+                p2++;
+            }
+            if (*p1 == *p2) {
+                return &cartridge_slots[i];
+            }
+        }
+    }
+    return 0;
+}

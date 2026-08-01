@@ -66,4 +66,7 @@ extern const cartridge_slot_t cartridge_slots[CARTRIDGE_SLOT_COUNT];
 /* Safe accessor: returns pointer to slot at index, or NULL if index < 0 or index >= CARTRIDGE_SLOT_COUNT. */
 const cartridge_slot_t *cartridge_layout_get_slot(int index);
 
+/* Search by title: returns pointer to matching slot, or NULL if title is NULL or not found. */
+const cartridge_slot_t *cartridge_layout_find_slot_by_title(const char *title);
+
 #endif /* CARTRIDGE_LAYOUT_H */
