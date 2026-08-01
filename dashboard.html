@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">STEP 5 AUDIO ACTIVE GETTER (313 Tests) GREEN</span>
+                    <span class="pill pill-green">STEP 5 INIT/RESET PARITY (314 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -394,7 +394,7 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Audio Active Getter (<code class="code-inline">emulator_loop.c</code>)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Init/Reset Parity Refactor (<code class="code-inline">emulator_loop.c</code>)</span>
                         <span class="pill pill-green">GREEN (14.0 KB Binary)</span>
                     </div>
                 </div>
@@ -410,7 +410,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Text Mode Aware Display Rendering (<code class="code-inline">bio_display.c</code>)</span>
-                        <span class="pill pill-green">GREEN (313 PASS)</span>
+                        <span class="pill pill-green">GREEN (314 PASS)</span>
                     </div>
                 </div>
 
@@ -487,8 +487,8 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 5 – 6: Audio Active Getter (<code class="code-inline">emulator_loop.c</code>) (COMPLETE)</h4>
-                            <p>Duke added <code class="code-inline">baoregon_emulator_is_audio_active()</code> with unit tests in <code class="code-inline">tests/test_emulator_loop_audio_active.c</code> (313 tests GREEN)!</p>
+                            <h4>Days 5 – 6: Init/Reset Parity Refactor (<code class="code-inline">emulator_loop.c</code>) (COMPLETE)</h4>
+                            <p>Duke extracted <code class="code-inline">reset_to_splash_menu()</code> helper preventing drift between <code class="code-inline">init()</code> and <code class="code-inline">reset_to_splash()</code> with unit tests in <code class="code-inline">tests/test_emulator_loop_init_reset_parity.c</code> (314 tests GREEN)!</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,30 +510,30 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. Audio Active Getter Landed (<code class="code-inline">emulator_loop.c</code>)</div>
+                    <div class="decision-title">1. Init/Reset Parity Refactor (<code class="code-inline">emulator_loop.c</code>)</div>
                     <div class="decision-desc">
-                        Duke added <code class="code-inline">baoregon_emulator_is_audio_active()</code> with unit tests in <code class="code-inline">tests/test_emulator_loop_audio_active.c</code> (313 tests GREEN)!
+                        Duke extracted <code class="code-inline">reset_to_splash_menu()</code> helper in <code class="code-inline">src/emulator_loop.c</code> ensuring 100% state parity between init and reset with unit tests in <code class="code-inline">tests/test_emulator_loop_init_reset_parity.c</code> (314 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Text Mode Aware Display Rendering (<code class="code-inline">bio_display.c</code>)</div>
+                    <div class="decision-title">2. Audio Active Getter Landed (<code class="code-inline">emulator_loop.c</code>)</div>
                     <div class="decision-desc">
-                        Bunnie added <code class="code-inline">bio_display_render_frame_auto_text_aware()</code> preventing graphics noise in TEXT mode ($C051) with unit tests in <code class="code-inline">tests/test_bio_display_text_mode.c</code> (313 tests GREEN)!
+                        Duke added <code class="code-inline">baoregon_emulator_is_audio_active()</code> with unit tests in <code class="code-inline">tests/test_emulator_loop_audio_active.c</code> (314 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">3. 6502 Cycle Overflow Freeze Fix (<code class="code-inline">cpu6502.c</code>)</div>
+                    <div class="decision-title">3. Text Mode Aware Display Rendering (<code class="code-inline">bio_display.c</code>)</div>
                     <div class="decision-desc">
-                        Woz fixed silent CPU freeze where <code class="code-inline">clockticks6502</code> wrapping near 4.29B cycles (~70 mins runtime) permanently stalled <code class="code-inline">exec6502()</code>. Fixed via modulo tick tracking with regression tests (<code class="code-inline">test_exec6502.c</code>)!
+                        Bunnie added <code class="code-inline">bio_display_render_frame_auto_text_aware()</code> preventing graphics noise in TEXT mode ($C051) with unit tests in <code class="code-inline">tests/test_bio_display_text_mode.c</code> (314 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
                     <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (313 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (314 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
