@@ -18,11 +18,30 @@ int baoregon_emulator_is_in_splash_menu(void);
 /* Test/inspection hook: read-only access to the internal framebuffer
  * baoregon_emulator_run_frame() renders into. Not for hardware use (the
  * real BIO Core 0 DMA path reads it directly once the SPI DMA peripheral
- * exists -- see bio_display.h). */
+ * exists -- see bio_display.h).
+ *
+ * IMPORTANT: this buffer is allocated at 320x240 (the eventual target
+ * badge display resolution per README.md), but bio_display.h's render
+ * functions do NOT scale -- they only ever write the native
+ * BIO_DISPLAY_WIDTH x BIO_DISPLAY_HEIGHT (280x192) region in the
+ * top-left corner. The remaining 320x240 - 280x192 = 23040 pixels
+ * (right/bottom margins) are NEVER written by the renderer; they stay
+ * whatever they were initialized to (static storage -> zero-initialized
+ * at program start, but NOT necessarily zero after a real 6502 program
+ * writes to $2000-$3FFF/$0400-$07FF -- that only affects the rendered
+ * 280x192 region, never the margins). Scaling 280x192 up to fill the
+ * full 320x240 (or switching to a 480x320 target) is explicitly
+ * deferred until baochip confirms the target resolution -- see
+ * bio_display.h's own "no scaling yet" note. Do not assume the margin
+ * pixels are meaningful display content. */
 const uint16_t *baoregon_emulator_get_framebuffer(void);
 
 /* Safely copy internal framebuffer (320*240 uint16_t pixels) into dest.
- * Returns 0 on success, -1 if dest is NULL or dest_count < 320*240. */
+ * Returns 0 on success, -1 if dest is NULL or dest_count < 320*240.
+ *
+ * Same margin caveat as baoregon_emulator_get_framebuffer(): only the
+ * top-left 280x192 pixels of the copied 320x240 buffer are real
+ * rendered content; the rest are unwritten margin pixels. */
 int baoregon_emulator_copy_framebuffer(uint16_t *dest, size_t dest_count);
 
 #endif /* EMULATOR_LOOP_H */
