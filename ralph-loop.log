@@ -679,3 +679,4 @@ fd840e8 Update ralph-loop.log with latest pass 89 status
 d0270e3 emulator_loop: wire bio_display_dma_push into run_frame (real integration gap)
 d66473e Update ralph-loop.log with latest pass 88 status
 [2026-08-01 04:57:12] sleeping 300s...
+[2026-08-01 05:02:12] --- checking Woz ---
