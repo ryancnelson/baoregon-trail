@@ -416,3 +416,8 @@ faad10c emulator_loop: add baoregon_emulator_reset_to_splash function with unit 
 d2df065 bio-sim-tests: extend real bio-sim RTL palette verification to Lo-Res (16 colors)
 [2026-08-01 02:39:47] sleeping 300s...
 [2026-08-01 02:44:47] --- checking Woz ---
+[2026-08-01 02:47:09] Woz reply (truncated): ��───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 
+[2026-08-01 02:47:09] --- checking Bunnie ---

@@ -28,10 +28,11 @@ int baoregon_emulator_is_in_splash_menu(void) {
 }
 
 void baoregon_emulator_reset_to_splash(void) {
+    apple2_mem_reset();
+    reset6502();
     boot_splash_init(&g_splash_state);
     boot_splash_button_edge_state_init(&g_edge_state);
     g_in_splash_menu = 1;
-    reset6502();
 }
 
 void baoregon_emulator_poll_input(void) {
