@@ -1071,3 +1071,20 @@ e866932 Update ralph-loop.log with latest pass 127 status
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  
 [2026-08-01 07:47:47] --- checking baochip ---
+[2026-08-01 07:48:25] baochip reply (truncated): �────
+  ###    Repository Sync
+
+  All commits pushed to Gitea origin main at http://biggie:3000/ryan/baoregon-
+  trail.git.
+  Live Status Dashboard: **dashboard.html**.
+
+────────────────────────────────────────────────────────────────────────────────────────
+>
+────────────────────────────────────────────────────────────────────────────────────────
+? for shortcuts                                                  Gemini 3.6 Flash · high
+[2026-08-01 07:48:25] recent commits: 4b1a50d Update dashboard.html: 338 tests GREEN, 14.2 KB RISC-V binary, Emulator Loop Copy Framebuffer Null Safety Test landed
+1a8a16a emulator_loop: add test_emulator_loop_copy_framebuffer_null_safety unit test (338 tests GREEN)
+b7c93bb Update ralph-loop.log with latest pass 131 status
+e19b294 cpu6502: lock in irq6502()/nmi6502() stack-wraparound round-trip with regression test
+535e66b Update ralph-loop.log with latest pass 130 status
+[2026-08-01 07:48:25] sleeping 300s...
