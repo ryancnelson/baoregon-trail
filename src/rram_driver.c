@@ -4,6 +4,7 @@
  * design rationale (real driver: src/bao1x/hardware_rram/rram.c).
  */
 #include "rram_driver.h"
+#include "cartridge_layout.h"
 #include <string.h>
 
 static uint8_t *g_store = 0;
@@ -14,6 +15,10 @@ void rram_driver_attach_backing_store(uint8_t *store, uint32_t base_addr, uint32
     g_store = store;
     g_base_addr = base_addr;
     g_size = size;
+}
+
+void rram_driver_attach_cartridge_partition(uint8_t *store) {
+    rram_driver_attach_backing_store(store, CARTRIDGE_RERAM_BASE, CARTRIDGE_TOTAL_SIZE);
 }
 
 static int addr_in_bounds(uint32_t addr, uint32_t len) {

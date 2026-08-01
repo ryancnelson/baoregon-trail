@@ -1,0 +1,118 @@
+baoregon-trail — Security/Architecture/Soundness Review (fable-5)
+Reviewed against live repo state, HEAD=48dba20, 2026-07-31
+
+METHOD: Verified against actual commits/build/test-run output, not docs or
+commit-message claims taken on trust (per this crew's own "verify before you
+agree" review standard). Ran `make test` directly, ran the Klaus Dormann
+functional-suite harness directly (it exists but is NOT wired into `make
+test`), read the actual C source for the one gap the run surfaced.
+
+===========================================================================
+REAL PROGRESS SINCE LAST PASS (verified, not claimed)
+===========================================================================
+- 6502 core: 0 opcodes -> 114 opcodes implemented in src/cpu6502.c, unit
+  tested via tests/test_opcodes.c (all passing, ran directly).
+- apple2_mem.c now exists (it did not last review) -- memory router wiring
+  RAM/ROM/soft-switches/traps. tests/test_apple2_mem.c: 9/9 passing,
+  including real write-protection ($F000 write ignored) and unmapped
+  soft-switch region behavior ($C0xx reads 0, ignores writes).
+- Video: full 192-row hires_line_offsets table, color decode, byte-boundary
+  edge cases (first/last column out-of-bounds read protection explicitly
+  tested), full-frame render, real-bus integration -- all passing.
+- Audio (bunnie_audio.c): BIO Core 1 $C030 PWM trigger/poll state machine,
+  tested, correctly non-blocking (trap sets a pending flag, never flips the
+  physical pin itself).
+- Disk trap: real $C0EC soft-switch streaming (256/256 bytes verified),
+  cursor wrap behavior tested, invalid track/sector selection confirmed to
+  not disturb a prior valid selection.
+- rram_driver.c: aligned/unaligned writes, read-modify-write for unaligned
+  starts, cross-page-boundary writes, out-of-bounds rejection, page erase to
+  0xFF -- all tested, this is genuine defensive engineering, not decorative
+  test names.
+- cartridge_layout.c: ReRAM partition base bug (0x20080000, wrong) was
+  caught and fixed to 0x20280000 -- confirmed by a test that explicitly
+  checks "is not the old buggy value", a real bug caught by their own suite.
+- 159+ tests green as of `make test`, run directly by me just now, not
+  taken from a commit message count.
+- RISC-V cross-compilation pipeline / linker.ld / crt0.S landed per commit
+  9514a80 -- NOT independently verified (no riscv32 toolchain available in
+  this review environment). Flagging as unverified, not assumed working.
+
+===========================================================================
+CRITICAL FINDING -- same failure class as the prior review, recurred
+===========================================================================
+Dashboard claim (dashboard.html, current): "Woz: 128 CPU Opcodes GREEN +
+Klaus Dormann harness." This phrasing is actually more careful than last
+time's false "100% passing" claim -- it only claims the harness EXISTS, not
+that the suite passes. Good improvement in precision.
+
+BUT: I ran tests/test_functional_suite.c directly (it builds fine, the
+fixture tests/fixtures/6502_functional_test.bin is present) and it FAILS:
+
+    FAIL: test_functional_suite_reaches_success_trap
+    (trapped at $0FAB after 42450 steps -- expected success trap at $3469)
+
+Root cause, confirmed by reading src/cpu6502.c directly: ADC/SBC do not
+implement BCD (decimal mode) arithmetic. The code says so explicitly:
+
+    case 0x69: { /* ADC immediate (binary mode only; decimal mode is a
+                    separate future test per NEXT_STEPS.md flag coverage) */
+
+This is a known, bounded, scoped-out gap -- not a mystery bug. But two
+problems follow from it:
+
+1. tests/test_functional_suite.c is NOT wired into `make test` (unlike
+   test-firmware and test-biosim, which ARE documented as separate targets
+   with an explicit comment explaining why they're excluded). This one has
+   no such target and no such comment -- it's just silently absent. Anyone
+   running `make test` and seeing "159 tests GREEN" has no way to know the
+   actual ISA-correctness suite fails.
+2. Decimal mode is used by real Apple II software more often than people
+   expect -- BASIC's floating-point/string routines and various games'
+   scorekeeping lean on it. This will surface as a real bug once actual
+   Oregon Trail code runs, not just as an academic test-suite gap.
+
+RECOMMENDATION (hardware in hand next week -- this is the highest-priority
+open item): either (a) implement decimal-mode ADC/SBC now -- it's a
+well-known, bounded algorithm, not exploratory work, or (b) if deferring,
+add an explicit `make test-functional` target (mirroring the existing
+test-firmware/test-biosim pattern) so the gap is visible and tracked in CI
+language, not silently missing. Right now it is neither passing nor
+tracked, which is the worst of both states.
+
+===========================================================================
+ARCHITECTURE / SECURITY -- holds up on direct inspection
+===========================================================================
+- Bus-abstraction contract (read6502/write6502 as the single seam for
+  RAM/ROM/soft-switches) remains the right call -- it's what let three
+  people's modules (Woz/Bunnie/Duke) develop in parallel against mocks and
+  get swapped to the real bus later without cross-module coupling.
+- Fast-sector-read disk trap (bypassing GCR/stepper emulation, direct ReRAM
+  pointer copy) is a smart, correctly-scoped simplification given the
+  actual goal (boot speed, not floppy-drive authenticity).
+- Bounds-checking discipline is consistent everywhere I checked: rram_driver
+  rejects unaligned/out-of-bounds writes (tested), disk_trap rejects
+  invalid track/sector without corrupting state (tested), video decode has
+  explicit first/last-column boundary tests (tested). This is real, not
+  decorative.
+- BRAINSTORM.md updates (Section 7 power numbers, BIO ISA confirmed as
+  RV32IMC with reserved x16-x31 MMIO registers) read as incorporating real
+  external information (Discord #c-side channel, bunnie huang directly)
+  with appropriate epistemic hedging -- commit 9d00f76 explicitly labels
+  claims "CONFIRMED-from-photo" vs "ASSUMED," which is the right posture
+  for hardware not yet in hand.
+- No meaningful new security-surface concerns beyond what was already
+  noted last review (no external/untrusted input path reaches the decode
+  functions; .dsk contents are baked in at build time, not loaded from an
+  untrusted external source at boot).
+
+===========================================================================
+BOTTOM LINE
+===========================================================================
+Much stronger snapshot than the prior review, and the team fixed the exact
+doc/reality mismatch pattern flagged before in most places (dashboard
+language is more precise now, test-suite wiring is more complete). But the
+identical failure mode reappeared once, in the highest-stakes possible
+location: the CPU core's actual ISA correctness, one week before hardware
+arrives. Fix the BCD gap or make its failure visible in `make test` before
+anyone treats the 6502 core as done.

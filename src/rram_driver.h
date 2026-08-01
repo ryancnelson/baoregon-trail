@@ -58,6 +58,25 @@ typedef enum {
 void rram_driver_attach_backing_store(uint8_t *store, uint32_t base_addr, uint32_t size);
 
 /*
+ * Attach store as the backing store for the cartridge disk-image
+ * partition specifically, using CARTRIDGE_RERAM_BASE/CARTRIDGE_TOTAL_SIZE
+ * (cartridge_layout.h) as the bounds -- rather than an arbitrary
+ * caller-supplied region. This is the integration point requested
+ * 2026-07-31: disk sector writes must be strictly bounds-checked against
+ * the cartridge partition specifically, so a write bug can never reach
+ * into the .text/.rodata headroom below CARTRIDGE_RERAM_BASE (the entire
+ * reason for the 2.5 MiB boundary correction). Equivalent to calling
+ * rram_driver_attach_backing_store(store, CARTRIDGE_RERAM_BASE,
+ * CARTRIDGE_TOTAL_SIZE), but named for the specific intent so call sites
+ * document themselves.
+ *
+ * store must be at least CARTRIDGE_TOTAL_SIZE bytes and remain valid for
+ * the lifetime of subsequent rram_read()/rram_write()/rram_write_page()
+ * calls.
+ */
+void rram_driver_attach_cartridge_partition(uint8_t *store);
+
+/*
  * Read len bytes starting at absolute address addr into buf. Always
  * succeeds if the whole range [addr, addr+len) is within the attached
  * backing store's bounds; out-of-bounds reads are NOT range-checked here
