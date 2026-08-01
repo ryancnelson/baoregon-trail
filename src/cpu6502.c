@@ -367,6 +367,18 @@ void step6502(void) {
             break;
         }
 
+        case 0x50: { /* BVC */
+            int8_t offset = (int8_t)fetch_immediate();
+            branch_if(!(status & FLAG_OVERFLOW), offset);
+            break;
+        }
+
+        case 0x70: { /* BVS */
+            int8_t offset = (int8_t)fetch_immediate();
+            branch_if(status & FLAG_OVERFLOW, offset);
+            break;
+        }
+
         case 0x29: /* AND immediate */
             a &= fetch_immediate();
             set_zero_and_sign(a);

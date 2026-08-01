@@ -1,0 +1,44 @@
+{
+  // BIO Core 0 fw: color-index -> RGB565 palette lookup. Ports and verifies
+  // src/bio_display.c's bio_display_color_to_rgb565() against real bio-sim
+  // (Verilator sim of actual bio_bdma RTL), driving inputs via FIFO0 and
+  // reading results back via FIFO1.
+  "fclk_mhz": 350,
+  "sw": "bio_display_palette",
+  "load_core": 0,
+  "commands": [
+    { "cmd": "poke", "name": "sfr_config",  "value": "0x000" },
+    { "cmd": "poke", "name": "sfr_qdiv0",   "value": "0x00010000" },
+    { "cmd": "start", "cores": [0], "restart": true, "clkdiv_restart": true },
+
+    // Case 1: BLACK (index 0) -> 0x0000
+    { "cmd": "fifo_write", "bank": 0, "value": "0x00000000" },
+    { "cmd": "run", "cycles": 2000, "stop_on_trap": true },
+    { "cmd": "fifo_read", "bank": 1, "count": 1 },
+
+    // Case 2: GREEN (index 1) -> 0x07E0
+    { "cmd": "fifo_write", "bank": 0, "value": "0x00000001" },
+    { "cmd": "run", "cycles": 2000, "stop_on_trap": true },
+    { "cmd": "fifo_read", "bank": 1, "count": 1 },
+
+    // Case 3: VIOLET (index 2) -> 0x781F
+    { "cmd": "fifo_write", "bank": 0, "value": "0x00000002" },
+    { "cmd": "run", "cycles": 2000, "stop_on_trap": true },
+    { "cmd": "fifo_read", "bank": 1, "count": 1 },
+
+    // Case 4: ORANGE (index 3) -> 0xFC00
+    { "cmd": "fifo_write", "bank": 0, "value": "0x00000003" },
+    { "cmd": "run", "cycles": 2000, "stop_on_trap": true },
+    { "cmd": "fifo_read", "bank": 1, "count": 1 },
+
+    // Case 5: BLUE (index 4) -> 0x001F
+    { "cmd": "fifo_write", "bank": 0, "value": "0x00000004" },
+    { "cmd": "run", "cycles": 2000, "stop_on_trap": true },
+    { "cmd": "fifo_read", "bank": 1, "count": 1 },
+
+    // Case 6: WHITE (index 5) -> 0xFFFF
+    { "cmd": "fifo_write", "bank": 0, "value": "0x00000005" },
+    { "cmd": "run", "cycles": 2000, "stop_on_trap": true },
+    { "cmd": "fifo_read", "bank": 1, "count": 1 }
+  ]
+}

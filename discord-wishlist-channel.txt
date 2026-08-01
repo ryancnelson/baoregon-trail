@@ -1,0 +1,278 @@
+
+ [CRY], 
+Xobs — 1/5/26, 1:56 AM
+I’m not sure it would colocate it if you marked the outer function as no_inline. And it would be fine to mark the inner one as inline.
+foxmoder [CRY],  — 1/5/26, 1:59 AM
+Ah, makes sense—and perfect, in that case I’ll go ahead and draft a version up of this and share a draft PR when it’s set :)
+sunipkm — 1/13/26, 12:17 AM
+Hey, just watched the 39C3 talk. Great work! I would love to try out Xous + Baochip-x1 for a cubesat project I am working on. How could I get one..?
+bunnie — 1/13/26, 12:22 AM
+There's a page you can sign up to be notified for once we have solid production details: https://www.crowdsupply.com/baochip/dabao
+Crowd Supply
+Dabao Evaluation Board for Baochip-1x
+A powerful new RISC-V microcontroller with mostly open RTL
+Dabao Evaluation Board for Baochip-1x
+Image failed to load.
+
+The ⁠hardware-supply-chain channel also has some updates there.
+Anna | DevMiner [MT6],  — 1/13/26, 6:05 AM
+I want to make new LED name badges for the congress, this time with addressable RGB! Sadly, I stumbled across the talk too late otherwise I could've caught you behind us (we were sitting right next to the fail0verflow assembly). I'm super tempted to use the Baochip 1x on our badges instead of some WCH chip. No doubt the BIO can do a couple channels of WS2812B traffic ^^
+
+Are there already power measurements? I know that the LEDs will draw the majority of the power, but at least in idle it would be great to have something low power. 
+sunipkm — 1/13/26, 7:35 AM
+Thanks! What if I wanted just the IC?
+bunnie — 1/13/26, 8:12 AM
+Forwarded
+"full on" with a CPU running at 700MHz, an OLED display, external RAM, TRNG, etc. - about 40mA
+wfi sleep - CPU is wakeable on an interrupt, no memory lost, recover in "milliseconds" timescale - around 12-14mA. Heavily temperature dependent - most of the power is leakage in the SRAM array. Reducing VDDCPU can get you even lower power numbers, I picked the rated 0.7V for the VDD core but I suspect you can undervolt and not lose memory and reduce that even further
+deep sleep - RTC only running, backup registers preserved, key press interrupt wakeable - but nothing else on, SRAM array powered down, peripherals powered down - < 1mA, for the setup I had, 1mA is about the noise floor.
+#bao1x-chip  •  1/13/26
+amazingly, this was just asked in another channel.
+if you're driving WS2812 - the way you'd do it is leave the core in WFI sleep, and then let the BIO run the LEDs. so that's the number you'd be looking at.
+not the best power numbers but all the SRAM comes at a cost in terms of power.
+bunnie — 1/13/26, 8:13 AM
+i'll be getting just the IC into supply chains probably around that time The harder issue with just the IC, at least for me, is I don't have contacts for IC distributors on hand. So there is an unknown chasm i have to cross to convince some buyer in Mouser, Digikey, or LCSC to stock this thing.
+Maybe it's easy? but it could also be hard. I just don't know. I'll figure it out, either way. But the hope is that shortly after the boards going into production, bare chips will be in distribution. I'd like it if LCSC stocked it and put it in its extended library so anyone could just JLC a board with it on there.
+emeb — 1/13/26, 8:43 AM
+Hmm... maybe get in touch with the folks at Adafruit? They seem pretty well connected & have products at DK & Mouser. They might be up to distribute your stuff too.
+sunipkm — 1/13/26, 9:17 AM
+I do think Adafruit will be able to help out. They also sell their products on Mouser/DK.
+bunnie — 1/13/26, 9:52 AM
+I think Adafruit may be one of my best bets to get listed.
+bunnie — 1/13/26, 10:45 PM
+I just opened a GH issue asking for help/consensus on best practices for software supply chain attack hardening on Xous-core: https://github.com/betrusted-io/xous-core/issues/778. "I want to know what best practices are for defending against software supply chain attacks" (keep in mind I'm a hardware guy so I'm not up to date on the latest software trends).
+GitHub
+betrusted-io/xous-core
+The Xous microkernel. Contribute to betrusted-io/xous-core development by creating an account on GitHub.
+The Xous microkernel. Contribute to betrusted-io/xous-core development by creating an account on GitHub.
+thj — 1/16/26, 8:14 AM
+@bunnie I know someone at wurth, but not on this side of things
+Rahzael — 1/21/26, 10:43 PM
+So I have almost no experiance on the hardware side of things, but I've always dreamed of having a hardware MIDI controller than can do microtonal fingerings like this: https://www.youtube.com/watch?v=HwTCF0zeo4o
+YouTube
+Erik Natanael
+neod.1: Explaining my 53edo musical instrument
+Image
+Rahzael — 1/21/26, 10:51 PM
+And yeah, there's some fairly difficult MIDI limitations to overcome (which is why that device produces sound directly), but MIDI 2.0 and MIDI 1.0 MTS help remove most of those, provided you're smart about voice allocation. 
+pinkforest(she/her) — 1/24/26, 10:56 PM
+I want to run my no-alloc no-std TLS 1.3 in it. Given it has de-coupled crypto I want to hook into the HW closely https://github.com/yolotls/yolotls | https://yolotls.github.io/book/ 
+pinkforest(she/her) — 1/24/26, 11:13 PM
+I also have no-posix oriented no-std no_alloc sans-io chained state machine/s pipeline for few higher level protocols (as well as generic construct to do them) so the I/O possibilities I'm wondering about - I also woner if I can plug these chained protocol pipeline compositions into the enum I'm planning https://github.com/yaws-rs/blueprint/issues/3 
+pinkforest(she/her) — 1/24/26, 11:29 PM
+one of my other use-cases is also with io_uring so it's interesting given there is ownership semantics between kernel/userspace over copying (like with posix read/write-like calls) 
+pinkforest(she/her) — 1/24/26, 11:46 PM
+I also love the idea to prove CT properties in the hardware level instead of hammering data
+also the software defined I/O I'm wondering what type of radio capabilities it could do w/o offloading proprietary vendor blobs like WiFi / BT / LoRaWAN 
+bunnie — 1/25/26, 8:44 AM
+nice! i love it.
+sebmai — 1/25/26, 10:05 AM
+You could try to get the chips into Aisler's hands, or at least make contact with them so that they can buy from you if you cannot make them available through larger distributors, or to cut out the middleman. Aisler is a small company, so you're more likely to have success with them than with larger companies, but they probably won't have many orders. If you're really unlucky, you might not get any. 
+cbjamo — 2/10/26, 5:36 PM
+I want to put a bao1x in a clockwork picocalc. The dabao has exactly enough pins to connect the important peripherals. But the cooler thing would be to replace the entire mainboard to really let the chip sing.
+bunnie — 2/10/26, 9:05 PM
+nice
+yspacelabs [LASR],  — 3/4/26, 5:51 PM
+I'm looking forward to some fun RF hacks with the BIO. With the 700MHz clock domain, it can definitely do some high frequency harmomic transmission and with a fast enough ADC, it can do some direct sampling reception!
+kit — 3/7/26, 10:03 AM
+if i wanted to mount the dabao board right inside the mnt reform next, would the screw holes on the dabao pcb line up with the grid inside the next? I think the grid is 40mm square
+sam blenny — 3/7/26, 5:41 PM
+according to my cheap calipers, the holes are approximately 2.2mm diameter with 12.1mm and 36.8mm center to center distances. If you want something more accurate, the kicad files are at https://github.com/baochip/dabao
+I expect it would be pretty easy to 3d-print an adapter plate
+for an example of the kind of mount I'm thinking of, see Adafruit's snap-on mount for QT Py
+sam blenny — 3/7/26, 5:58 PM
+According to https://mntre.com/media/reform_md/2024-09-09-introducing-mnt-reform-next.html, the space below the keyboard is only 4mm tall, so you might need to remove the dabao's USB jack which could make it a bit awkward to use.
+kit — 3/7/26, 6:45 PM
+Hmm the usb port would be what I want to use to connect it to the board, though I guess I could use some other i/o, though if I were doing something like that I might just want to make a different pcb, or maybe I could mount it upside down? Idk much to think about
+Ultimately I’d like to use it as a password manager or tpm I could trust on my laptop
+sam blenny — 3/7/26, 7:13 PM
+hmm... the tricky part would probably be arranging the USB cabling. I don't know if there's already a USB hub on one of the existing port boards with a convenient way to wire an internal USB connection.
+a custom port board PCB might be the way to go
+kit — 3/7/26, 7:25 PM
+Yeah and then putting a dabao chip on that with maybe a button for presence detection maybe
+Supermath101 — 3/7/26, 7:48 PM
+Yeah. I wonder if a future variant of the ⁠board-dabao could take some inspiration from the Waveshare RP2350-Tiny-Kit or Fairphone USB-C Port, and have a detachable daughterboard for USB (and the two buttons).
+Waveshare RP2350-Tiny Development Board, Raspberry Pi Microcontroll...
+Waveshare RP2350-Tiny Development Board, Raspberry Pi Microcontroller Development Board, Based On RP2350A Dual-core & Dual-architecture Microcontroller
+bunnie — 3/8/26, 1:36 AM
+oof that cable would be brutal for high speed signal integrity
+Supermath101 — 3/8/26, 9:56 AM
+Would a customized Flex PCB fare any better? 🤔 
+kit — 3/8/26, 10:28 AM
+pretty sure that's what they're using internally for the reform next
+Supermath101 — 3/8/26, 10:36 AM
+The Raspberry Pi 5 has a PCIe FFC connector, and people have managed to achieve PCIe 3.0 speeds, with it being officially rated for PCIe 2.0 speeds. 
+bunnie — 3/8/26, 10:55 AM
+yah that's a controlled impedance flex cable. not the same thing as it looks in the other cable which looks like a mylar laminate construction
+price difference is pretty substantial
+Supermath101 — 3/8/26, 11:11 AM
+For the use-cases of UF2 firmware flashing, and printf-style debugging over USB CDC, a kit with a single controlled impedance flex cable, and matching USB (and two buttons) daughterboard, paired with several of the special variant of the ⁠board-dabao, could help to offset that increased cost. 
+Supermath101 — 3/8/26, 11:30 AM
+Since a flatter UART-focused ⁠board-dabao would likely serve those use-cases just as well, it probably wouldn't be worth the R&D time and effort. 
+sam blenny — 3/8/26, 4:08 PM
+FWIW, if you want a different perspective on making small boards, some of the stuff folks do in the FPV quadcopter building scene is kinda interesting. Things like ELRS radio boards and such. A lot of that uses a combination of test points and small solder pads. In that case, the boards usually communicate on UART pairs and the main flight controller board has multiple UARTs. 
+If you wanted to do something in that style, perhaps you could have USB port test point pads and a programmer board with pogo pins and a clamp
+Then you could use I2C, UART, or whatever on a couple solder pads, or a flex cable, or whatever, to connect back to your main system. I suppose a lot of the design would need to follow from a good understanding of what signals, using which cable and connector types, are available inside the Reform NXT to tap into.
+sam blenny — 3/8/26, 4:27 PM
+According to the "Motherboard" section of https://www.crowdsupply.com/mnt/mnt-reform-next, you'd have access to flex cable USB ports, "Serial UART for Debug", some I2C buses used in the power system, and some other stuff. There's also an internal microSD slot, so you might be able to tap SDIO from there.
+That's assuming you don't want to just copy their right port board design and modify it to include a bao1x and USB hub. 
+kit — 3/8/26, 4:33 PM
+a keepass db isn't that large, just a serial connection might be fast enough
+sam blenny — 3/8/26, 6:55 PM
+looking at the port board kicad files from https://source.mnt.re/reform/reform-next/-/tree/main, it seems like one of the flex connectors is a USB port for the camera. If you were willing to go without a camera, maybe you could just make a little board with a bao1x and an fpc connector that works with the camera board's USB flex cable.
+Image
+kit — 3/8/26, 6:57 PM
+Neat that probably would be what I’d try, then I don’t have to modify any other boards
+yspacelabs [LASR],  — 3/8/26, 7:13 PM
+what is the large QFN? USB3 hub?
+sam blenny — 3/8/26, 7:14 PM
+Very likely from the look of it. If you want to poke around the design, you can clone the reform-next repo and drag kicad files into a kicanvas.org window, or just use kicad. 
+Min1123 — 3/9/26, 10:13 PM
+Ok, did a quick search for emulator, found a mention of renode, and a mention of some cargo command for emulating XouS, didn't see any mention of QEMU, or of setting up something else. Read the CrowdSupply update today, and I understand that the Baochip-1x is to be a single core RISCV32, but with an MMU, which puts it in an interesting class of maybe being able to run Linux with MMU directly.
+
+I Want To - use the Gentoo Linux ( https://www.gentoo.org/downloads/riscv/#stages-advanced ) MUSL RV32 image with a modern kernel (6.19/7.0 for the moment) on QEMU to prepare a rootfs for use with a bao1x with some sort of additional external RAM.
+riscv (aka RISC-V) – Gentoo Linux
+News and information from Gentoo Linux
+Image
+bunnie — 3/10/26, 9:10 AM
+that would be pretty awesome
+sam blenny — 3/16/26, 3:52 AM
+This is sort of an "I want to" and also sort of a general "hey maybe this would work what do you think?"...
+
+From what I can tell, the M5Stack NanoC6 dev kit might be usable as a breadboard-friendly WiFi/BLE/IEEE802.15.4 radio coprocessor for Dabao. Hypothetically, a procedure like this might work:
+Flash NanoC6 with Espressif's AT Firmware configured to do UART serial on the grove connector data pins
+Wire the NanoC6 to Dabao for data and power using a Grove to DuPont connector cable and a breadboard
+Write firmware for Dabao that can use the C6 AT firmware as a radio modem
+ 
+Plenty of other ESP32 modules would probably also work. The NanoC6 caught my attention because of its small/cute/cheap factor and the potential for easy wiring. 
+This is a screenshot from one of the NanoC6 documentation page videos showing the kind of wiring setup I'm imagining for AT firmware over UART serial by way of a Grove cable. 
+Image
+Haakun_the_Eril — 3/24/26, 4:54 PM
+This should be interesting for you folks in here:
+https://github.com/Supermagnum/Baochip-1x-firmware
+GitHub
+GitHub - Supermagnum/Baochip-1x-firmware: This document outlines fi...
+This document outlines firmware for USB hardware security tokens and protected cryptographic storage on the Baochip-1x SoC - Supermagnum/Baochip-1x-firmware
+This document outlines firmware for USB hardware security tokens and protected cryptographic storage on the Baochip-1x SoC - Supermagnum/Baochip-1x-firmware
+bunnie — 3/24/26, 9:39 PM
+ooh wow
+gluonix — 3/24/26, 9:52 PM
+Yeah! Working on this too!
+Haakun_the_Eril — 3/25/26, 4:51 AM
+Cool!  My stuff is just a idea, because If I am going to actually implement it I have to use cursor. I'm not proud of it, but my dyscalculia also drags along the bit in my brain that was supposed to grasp programming.  At least I am aware of tests like Wycheproof,BSI TR-03111 and fuzzing. Fuzzing takes some time, around 6 hours depending on complexity and system resources. 
+Because I have the issues I have I tend to subject my projects to a barrage of tests.
+Haakun_the_Eril — 3/25/26, 6:42 AM
+https://github.com/Supermagnum/Galdralag-firmware
+GitHub
+GitHub - Supermagnum/Galdralag-firmware: A attempt at cryptographic...
+A attempt at cryptographic firmware for Baochip-1x . - Supermagnum/Galdralag-firmware
+Haakun_the_Eril — 3/26/26, 3:12 PM
+V0.10-Alpha ,  Galdralag is now ready for human testing.
+Haakun_the_Eril — 3/27/26, 3:25 AM
+one can mix different things,- like Serpent-256 + ChaCha20-Poly1305 + shamir's secret .
+Haakun_the_Eril — 3/28/26, 10:17 AM
+The only remaining work before physical hardware works is the Xous USB service wiring — aka waiting for the BSP crates/CcidClass stuff.
+At that point the project will be a complete, tested, open-source hardware security token firmware with capabilities that no commercial token currently offers: on-device ephemeral ECDH with true forward secrecy, on-device Shamir K-of-N, cipher-agnostic profile system, PSRAM decoy volume, and full OpenPGP card compatibility — all on open RTL with a reproducible bootloader.
+Masanori Ogino — 3/28/26, 7:26 PM
+I had found that HiFive Premier P550 has STM32F407VET6 (Cortex-M4F at 168 MHz) as BMC and thought Baochip-1x could do something similar.
+GitHub
+GitHub - eswincomputing/hifive-premier-p550-mcu-patches
+Contribute to eswincomputing/hifive-premier-p550-mcu-patches development by creating an account on GitHub.
+GitHub - eswincomputing/hifive-premier-p550-mcu-patches
+bry — 3/29/26, 11:25 AM
+Has anyone looked at bitbanging Ethernet on the bio? I saw someone has done it on the pi pico
+Supermath101 — 3/29/26, 3:21 PM
+IIRC, it was the QMII protocol that was bit banged using that microcontroller's PIO peripheral, not the physical layer of Ethernet itself. IIUC, that project requires a Ethernet PHY chip connected to the microcontroller.
+bry — 3/29/26, 3:22 PM
+https://github.com/kingyoPiyo/Pico-10BASE-T
+GitHub
+GitHub - kingyoPiyo/Pico-10BASE-T: 10BASE-T from Raspberry Pi Pico
+10BASE-T from Raspberry Pi Pico. Contribute to kingyoPiyo/Pico-10BASE-T development by creating an account on GitHub.
+GitHub - kingyoPiyo/Pico-10BASE-T: 10BASE-T from Raspberry Pi Pico
+Supermath101 — 3/29/26, 3:27 PM
+That project uses the variant of Ethernet that was originally released in the early 1990s. A lot of modern devices are not backwards compatible with it. You'll have to double-check each switch/router.
+bry — 3/29/26, 3:27 PM
+https://github.com/holysnippet/pico_eth_doc I think this was the project I was looking at before
+GitHub
+GitHub - holysnippet/pico_eth_doc: RP2040 Minimal hardware (PIO) Et...
+RP2040 Minimal hardware (PIO) Ethernet interface + LwIP TCP/IP stack driver - holysnippet/pico_eth_doc
+GitHub - holysnippet/pico_eth_doc: RP2040 Minimal hardware (PIO) Et...
+logan2611 — 3/29/26, 4:23 PM
+10BASE-T is still decently supported
+Xobs — 3/29/26, 4:56 PM
+10BASE-T1S is even a new standard that is viable in automotive for point to point communications.
+bry — 3/29/26, 4:58 PM
+I just bought a product released in the last couple years that still has a 10base-t phy, so I'm pretty sure it's still relevant
+Supermath101 — 3/29/26, 5:21 PM
+Yeah, it's similar to IEEE 802.11b by that metric.
+Fresnel — 4/2/26, 3:31 PM
+Baochip is well suited as a service processor aside from lacking a RMII.
+I don't think there are many SoCs that don't already have a Cortex M for low level board control though 
+retr0id [snek],  — 4/10/26, 9:55 PM
+I'm doing some xbox one glitching (replicating "bliss"), currently using rp2040 PIO to drive the glitching, overclocked to 300MHz. PIO lets me do controlled delays down to single cycles. If I ported my work over to dabao+BIO, could I get tighter timing? (i.e. can I do a "wait n cycles" loop at 700MHz?)
+laoo — 4/11/26, 3:26 AM
+If so, it might be very difficult given PicoRV's CPI is at least 4.
+Someone here did a POC running all 4 PicoRV cores locked in a phase-shift to obtain high GPIO output frequency though.
+ [snek], 
+bunnie — 4/11/26, 5:29 AM
+i think you can do a "phased array" approach to driving the GPIO, where you start each of the cores off-by-a-cycle by using some carefully timed dummy instructions on reset, which can get you resolution down to the clock cycle limit. haven't tried it, but I think it's possible.
+VectorVoyager — 4/14/26, 3:36 AM
+Would you consider becoming a member of RISC-V International as an organization or as an individual? https://riscv.org/members/join/
+RISC-V International
+Join RISC-V International
+Becoming a corporate member of RISC-V International offers several strategic advantages for companies involved in the semiconductor and technology industries.
+Join RISC-V International
+It has many benefits like being able to participate in technical and marketing meetings, taking part in its administration to some degree and getting highlighted in their publications.
+Patto — 4/22/26, 9:22 AM
+That's a fun idea. Baochip could get RISC-V certified. On the other hand that sounds like extra work for bunny. Do you think they would let a hobby assembly programmer like me become a member?
+yspacelabs [LASR],  — 4/22/26, 8:44 PM
+This chip needs to be stuck in a framework laptop expansion slot as soon as possible
+Patto — 4/25/26, 8:29 AM
+Is there any way I can support baochip development as someone who knows RISC-V assembly? I may not know C that well, and I have never worked with rust. I could cook up some BIO code to talk to some peripheral, though I can't validate it as I don't own an oscilloscope or any fancy equipment.
+yspacelabs [LASR],  — 4/25/26, 6:30 PM
+Probably writing some pre-baked BIO examples for common peripherals like i2c, spi, i2s, parallel, qspi would help everyone a lot! I'm not very familiar with RV asm, but I am somewhat with C lol 
+Flip — 4/26/26, 1:12 AM
+how come you know assembly without knowing c or rust 🤯
+bunnie — 4/26/26, 1:59 AM
+that's...actually how i learned. assembly was all you had: C compilers used to cost money and came on several floppy disks! meanwhile tapping hex numbers into a console was free.
+armstrongsubero — 4/26/26, 7:12 AM
+Oh yeah you can def do BIO stuff!! It's all assembly and those peripherals are amazing, never a shortage of stuff to do with them...
+Patto — 4/26/26, 7:12 AM
+Well, haha, I started learning digital logic through a simulator game called "turing complete", then I decided I wanted to learn some sort of assembly and picked RISC-V, read a book about it, and started writing some bare metal mmio peripheral-interacting asm code for a microcontroller (bl602) I have a bit of C reading experience from doing a little reverse engineering. I haven't learned rust because the syntax puts me off. I don't like using large toolchains, HALs, or high-level stuff. I tried learning python once, didn't like it
+gamiee [PINE],  — 4/26/26, 11:19 PM
+bl602 👀
+fahrstuhl — 5/2/26, 9:24 AM
+I'd like to make/have a FIDO pendant or earring with bao1x. I'm a fan of electronic jewelry that does something cool while also looking nice, like something you'd actually wear. My current favorite example are the HALO-90 sound reactive earrings. I forgot most of my electrical engineering classes from uni and haven't used KiCAD much but I found this 38C3 talk on how to make pretty and functional PCBs really inspiring. I checked out the dabao design files, they didn't seem like they needed that many parts. Is putting a bao1x, a USB-C plug and a button or capacitive touch sensor onto a PCB somewhat straightforward or am I underestimating this? (Maybe there are really tiny displays that could show what secret was requested!)
+bunnie — 5/2/26, 4:01 PM
+(posting here again as this is probably the better channel to put the response)  I think this would be do-able. It's correct that you don't need many parts. The main thing you want to include is the switching regulators to get down to 3.3 and 0.85V from 5V to manage power dissipation, and there are some very small options for that if you're size-constrained. You'd also need to select a 48MHz crystal that is appropriately small. but you are correct I think this is do-able, even easier if you have access to HDI boards. 
+Haakun_the_Eril — 5/7/26, 10:27 AM
+This is two suitable NFC antenna options for the baochip:
+https://github.com/Supermagnum/Galdralag-firmware/blob/main/docs/NFC-antenna.md 
+GitHub
+Galdralag-firmware/docs/NFC-antenna.md at main · Supermagnum/Galdr...
+A attempt at cryptographic framework for Baochip-1x . - Supermagnum/Galdralag-firmware
+A attempt at cryptographic framework for Baochip-1x . - Supermagnum/Galdralag-firmware
+bry — 5/21/26, 3:12 PM
+The main chip has full MMU right? Just not very much RAM?
+I'm interested in using it as a platform for general purpose osdev
+Thinking about something wacky like using the onboard RAM as a software-filled cache for a large external hyperram or something
+yspacelabs [LASR],  — 5/21/26, 10:38 PM
+Yes! It has a large amount of RAM for a microcontroller (~2MB). And since ReRAM doesn't wear out like flash does (and may also be faster to write to), it can probably be used as extra RAM. But for developing an OS, I think your idea to use the onboard RAM as a cache makes a lot of sense
+bry — 5/21/26, 10:46 PM
+I figure the BIO cores can probably be made to speak hyperbus at fairly respectable speed 
+VectorVoyager — 5/27/26, 7:52 AM
+A member? If @bunnie joins RISC-V International he will definitely become a honorary RISC-V Ambassador and they will just highlight his great work. He doesn't need to do anything special for the association. He would become the most legendary ambassador just by joining the association, and its completely free.
+ [LASR], 
+VectorVoyager — 5/27/26, 7:53 AM
+Like this one? https://hackaday.com/2025/12/08/rp2350-done-framework-style/
+Hackaday
+Arya Voronova
+RP2350 Done Framework Style
+Ever want a microcontroller addon for your laptops? You could do worse than match one of the new and powerful microcontrollers on the block to one of the most addon-friendly laptops, in the way the…
+RP2350 Done Framework Style
+aceat64 — 7/27/26, 4:59 PM
+One use-case that I'll be investigating is using Baochips as Trusted Execution Environments (TEEs) managed by QuorumOS (or something similar). I think this would likely end up being a PCIe card with multiple Baochips, but to start I'll just be using Dabao boards over USB.
+GitHub
+GitHub - tkhq/qos: QuorumOS is a computation layer for running appl...
+QuorumOS is a computation layer for running applications inside Trusted Execution Environments (TEEs) - tkhq/qos
+GitHub - tkhq/qos: QuorumOS is a computation layer for running appl...

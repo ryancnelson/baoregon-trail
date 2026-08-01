@@ -1515,6 +1515,48 @@ static void test_cmp_absolute_compares_value(void) {
           "test_cmp_absolute_compares_value");
 }
 
+static void test_bvc_branches_when_overflow_flag_clear(void) {
+    /* Found via Klaus Dormann's functional_test.bin integration run:
+     * BVC/BVS were both missing. */
+    setup();
+    status &= (uint8_t)~FLAG_OVERFLOW;
+    test_ram[0x0400] = 0x50; /* BVC +4 */
+    test_ram[0x0401] = 0x04;
+    step6502();
+    CHECK(pc == 0x0406 && clockticks6502 == 3,
+          "test_bvc_branches_when_overflow_flag_clear");
+}
+
+static void test_bvc_does_not_branch_when_overflow_flag_set(void) {
+    setup();
+    status |= FLAG_OVERFLOW;
+    test_ram[0x0400] = 0x50; /* BVC +4 */
+    test_ram[0x0401] = 0x04;
+    step6502();
+    CHECK(pc == 0x0402 && clockticks6502 == 2,
+          "test_bvc_does_not_branch_when_overflow_flag_set");
+}
+
+static void test_bvs_branches_when_overflow_flag_set(void) {
+    setup();
+    status |= FLAG_OVERFLOW;
+    test_ram[0x0400] = 0x70; /* BVS +3 */
+    test_ram[0x0401] = 0x03;
+    step6502();
+    CHECK(pc == 0x0405 && clockticks6502 == 3,
+          "test_bvs_branches_when_overflow_flag_set");
+}
+
+static void test_bvs_does_not_branch_when_overflow_flag_clear(void) {
+    setup();
+    status &= (uint8_t)~FLAG_OVERFLOW;
+    test_ram[0x0400] = 0x70; /* BVS +3 */
+    test_ram[0x0401] = 0x03;
+    step6502();
+    CHECK(pc == 0x0402 && clockticks6502 == 2,
+          "test_bvs_does_not_branch_when_overflow_flag_clear");
+}
+
 int main(void) {
     test_nop_advances_pc_and_takes_2_cycles();
     test_lda_immediate_loads_value();
@@ -1645,6 +1687,10 @@ int main(void) {
     test_adc_absolute_adds_value();
     test_sbc_absolute_subtracts_value();
     test_cmp_absolute_compares_value();
+    test_bvc_branches_when_overflow_flag_clear();
+    test_bvc_does_not_branch_when_overflow_flag_set();
+    test_bvs_branches_when_overflow_flag_set();
+    test_bvs_does_not_branch_when_overflow_flag_clear();
 
     if (failures > 0) {
         printf("\n%d test(s) FAILED\n", failures);

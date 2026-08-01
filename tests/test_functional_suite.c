@@ -6,16 +6,17 @@
  *
  * The .bin is a full 64KB memory image (loaded at $0000); per baochip's
  * spec the reset vector points to $0400 (the test's code_segment entry
- * point). The suite traps forever (JMP *) on success; on failure it
- * traps at the instruction that failed. We detect "stuck" by watching PC
- * stop advancing across steps and report the trapped PC so a human/agent
- * can cross-reference the failing test's listing.
- *
- * Known success address for this build of the suite (05-jan-2020,
- * disable_selfmod=0, report=0): $3469 -- the final "lda #$f0 / success"
- * trap after "test cases have been exhausted". If Klaus's suite is
- * updated upstream this constant may need to move; the stuck-PC detector
- * below works regardless.
+ * point). The suite traps forever (JMP *) on success; on FAILURE it ALSO
+ * traps with a self-jump at the failing instruction (every trap_* macro
+ * in the source expands to a conditional branch around a `jmp *` /
+ * `bne *`-style self-jump) -- so "PC stopped advancing" alone can't
+ * distinguish pass from fail. The one true success address for this
+ * exact build (05-jan-2020, disable_selfmod=0, report=0) is $3469 -- the
+ * final "lda #$f0 / success" trap after "mark opcode testing complete".
+ * Confirmed against the .lst listing at build time; if Klaus's suite is
+ * ever updated upstream this constant needs to move (re-derive it from a
+ * freshly regenerated .lst -- grep for "S U C C E S S" and take the jmp *
+ * address immediately after "mark opcode testing complete").
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,6 +26,7 @@
 #define FIXTURE_PATH "tests/fixtures/6502_functional_test.bin"
 #define RESET_VECTOR 0xFFFC
 #define ENTRY_POINT 0x0400
+#define SUCCESS_TRAP_ADDR 0x3469
 #define MAX_STEPS 100000000UL
 
 static uint8_t test_ram[65536];
@@ -87,13 +89,7 @@ int main(void) {
         return 1;
     }
 
-    /* Klaus Dormann's suite traps with `jmp *` (opcode 0x4C jumping to
-     * itself) on success. Detect that specific self-jump signature
-     * rather than hardcoding a known-good address, so this test stays
-     * correct if the upstream suite's success address ever shifts. */
-    if (test_ram[pc] == 0x4C &&
-        test_ram[(uint16_t)(pc + 1)] == (pc & 0xFF) &&
-        test_ram[(uint16_t)(pc + 2)] == ((pc >> 8) & 0xFF)) {
+    if (pc == SUCCESS_TRAP_ADDR) {
         printf("PASS: test_functional_suite_reaches_success_trap "
                "(trapped at $%04X after %lu steps)\n", pc, steps);
         return 0;
@@ -101,7 +97,9 @@ int main(void) {
 
     printf("FAIL: test_functional_suite_reaches_success_trap "
            "(trapped at $%04X after %lu steps -- this is a FAILING test "
-           "case, not success; cross-reference the .a65 listing for the "
-           "opcode/flag under test near this address)\n", pc, steps);
+           "case (expected success trap at $%04X); cross-reference the "
+           ".a65/.lst listing for the opcode/flag under test near this "
+           "address)\n", pc, steps, SUCCESS_TRAP_ADDR);
     return 1;
 }
+
