@@ -7,13 +7,14 @@ BUILD_DIR = build
 
 .PHONY: test clean
 
-test: $(BUILD_DIR)/test_reset $(BUILD_DIR)/test_opcodes $(BUILD_DIR)/test_disk_sector_layout $(BUILD_DIR)/test_disk_trap $(BUILD_DIR)/test_video_apple2 $(BUILD_DIR)/test_video_apple2_color $(BUILD_DIR)/test_video_apple2_fullframe $(BUILD_DIR)/test_video_apple2_realbus $(BUILD_DIR)/test_bunnie_audio $(BUILD_DIR)/test_apple2_mem
+test: $(BUILD_DIR)/test_reset $(BUILD_DIR)/test_opcodes $(BUILD_DIR)/test_disk_sector_layout $(BUILD_DIR)/test_disk_trap $(BUILD_DIR)/test_video_apple2 $(BUILD_DIR)/test_video_apple2_color $(BUILD_DIR)/test_video_apple2_color_edges $(BUILD_DIR)/test_video_apple2_fullframe $(BUILD_DIR)/test_video_apple2_realbus $(BUILD_DIR)/test_bunnie_audio $(BUILD_DIR)/test_apple2_mem
 	@$(BUILD_DIR)/test_reset
 	@$(BUILD_DIR)/test_opcodes
 	@$(BUILD_DIR)/test_disk_sector_layout
 	@$(BUILD_DIR)/test_disk_trap
 	@$(BUILD_DIR)/test_video_apple2
 	@$(BUILD_DIR)/test_video_apple2_color
+	@$(BUILD_DIR)/test_video_apple2_color_edges
 	@$(BUILD_DIR)/test_video_apple2_fullframe
 	@$(BUILD_DIR)/test_video_apple2_realbus
 	@$(BUILD_DIR)/test_bunnie_audio
@@ -43,6 +44,10 @@ $(BUILD_DIR)/test_video_apple2: $(TEST_DIR)/test_video_apple2.c $(SRC_DIR)/video
 $(BUILD_DIR)/test_video_apple2_color: $(TEST_DIR)/test_video_apple2_color.c $(SRC_DIR)/video_apple2.c $(SRC_DIR)/video_apple2.h
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_video_apple2_color.c $(SRC_DIR)/video_apple2.c
+
+$(BUILD_DIR)/test_video_apple2_color_edges: $(TEST_DIR)/test_video_apple2_color_edges.c $(SRC_DIR)/video_apple2.c $(SRC_DIR)/video_apple2.h
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_video_apple2_color_edges.c $(SRC_DIR)/video_apple2.c
 
 $(BUILD_DIR)/test_video_apple2_fullframe: $(TEST_DIR)/test_video_apple2_fullframe.c $(SRC_DIR)/video_apple2.c $(SRC_DIR)/video_apple2.h
 	@mkdir -p $(BUILD_DIR)
