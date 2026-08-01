@@ -68,11 +68,13 @@ def main(argv=None) -> int:
 
     try:
         data = build_cartridge_image(slot_paths)
+        args.output.write_bytes(data)
+    except OSError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
     except Exception as exc:
         print(f"Error building cartridge image: {exc}", file=sys.stderr)
         return 1
-
-    args.output.write_bytes(data)
     print(
         f"Wrote {len(data)} bytes ({len(slot_paths)}/{CARTRIDGE_SLOT_COUNT} slots populated) to {args.output}"
     )
