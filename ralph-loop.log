@@ -365,3 +365,20 @@ d22f68f boot_perf: add null safety and overflow cycle count protection with boot
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  
 [2026-08-01 02:21:55] --- checking baochip ---
+[2026-08-01 02:22:33] baochip reply (truncated): �────
+  ###    Repository Sync
+
+  All commits pushed to Gitea origin main at http://biggie:3000/ryan/baoregon-
+  trail.git.
+  Live Status Dashboard: **dashboard.html**.
+
+────────────────────────────────────────────────────────────────────────────────────────
+>
+────────────────────────────────────────────────────────────────────────────────────────
+? for shortcuts                                                  Gemini 3.6 Flash · high
+[2026-08-01 02:22:33] recent commits: 5aacd6e Update dashboard.html: 308 tests GREEN, 13.8 KB RISC-V binary, Main Boot Metrics Getter landed
+fda35d5 main: add baoregon_get_boot_metrics getter with unit tests (308 tests GREEN)
+0164c0e Update dashboard.html: 307 tests GREEN, 13.8 KB RISC-V binary, Disk Trap Unload Image Safety landed
+45cf34c tests: add test_disk_trap_unload_image for null image reset safety (307 tests GREEN)
+b86dc58 bio_display.h: document BIO Core 3 memcopy-DMA handoff for real display refresh
+[2026-08-01 02:22:33] sleeping 300s...
