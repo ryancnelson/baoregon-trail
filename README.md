@@ -1,14 +1,23 @@
 # Bao-Oregon-Trail (baoregon-trail)
 
-> **The Oregon Trail** running natively on the **Baochip-1x** open-silicon RISC-V SoC for the DEF CON 34 badge.
+> **Goal:** get **The Oregon Trail** running natively on the **Baochip-1x** open-silicon RISC-V SoC for the DEF CON 34 badge. We're not there yet — this is a work in progress.
 
 ---
 
 ## 🌲 Overview
 
-`baoregon-trail` is a bare-metal Apple II / IIe emulator targeted specifically at the **Baochip-1x** (BAO1X2S4F-WA) System-on-Chip designed by Andrew "bunnie" Huang.
+`baoregon-trail` is a bare-metal Apple II / IIe emulator being built for
+the **Baochip-1x** (BAO1X2S4F-WA) System-on-Chip designed by Andrew
+"bunnie" Huang.
 
-By leveraging the Baochip's **350 MHz Vexriscv RISC-V CPU**, **4x 700 MHz PicoRV32 BIO coprocessors**, **2.0 MiB SRAM**, and **4.0 MiB ReRAM**, this project runs classic Apple II software—starting with *The Oregon Trail* (1985)—**100% on-chip** with zero external SD cards, zero external RAM, and instant (<50ms) boot times.
+The plan is to leverage the Baochip's **350 MHz Vexriscv RISC-V CPU**,
+**4x 700 MHz PicoRV32 BIO coprocessors**, **2.0 MiB SRAM**, and **4.0 MiB
+ReRAM** to run classic Apple II software — starting with *The Oregon
+Trail* (1985) — **100% on-chip**, with zero external SD cards, zero
+external RAM, and instant (<50ms) boot times. Real Baochip-1x hardware
+hasn't arrived yet, so none of this has been verified on the actual
+target chip — see "Current Status" below for what's actually been tested
+so far (host-native and QEMU only).
 
 ---
 
@@ -55,38 +64,48 @@ By leveraging the Baochip's **350 MHz Vexriscv RISC-V CPU**, **4x 700 MHz PicoRV
 
 ---
 
-## ✅ Current Status (work in progress, hardware arriving imminently)
+## 🚧 Current Status (work in progress, hardware not yet in hand)
+
+Nothing here has run on real Baochip-1x silicon yet — hardware is
+expected soon. What follows is what's actually been built and tested so
+far, host-native and under QEMU only.
 
 581 tests passing (host-native C test suite, `make test`), including a
 full pass of the industry-standard **Klaus Dormann 6502 functional test
 suite** against our own from-scratch CPU core.
 
-**Real, verified milestones:**
-- 6502 CPU core: reference-verified correct (Klaus Dormann suite, ~30.6M
-  simulated instructions)
+**What's actually been tested so far:**
+- 6502 CPU core: passes the Klaus Dormann reference suite (~30.6M
+  simulated instructions) — a good sign, not a guarantee it's bug-free
 - Apple II memory map + soft-switch dispatch: tested against real DOS 3.3
   boot sequences
-- Hi-Res video decode + NTSC color-artifact rendering: tested, and proven
-  end-to-end by converting and rendering a real 1985 Apple II title screen
-  (see screenshot below)
-- RISC-V cross-compile for the real Baochip-1x target (rv32imac/ilp32):
-  builds clean, correct memory placement (verified via
-  `tools/check_linker_placement.py`)
-- **Runs as actual compiled RISC-V machine code under QEMU** (`-M virt`):
-  confirmed via live CPU register inspection (non-zero PC/SP, not stuck at
-  reset) and a byte-exact memory dump of the emulated Apple II screen
-  after execution
+- Hi-Res video decode + NTSC color-artifact rendering: tested, and
+  exercised end-to-end by converting and rendering a real 1985 Apple II
+  title screen (see screenshot below) — on the host, not on target
+  hardware
+- RISC-V cross-compile for the Baochip-1x target (rv32imac/ilp32): builds
+  clean, correct memory placement (verified via
+  `tools/check_linker_placement.py`) — untested on real hardware
+- Runs as compiled RISC-V machine code under **QEMU's generic `virt`
+  machine** (`-M virt`): confirmed via live CPU register inspection
+  (non-zero PC/SP, not stuck at reset) and a byte-exact memory dump of
+  the emulated Apple II screen after execution. QEMU's `virt` machine
+  does not model Baochip-1x's actual peripherals (ReRAM, BIO
+  coprocessors, display) — this only verifies the core emulator logic
+  runs correctly as RISC-V code, not that it works on the real chip
 
-**What's still ahead:** real Baochip-1x hardware bring-up (BIO Core
-display-DMA firmware, real button/display wiring) — the software-side
-emulation and rendering pipeline is done and tested; the remaining work is
-adapting to real silicon once it's in hand.
+**What's still ahead, and still unverified:** real Baochip-1x hardware
+bring-up — BIO Core display-DMA firmware, real button/display wiring,
+and confirming the memory map/timing assumptions above actually hold on
+silicon. The software side is further along than the hardware
+integration; treat everything above as "looks right in simulation," not
+"works on the badge."
 
 ### Screenshot
 
 The real Oregon Trail (1985, MECC) title screen, converted to Apple II
-Hi-Res format and rendered through our own decode pipeline after running
-on a real emulated RV32IMAC CPU core (not just the host test harness):
+Hi-Res format and rendered through our decode pipeline, run host-side and
+under QEMU — not yet on real Baochip-1x hardware:
 
 ![Oregon Trail title screen, rendered via our own Hi-Res pipeline](docs/screenshot_oregon_trail_title.png)
 
