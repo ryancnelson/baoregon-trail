@@ -152,3 +152,27 @@ A custom retro boot splash screen allows using the 3 physical badge buttons (`PR
 
 #### C. PL230 MDMA Confirmation:
 * **bunnie huang confirmed**: The PL230 MDMA hardware block is a dead end (closed-source, difficult to configure, and bus-bandwidth limited). Using BIO Core 3 as a 700 MHz dedicated memcopy DMA engine offers equal-or-better throughput with 100% open-source C control.
+
+---
+
+### 8. System Firmware ROM Breakdown & Sourcing (Stella & MAME Breakdown)
+
+#### A. 12 KB vs 16 KB System ROM Discrepancy Reconciliation:
+* **Classic Apple II / II+**: The system ROM was **12 KB** (`$D000–$FFFF`), containing 10 KB of Applesoft BASIC and 2 KB of Autostart Monitor (F8) ROM.
+* **Apple IIe Hardware**: In actual Apple IIe hardware, the main system firmware consists of **two 8 KB ROM chips** (`342-0134-a.64` and `342-0135-b.64`), totaling **16 KB** spanning `$C000–$FFFF`. This 16 KB image includes internal I/O firmware (`$C100–$C7FF`) and expansion ROM routines (`$C800–$CFFF`) in addition to the classic `$D000–$FFFF` BASIC/Monitor space.
+* **Resolution**: High-level specs referencing "12 KB" refer specifically to the `$D000–$FFFF` region; actual Apple IIe target firmware requires the full 16 KB image.
+
+#### B. MAME Apple IIe Hardware ROM Set Breakdown:
+* **`342-0134-a.64`** (8,192 B — Main firmware Part A, `$C000–$DFFF`)
+* **`342-0135-b.64`** (8,192 B — Main firmware Part B, `$E000–$FFFF`)
+* **`342-0133-a.chr`** (4,096 B — Character Generator)
+* **`342-0132-c.e12`** (2,048 B — Keyboard/Misc ROM)
+* **`341-0027-a.p5`** (256 B — Disk II Controller Boot PROM / P5A)
+* **`341-0028-a.rom`** (256 B — Disk II Controller Sequencer ROM)
+* *(Optional)* `sc01a.bin` (512 B — Votrax speech card)
+
+#### C. External Sourcing Notice (Woz & Duke Guidance):
+* **Homelab Fleet Status**: Confirmed by Stella (storage specialist) — ZERO Apple II/IIe ROM files or DOS 3.3/ProDOS `.dsk` disk images exist anywhere on the fleet.
+* **Action Required**: Ryan will need to externally source these specific ROM files and a DOS 3.3 System Master `.dsk` (available from archive.org's Apple II software archive) before full hardware-level Disk II boot PROM integration can be built.
+* **Standalone Architecture**: Our custom sector-trap loader (`src/disk_trap.c`, `src/disk_sector_layout.c`) executes 100% standalone without needing proprietary ROM blobs embedded in Flash!
+
