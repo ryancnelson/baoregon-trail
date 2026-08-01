@@ -335,6 +335,50 @@ static void test_lc_e000_ffff_is_shared_across_banks(void) {
           "test_lc_e000_ffff_is_shared_across_banks");
 }
 
+static void test_apple2_mem_reset_restores_lc_default_rom_state(void) {
+    /* Same reset-completeness class as the paddle/disk-cursor/
+     * pending-track/keyboard-strobe gaps fixed earlier this session:
+     * only the "before touching any LC softswitch" default state is
+     * tested (test_lc_default_state_reads_rom_and_blocks_writes above)
+     * -- nothing proves reset() actually restores that default AFTER
+     * the LC state has been flipped away from it (RAM read+write
+     * enabled, bank 1 selected). A stale write-enabled/bank1 LC state
+     * surviving a mid-game reset would let a freshly-reset program's
+     * ROM writes silently succeed into RAM instead of being ignored,
+     * and read from the wrong 4KB bank. */
+    apple2_mem_reset();
+
+    /* Flip LC state away from the reset default: select bank 1,
+     * enable RAM read+write ($C08B = bit3=1 bank1, low nibble 0x03 =
+     * read RAM/write enable). */
+    (void)read6502(0xC08B);
+    write6502(0xD050, 0x99); /* would only succeed if write-enabled */
+    CHECK(read6502(0xD050) == 0x99,
+          "test_apple2_mem_reset_restores_lc_default_rom_state: LC RAM write took effect before reset (setup sanity check)");
+
+    apple2_mem_reset();
+
+    /* Post-reset, $D000-$FFFF must be back to read-ROM/write-protected
+     * (same behavior as test_lc_default_state_reads_rom_and_blocks_writes),
+     * not still pointing at bank 1's RAM with writes silently succeeding. */
+    uint8_t before = read6502(0xE000);
+    write6502(0xE000, 0xAB);
+    uint8_t after = read6502(0xE000);
+    CHECK(after == before,
+          "test_apple2_mem_reset_restores_lc_default_rom_state: write-protected again after reset");
+
+    /* Also confirm the STALE bank-1 write from before the reset isn't
+     * silently visible anymore via a fresh bank-1 RAM-read selection --
+     * would only matter if a later $C08B access re-enabled RAM reads,
+     * but the bank1 backing array itself should also be re-zeroed by
+     * reset() (matches apple2_mem_reset()'s existing g_lc_bank1[]
+     * clearing loop). */
+    (void)read6502(0xC08B); /* re-select bank1, RAM read+write */
+    uint8_t bank1_after_reset = read6502(0xD050);
+    CHECK(bank1_after_reset == 0x00,
+          "test_apple2_mem_reset_restores_lc_default_rom_state: bank1 RAM contents zeroed by reset");
+}
+
 /*
  * Display-mode softswitch tests ($C050-$C057). Real Apple II semantics:
  * any access (read OR write) to the address triggers the mode change --
@@ -694,6 +738,7 @@ int main(void) {
     test_lc_c082_restores_rom_read_and_write_protection();
     test_lc_bank1_and_bank2_are_independent_at_d000();
     test_lc_e000_ffff_is_shared_across_banks();
+    test_apple2_mem_reset_restores_lc_default_rom_state();
     test_display_mode_defaults_to_text_page1_lores();
     test_c050_selects_graphics_mode();
     test_c051_selects_text_mode();
