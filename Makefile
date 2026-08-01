@@ -42,6 +42,7 @@ test: $(BUILD_DIR)/test_reset $(BUILD_DIR)/test_opcodes $(BUILD_DIR)/test_functi
 	@$(BUILD_DIR)/test_boot_perf
 	@python3 -m unittest tests.test_embed_disk -v
 	@python3 -m unittest tests.test_build_cartridge_image -v
+	@python3 -m unittest tests.test_build_cartridge_image_constants -v
 
 $(BUILD_DIR)/test_reset: $(TEST_DIR)/test_reset.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/cpu6502.h
 	@mkdir -p $(BUILD_DIR)
