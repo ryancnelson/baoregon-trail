@@ -50,13 +50,18 @@ def main():
     else:
         out_path = Path(sys.argv[1])
 
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    
-    disk = bytearray(DOS33_DISK_SIZE)
-    boot_sec = generate_boot_sector()
-    disk[:256] = boot_sec
-    
-    out_path.write_bytes(disk)
+    try:
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+
+        disk = bytearray(DOS33_DISK_SIZE)
+        boot_sec = generate_boot_sector()
+        disk[:256] = boot_sec
+
+        out_path.write_bytes(disk)
+    except OSError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        sys.exit(1)
+
     print(f"Generated {len(disk)} byte DOS 3.3 boot disk image at {out_path}")
 
 if __name__ == "__main__":

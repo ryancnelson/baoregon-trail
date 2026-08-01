@@ -101,6 +101,7 @@ test: $(BUILD_DIR)/test_reset $(BUILD_DIR)/test_opcodes $(BUILD_DIR)/test_functi
 	@python3 -m unittest tests.test_build_cartridge_image -v
 	@python3 -m unittest tests.test_build_cartridge_image_constants -v
 	@python3 -m unittest tests.test_build_cartridge_image_write_error -v
+	@python3 -m unittest tests.test_create_sample_boot_dsk_write_error -v
 
 $(BUILD_DIR)/test_reset: $(TEST_DIR)/test_reset.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/cpu6502.h
 	@mkdir -p $(BUILD_DIR)
