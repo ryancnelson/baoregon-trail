@@ -335,6 +335,32 @@ static void test_lc_e000_ffff_is_shared_across_banks(void) {
           "test_lc_e000_ffff_is_shared_across_banks");
 }
 
+static void test_lc_dfff_e000_exact_boundary_no_off_by_one(void) {
+    /* The banked/shared boundary is drawn between $DFFF (last byte of
+     * the banked region) and $E000 (first byte of the shared region).
+     * Existing tests exercise mid-range addresses ($D050, $E500) that
+     * wouldn't catch an off-by-one at the exact boundary (e.g. if
+     * LC_BANKED_REGION_END were accidentally $E000 instead of $DFFF, or
+     * the boundary check used < instead of <=). Confirms $DFFF is
+     * genuinely per-bank (bank1 write invisible from bank2) while $E000
+     * one byte higher is genuinely shared (bank1 write visible from
+     * bank2), pinning down the exact split point. */
+    apple2_mem_reset();
+
+    (void)read6502(0xC08B); /* bank 1, RAM read+write */
+    write6502(0xDFFF, 0xAA); /* last byte of the BANKED region */
+    write6502(0xE000, 0xBB); /* first byte of the SHARED region */
+
+    (void)read6502(0xC083); /* bank 2, RAM read+write */
+    uint8_t dfff_from_bank2 = read6502(0xDFFF); /* must NOT see bank1's 0xAA */
+    uint8_t e000_from_bank2 = read6502(0xE000); /* MUST see bank1's 0xBB (shared) */
+
+    CHECK(dfff_from_bank2 != 0xAA,
+          "test_lc_dfff_e000_exact_boundary_no_off_by_one: $DFFF is bank-specific, not shared");
+    CHECK(e000_from_bank2 == 0xBB,
+          "test_lc_dfff_e000_exact_boundary_no_off_by_one: $E000 is shared, not bank-specific");
+}
+
 static void test_apple2_mem_reset_restores_lc_default_rom_state(void) {
     /* Same reset-completeness class as the paddle/disk-cursor/
      * pending-track/keyboard-strobe gaps fixed earlier this session:
@@ -774,6 +800,8 @@ int main(void) {
     test_lc_c082_restores_rom_read_and_write_protection();
     test_lc_bank1_and_bank2_are_independent_at_d000();
     test_lc_e000_ffff_is_shared_across_banks();
+    test_lc_dfff_e000_exact_boundary_no_off_by_one();
+    test_lc_dfff_e000_exact_boundary_no_off_by_one();
     test_apple2_mem_reset_restores_lc_default_rom_state();
     test_display_mode_defaults_to_text_page1_lores();
     test_apple2_mem_reset_restores_display_mode_defaults();
