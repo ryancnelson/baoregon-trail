@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">STEP 2 BRANCH PAGE CROSSING FIX (298 Tests) GREEN</span>
+                    <span class="pill pill-green">STEP 5 VIDEO NULL SAFETY (300 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -409,8 +409,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: BIO Audio Null Pointer Safety (<code class="code-inline">bunnie_audio.c</code>)</span>
-                        <span class="pill pill-green">GREEN (bio-sim PASS)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Video Decoding NULL Pointer Safety (<code class="code-inline">video_apple2.c</code> / <code class="code-inline">lores_apple2.c</code>)</span>
+                        <span class="pill pill-green">GREEN (300 PASS)</span>
                     </div>
                 </div>
 
@@ -487,8 +487,8 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 5 – 6: Branch Page-Crossing Test Setup Fixed (<code class="code-inline">tests/test_opcodes.c</code>) (COMPLETE)</h4>
-                            <p>Woz updated <code class="code-inline">test_beq_takes_extra_cycle_when_branch_crosses_page()</code> to use a genuine page-crossing offset ($04FD to $0504), bringing the full test suite back to 100% GREEN!</p>
+                            <h4>Days 5 – 6: Video Decoding NULL Pointer Safety (<code class="code-inline">video_apple2.c</code> / <code class="code-inline">lores_apple2.c</code>) (COMPLETE)</h4>
+                            <p>Bunnie added NULL pointer safety guards to Hi-Res &amp; Lo-Res scanline decoding functions with unit tests in <code class="code-inline">tests/test_video_apple2_safety.c</code> and <code class="code-inline">tests/test_lores_apple2_safety.c</code> (300 tests GREEN)!</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,30 +510,30 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. Branch Page-Crossing Test Setup Fixed (<code class="code-inline">tests/test_opcodes.c</code>)</div>
+                    <div class="decision-title">1. Video Decoding NULL Pointer Safety Landed (<code class="code-inline">video_apple2.c</code> / <code class="code-inline">lores_apple2.c</code>)</div>
+                    <div class="decision-desc">
+                        Bunnie added NULL pointer safety guards to Hi-Res &amp; Lo-Res scanline decoding functions with unit tests in <code class="code-inline">tests/test_video_apple2_safety.c</code> and <code class="code-inline">tests/test_lores_apple2_safety.c</code> (300 tests GREEN)!
+                    </div>
+                </div>
+
+                <div class="decision-item">
+                    <div class="decision-title">2. Branch Page-Crossing Test Setup Fixed (<code class="code-inline">tests/test_opcodes.c</code>)</div>
                     <div class="decision-desc">
                         Woz updated <code class="code-inline">test_beq_takes_extra_cycle_when_branch_crosses_page()</code> to use a genuine page-crossing offset ($04FD to $0504), bringing the full test suite back to 100% GREEN!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. BIO Audio Null Pointer Safety Landed (<code class="code-inline">bunnie_audio.c</code>)</div>
+                    <div class="decision-title">3. BIO Audio Null Pointer Safety Landed (<code class="code-inline">bunnie_audio.c</code>)</div>
                     <div class="decision-desc">
                         Bunnie added NULL pointer safety guards to <code class="code-inline">bunnie_audio_init()</code>, <code class="code-inline">bunnie_audio_trigger_toggle()</code>, and <code class="code-inline">bunnie_audio_poll_and_apply()</code> with regression tests in <code class="code-inline">tests/test_bunnie_audio_null_safety.c</code>!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">3. Disk Drive Trap Default Fallback Safety Landed (<code class="code-inline">disk_trap.h</code>)</div>
-                    <div class="decision-desc">
-                        Duke documented and locked in default fallback safety behavior (returning <code class="code-inline">0x00</code> when uninitialized) in <code class="code-inline">src/disk_trap.h</code> with regression tests in <code class="code-inline">tests/test_disk_trap_safe_defaults.c</code>!
-                    </div>
-                </div>
-
-                <div class="decision-item">
                     <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (298 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (300 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
