@@ -28,6 +28,13 @@ Row 9   : $2480
 Row 16  : $2100
 ```
 
+#### BIO Core Silicon Architecture (CONFIRMED from bio-sim `sw/build.zig` & `sw/include/bio.h`):
+* **Hardware Core**: 4x PicoRV32 cores @ 700 MHz running **RV32IMC** (32 registers, `zmmul` hardware multiply, compressed instructions).
+* **Register Mapping**:
+  * `x0` – `x15`: Standard C general-purpose registers (GPRs) for local logic, stack, and function calls.
+  * `x16` – `x31`: **Special-purpose hardware peripheral MMIO registers** hardwired directly to silicon peripherals (e.g. `x16` = `pop_fifo0`, `x26` = `set_gpio_mask`, event masks, cycle counter).
+* **Compiler Configuration**: Target `-march=rv32imc -mabi=ilp32 -ffixed-x16 -ffixed-x17 ... -ffixed-x31`. The compiler excludes `x16`–`x31` from general temporary register allocation, leaving them available for direct high-speed assembly I/O instructions (`mv %0, x16`).
+
 #### BIO Core 0 Pipeline
 1. Main CPU updates raw byte at `$2000` + offset in SRAM.
 2. BIO Core 0 (700 MHz PicoRV32) reads raw SRAM bytes via fast local interconnect.

@@ -409,8 +409,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 4: QEMU RV32E Bare-Metal Audio &amp; BIO Display</span>
-                        <span class="pill pill-green">GREEN (QEMU PASS)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: <code class="code-inline">bio-sim</code> Verilator Harness &amp; RV32IMC ISA</span>
+                        <span class="pill pill-green">GREEN (bio-sim ACTIVE)</span>
                     </div>
                 </div>
 
@@ -446,7 +446,7 @@
                     <div class="spec-box">
                         <div class="spec-label">BIO Cores</div>
                         <div class="spec-val">4x 700 MHz</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted)">PicoRV32 RV32E</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted)">PicoRV32 RV32IMC (x16-31 MMIO)</div>
                     </div>
                     <div class="spec-box">
                         <div class="spec-label">SRAM Memory</div>
@@ -488,7 +488,7 @@
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
                             <h4>Days 5 – 6: BIO Sim (<code class="code-inline">baochip/bio-sim</code>) &amp; Firmware Validation (IN PROGRESS)</h4>
-                            <p>Bunnie landed QEMU bare-metal RV32E firmware testing for BIO Core 1 (<code class="code-inline">bio_audio.S</code>) and building BIO display DMA (<code class="code-inline">bio_display.c</code>).</p>
+                            <p>Bunnie landed QEMU bare-metal RV32E audio firmware and integrated Verilator <code class="code-inline">bio-sim</code> with true RV32IMC + reserved <code class="code-inline">x16-x31</code> hardware MMIO registers.</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,16 +510,16 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. 125 6502 Opcodes GREEN</div>
+                    <div class="decision-title">1. BIO Core Silicon ISA: RV32IMC + Reserved x16-x31 (CONFIRMED)</div>
                     <div class="decision-desc">
-                        Woz added <code class="code-inline">AND</code>/<code class="code-inline">ORA</code>/<code class="code-inline">EOR</code>/<code class="code-inline">ADC</code>/<code class="code-inline">SBC</code>/<code class="code-inline">CMP</code> absolute, <code class="code-inline">STX</code>/<code class="code-inline">STY</code>/<code class="code-inline">STA</code>, <code class="code-inline">JMP indirect</code>, <code class="code-inline">BRK</code>, and <code class="code-inline">RTI</code>, bringing total test suite to 155 GREEN.
+                        Confirmed via <code class="code-inline">bio-sim</code> source (<code class="code-inline">sw/build.zig</code> &amp; <code class="code-inline">sw/include/bio.h</code>): BIO cores are 32-register <b>RV32IMC</b>. Registers <code class="code-inline">x16-x31</code> are reserved from compiler GPR allocation and hardwired to special-purpose peripheral MMIO (FIFOs, GPIO, event masks).
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. QEMU RV32E Bare-Metal Firmware Test Suite</div>
+                    <div class="decision-title">2. 125 6502 Opcodes GREEN</div>
                     <div class="decision-desc">
-                        Bunnie added <code class="code-inline">make test-firmware</code> to execute bare-metal RV32E assembly under <code class="code-inline">qemu-system-riscv32</code> virt machine (diagnosing and fixing <code class="code-inline">-mno-relax</code> linker relaxation).
+                        Woz added <code class="code-inline">AND</code>/<code class="code-inline">ORA</code>/<code class="code-inline">EOR</code>/<code class="code-inline">ADC</code>/<code class="code-inline">SBC</code>/<code class="code-inline">CMP</code> absolute, <code class="code-inline">STX</code>/<code class="code-inline">STY</code>/<code class="code-inline">STA</code>, <code class="code-inline">JMP indirect</code>, <code class="code-inline">BRK</code>, and <code class="code-inline">RTI</code>, bringing total test suite to 155 GREEN.
                     </div>
                 </div>
 
