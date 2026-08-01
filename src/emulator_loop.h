@@ -12,6 +12,7 @@
 #define BAOREGON_CYCLES_PER_FRAME 17050u
 
 void baoregon_emulator_init(void);
+void baoregon_emulator_reset(void);
 uint32_t baoregon_emulator_run_frame(void);
 void baoregon_emulator_poll_input(void);
 int baoregon_emulator_is_in_splash_menu(void);

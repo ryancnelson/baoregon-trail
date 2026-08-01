@@ -60,6 +60,10 @@ void baoregon_emulator_init(void) {
     reset_to_splash_menu();
 }
 
+void baoregon_emulator_reset(void) {
+    reset_to_splash_menu();
+}
+
 uint64_t baoregon_emulator_get_total_cycles(void) {
     return g_total_cycles;
 }
