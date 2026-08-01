@@ -91,3 +91,69 @@ Once this works, iteration on the actual Apple II side (getting DOS 3.3's
 disk-boot chain further, keyboard input for the boot-splash menu, etc.)
 becomes something that can be watched happening live, not re-derived from
 memory dumps each time.
+
+---
+
+## 💾 Step 7: Real Disk II Controller Emulation (port from apple2js, MIT-licensed)
+
+**Context:** tonight's session confirmed a real, hard blocker for booting
+unmodified real Apple II disk images (Zork I, Apple DOS 3.3 System
+Master): their boot code executes `JMP ($003E)`, an indirect jump into
+the Disk II peripheral card's own ROM (e.g. `$C65C` for slot 6), expecting
+that ROM to keep reading raw magnetic nibbles off the disk at a low
+level. `src/disk_trap.c` deliberately doesn't implement this — it's a
+fast-sector-read shortcut (given track/sector, copy 256 bytes straight
+from ReRAM), not real Disk II hardware. This means real, unmodified
+Apple II disk images cannot boot through our current pipeline; only
+our own hand-assembled bootloaders (which call the fast-sector trap
+directly) work.
+
+**Decision (2026-08-01):** rather than write the real GCR/nibble-encoding
+protocol from scratch, or port from AppleWin/MAME (both GPLv2 -- would
+require GPL-licensing at least that module, incompatible with this
+project's MIT license), port from
+**[whscullin/apple2js](https://github.com/whscullin/apple2js)**, an
+actively-maintained, **MIT-licensed** Apple II emulator (in TypeScript)
+with a real, working Disk II implementation:
+
+- `js/cards/disk2.ts` (851 lines) -- the Disk II card itself: phase-based
+  stepper motor emulation (`PHASE0ON`/`PHASE0OFF`/etc. softswitches at
+  `$C0Ex`), Q6/Q7 read/write-mode softswitches, boot ROM constants
+  (`BOOTSTRAP_ROM_13`/`BOOTSTRAP_ROM_16`).
+- `js/cards/drivers/NibbleDiskDriver.ts` (107 lines) -- the actual
+  nibble-level read/write logic: `onQ6Low()` reads the next raw byte off
+  the current track at the drive's head position and latches it, exactly
+  the operation real disk boot code depends on.
+- Also has WOZ-format disk support (`WozDiskDriver.ts`) for
+  higher-fidelity images, if useful later.
+
+**MIT attribution requirement:** when porting, must retain the MIT
+license notice and attribute apple2js per its license terms -- this is a
+real legal requirement of MIT, not optional. Add a comment header in the
+ported C file(s) crediting `whscullin/apple2js` and including/pointing at
+its MIT license text.
+
+**Task breakdown:**
+- [ ] Port `disk2.ts`'s softswitch dispatch ($C0E0-$C0EF phase/motor
+      controls, Q6/Q7 mode switches) into a new `src/disk2_controller.c`
+      -- this replaces/extends `disk_trap.c`'s scope, doesn't necessarily
+      delete it (the fast-sector trap may still be useful for our own
+      synthetic bootloaders/game-select menu).
+- [ ] Port `NibbleDiskDriver.ts`'s track/head-position nibble read logic
+      -- needs a real GCR-encoded/nibble-format disk image, not our
+      existing flat 143,360-byte DOS-order `.dsk` format (that format is
+      *sector* data, not raw nibble/flux data -- converting real DOS
+      3.3/.dsk images to nibble format, or sourcing pre-nibblized `.nib`
+      images, is a real sub-task here).
+- [ ] Embed the real Disk II boot ROM (`341-0027-a.p5` +
+      `341-0028-a.rom`, already sourced in `roms/` from tonight's
+      session) at the address the boot code actually jumps to (`$Cn00`
+      range, slot-dependent) so `JMP ($003E)` lands somewhere real.
+- [ ] Verify against a real target: boot `Apple_DOS_3.3_Master.dsk`
+      (or Zork_I.dsk) through the composed system and confirm it reaches
+      the same real DOS 3.3 banner/prompt state already confirmed via
+      MAME earlier tonight (`tools/fixtures/mame-captures/` has the
+      verified reference RAM dump to compare against).
+- [ ] Once working, revisit whether `ramfb`/QEMU live display (Step 6)
+      should show this real-disk-boot path instead of (or alongside) the
+      synthetic bootloader demos.
