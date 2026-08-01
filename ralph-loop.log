@@ -928,3 +928,4 @@ c59d5ac build_cartridge_image.py: handle output write failures gracefully
 8c40533 tools: add test_create_sample_boot_dsk_write_error python unit test (332 tests GREEN)
 4bbdbf7 apple2_mem: lock in $C000-$C0FF softswitch region exact boundary with regression test
 [2026-08-01 06:48:33] sleeping 300s...
+[2026-08-01 06:53:33] --- checking Woz ---
