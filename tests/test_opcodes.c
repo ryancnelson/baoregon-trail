@@ -798,6 +798,28 @@ static void test_lda_absolute_x_extra_cycle_when_page_crossed(void) {
           "test_lda_absolute_x_extra_cycle_when_page_crossed");
 }
 
+static void test_lda_absolute_x_wraps_full_address_space_at_top_of_memory(void) {
+    /* Distinct from the ordinary page-crossing case above: here the base
+     * address itself is right at the TOP of the 16-bit address space
+     * ($FFFF), so base+X doesn't just cross a page -- it wraps the
+     * entire 16-bit effective address back around to $0000-ish. Real
+     * 6502 hardware has no bounds checking on this addition either (same
+     * wraparound-boundary class as pc++ and clockticks6502 elsewhere in
+     * this suite), so LDA $FFFF,X with X=2 must read from $0001, not
+     * some garbage/overflowed address. Never explicitly tested until
+     * now despite fetch_absolute_indexed_addr()'s 'base + index' being
+     * on the hot path for every absolute,X/Y opcode. */
+    setup();
+    x = 0x02;
+    test_ram[0x0400] = 0xBD; /* LDA $FFFF,X -> wraps to $0001 */
+    test_ram[0x0401] = 0xFF;
+    test_ram[0x0402] = 0xFF;
+    test_ram[0x0001] = 0x99;
+    step6502();
+    CHECK(a == 0x99 && pc == 0x0403,
+          "test_lda_absolute_x_wraps_full_address_space_at_top_of_memory");
+}
+
 static void test_lda_absolute_y_loads_value_with_index(void) {
     setup();
     y = 0x03;
@@ -2400,6 +2422,7 @@ int main(void) {
     test_sta_zeropage_x_stores_value_with_index();
     test_lda_absolute_x_loads_value_with_index();
     test_lda_absolute_x_extra_cycle_when_page_crossed();
+    test_lda_absolute_x_wraps_full_address_space_at_top_of_memory();
     test_lda_absolute_y_loads_value_with_index();
     test_lda_absolute_y_extra_cycle_when_page_crossed();
     test_sta_absolute_x_stores_value_with_index();
