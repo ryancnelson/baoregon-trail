@@ -67,6 +67,35 @@ static void test_unknown_soft_switch_reads_zero_and_ignores_writes(void) {
           "test_unknown_soft_switch_reads_zero_and_ignores_writes: still 0 after write");
 }
 
+static void test_softswitch_region_exact_boundary_no_off_by_one(void) {
+    /* Same off-by-one class as the LC $DFFF/$E000 boundary test:
+     * softswitch dispatch is address >= $C000 && address <= $C0FF.
+     * Existing tests only exercise addresses well inside that range
+     * ($C030, $C050, etc.) -- nothing pins down the exact edges. $BFFF
+     * (one below $C000) and $C100 (one above $C0FF) must both be plain
+     * RAM with normal read/write semantics, not accidentally caught by
+     * an off-by-one in the range check (e.g. >= $BFFF or <= $C100). */
+    apple2_mem_reset();
+
+    write6502(0xBFFF, 0x11);
+    CHECK(read6502(0xBFFF) == 0x11,
+          "test_softswitch_region_exact_boundary_no_off_by_one: $BFFF is plain RAM");
+
+    write6502(0xC100, 0x22);
+    CHECK(read6502(0xC100) == 0x22,
+          "test_softswitch_region_exact_boundary_no_off_by_one: $C100 is plain RAM");
+
+    /* And confirm the actual edges of the softswitch range ARE
+     * dispatched (not accidentally excluded by an off-by-one the other
+     * direction, e.g. > $C000 or < $C0FF). $C000 is the keyboard latch
+     * (always dispatches, never plain RAM); $C0FF is an unmapped
+     * softswitch that must still read 0 and ignore writes, not fall
+     * through to plain RAM. */
+    write6502(0xC0FF, 0x33); /* must be swallowed by softswitch dispatch */
+    CHECK(read6502(0xC0FF) == 0x00,
+          "test_softswitch_region_exact_boundary_no_off_by_one: $C0FF is still dispatched, not plain RAM");
+}
+
 static void test_c030_triggers_audio_toggle_without_blocking(void) {
     apple2_mem_reset();
     bunnie_audio_state_t *audio = apple2_mem_get_audio_state();
@@ -789,6 +818,7 @@ int main(void) {
     test_plain_ram_read_write_roundtrip();
     test_rom_region_is_write_protected();
     test_unknown_soft_switch_reads_zero_and_ignores_writes();
+    test_softswitch_region_exact_boundary_no_off_by_one();
     test_c030_triggers_audio_toggle_without_blocking();
     test_disk_trap_select_and_stream_sector_via_c0ec();
     test_disk_trap_cursor_wraps_after_256_bytes();
