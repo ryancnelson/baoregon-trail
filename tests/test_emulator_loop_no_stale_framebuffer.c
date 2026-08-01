@@ -28,6 +28,7 @@ static void test_framebuffer_is_fresh_lores_after_reset_to_splash(void) {
     apple2_mem_set_button_state(2, 0);
     assert(baoregon_emulator_is_in_splash_menu() == 0);
 
+    write6502(0xC050, 0x00); /* select GRAPHICS mode (post-init default is TEXT) */
     write6502(0xC057, 0x00); /* select HIRES */
     write6502(HIRES_BASE_ADDR, 0x01); /* col0 lit -> GREEN */
     baoregon_emulator_run_frame();

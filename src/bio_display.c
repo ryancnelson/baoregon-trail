@@ -136,7 +136,17 @@ void bio_display_render_frame_auto_text_aware(int hires_mode, int page2, int mix
                                                int text_mode, read6502_fn read_mem,
                                                uint16_t framebuffer[BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT]) {
     if (text_mode && !mixed_mode) {
-        return; /* full-screen TEXT: no character ROM yet, safe no-op */
+        /* Full-screen TEXT: no character-ROM renderer exists yet. Fill
+         * black rather than leaving stale content from a previous
+         * frame's graphics (unlike MIXED mode, nothing else re-fills
+         * this region every frame). */
+        if (!framebuffer) {
+            return; /* safe no-op on bad input */
+        }
+        for (int i = 0; i < BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT; i++) {
+            framebuffer[i] = 0x0000;
+        }
+        return;
     }
     bio_display_render_frame_auto(hires_mode, page2, mixed_mode, read_mem, framebuffer);
 }

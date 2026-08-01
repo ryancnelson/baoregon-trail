@@ -19,11 +19,14 @@
 
 static void test_run_frame_renders_lores_when_lores_mode_active(void) {
     baoregon_emulator_init();
-    /* apple2_mem_reset() defaults to LORES already (apple2_mem.c's own
-     * doc comment), so this is the post-init default state -- no need to
-     * poke $C056 explicitly, but assert it to make the precondition
-     * explicit and catch a future default-state regression. */
+    /* apple2_mem_reset() defaults to TEXT mode (real Apple II post-reset
+     * state) with LORES also selected underneath -- but TEXT mode is a
+     * safe no-op now (bio_display_render_frame_auto_text_aware() fix),
+     * so GRAPHICS mode must be explicitly selected first to actually see
+     * Lo-Res graphics render. */
     assert(apple2_mem_is_hires_mode() == 0);
+    write6502(0xC050, 0x00); /* select GRAPHICS mode */
+    assert(apple2_mem_is_text_mode() == 0);
 
     /* Write a known Lo-Res byte to Page 1 row 0 col 0 via the REAL bus
      * (not a mock) so this proves the actual wiring, matching the
@@ -47,9 +50,13 @@ static void test_run_frame_renders_lores_when_lores_mode_active(void) {
 static void test_run_frame_renders_hires_when_hires_mode_active(void) {
     baoregon_emulator_init();
 
-    /* Real Apple II: $C057 write/read selects HIRES mode. */
+    /* Real Apple II: $C057 write/read selects HIRES mode; $C050 selects
+     * GRAPHICS mode (required now that full TEXT mode is correctly a
+     * no-op post-reset). */
+    write6502(0xC050, 0x00);
     write6502(0xC057, 0x00);
     assert(apple2_mem_is_hires_mode() == 1);
+    assert(apple2_mem_is_text_mode() == 0);
 
     write6502(HIRES_BASE_ADDR, 0x01); /* col0 lit, isolated, even col, palette 0 -> GREEN */
 

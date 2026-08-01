@@ -70,15 +70,17 @@ uint32_t baoregon_emulator_run_frame(void) {
     bunnie_audio_poll_and_apply(apple2_mem_get_audio_state());
 
     /* Render video frame based on current softswitch modes -- picks
-     * HIRES vs LORES via bio_display_render_frame_auto() (which itself
-     * honors MIXED-mode's text-region boundary for the HIRES path). Real
-     * Apple II defaults to LORES post-reset, so this must actually
-     * dispatch on hires_mode, not always assume Hi-Res. */
+     * HIRES vs LORES via bio_display_render_frame_auto_text_aware()
+     * (which itself honors MIXED-mode's text-region boundary for the
+     * HIRES/LORES paths, AND is a safe no-op in full TEXT mode -- real
+     * Apple II defaults to TEXT mode post-reset, not graphics, and
+     * rendering graphics garbage there was a real bug this fixes). */
     int is_hires = apple2_mem_is_hires_mode();
     int is_page2 = apple2_mem_is_page2_selected();
     int is_mixed = apple2_mem_is_mixed_mode();
+    int is_text = apple2_mem_is_text_mode();
 
-    bio_display_render_frame_auto(is_hires, is_page2, is_mixed, read6502, g_framebuffer);
+    bio_display_render_frame_auto_text_aware(is_hires, is_page2, is_mixed, is_text, read6502, g_framebuffer);
 
     return BAOREGON_CYCLES_PER_FRAME;
 }

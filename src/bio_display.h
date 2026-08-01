@@ -162,17 +162,23 @@ void bio_display_render_frame_auto(int hires_mode, int page2, int mixed_mode,
  *
  * text_mode matches apple2_mem_is_text_mode()'s convention (nonzero =
  * TEXT/$C051, 0 = GRAPHICS/$C050). When text_mode is nonzero AND
- * mixed_mode is 0 (full-screen TEXT, not MIXED), this function is a
- * SAFE NO-OP -- framebuffer is left UNTOUCHED (not zeroed, not black),
- * matching the same "renderer doesn't own this content" convention
- * already used for MIXED mode's text region. TEXT character rendering
- * itself (character ROM lookup, 40-column layout) is explicitly OUT OF
- * SCOPE here -- no character ROM data exists in this codebase yet.
- * When mixed_mode is nonzero, TEXT/GRAPHICS is irrelevant (real Apple
- * II MIXED mode always shows graphics on top regardless of the TEXT/
- * GRAPHICS switch) -- this function proceeds with the normal HIRES/
- * LORES + MIXED-boundary dispatch (bio_display_render_frame_auto())
- * in that case.
+ * mixed_mode is 0 (full-screen TEXT, not MIXED), this function fills
+ * framebuffer with BLACK (0x0000), NOT left-untouched -- unlike MIXED
+ * mode's text-region convention (where a future text-mode renderer is
+ * expected to run every frame and fill that region itself), there is
+ * currently no text-mode renderer AT ALL in this codebase, so
+ * "untouched" would mean "whatever the previous frame's Hi-Res/Lo-Res
+ * graphics happened to leave there" -- genuinely stale content, not a
+ * safe placeholder. Filling black avoids that regression until a real
+ * character-ROM-backed text renderer exists (no character ROM data
+ * exists in this codebase yet -- that renderer is explicitly OUT OF
+ * SCOPE here). When mixed_mode is nonzero, TEXT/GRAPHICS is irrelevant
+ * (real Apple II MIXED mode always shows graphics on top regardless of
+ * the TEXT/GRAPHICS switch) -- this function proceeds with the normal
+ * HIRES/LORES + MIXED-boundary dispatch (bio_display_render_frame_auto())
+ * in that case, which DOES still leave its bottom text rows untouched
+ * (a future MIXED-mode text renderer is expected to run every frame,
+ * unlike the full-TEXT case where nothing runs at all).
  */
 void bio_display_render_frame_auto_text_aware(int hires_mode, int page2, int mixed_mode,
                                                int text_mode, read6502_fn read_mem,

@@ -35,15 +35,17 @@ static int test_full_text_mode_leaves_framebuffer_untouched(void) {
     uint16_t framebuffer[BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT];
     memset(framebuffer, 0xAA, sizeof(framebuffer)); /* poison */
 
-    /* text_mode=1, mixed_mode=0 (full-screen TEXT) -- must be a no-op
-     * regardless of hires_mode/page2. */
+    /* text_mode=1, mixed_mode=0 (full-screen TEXT) -- must fill BLACK
+     * (no text-renderer exists to re-fill this region every frame,
+     * unlike MIXED mode, so "untouched" would mean stale graphics). */
     bio_display_render_frame_auto_text_aware(/*hires_mode=*/0, /*page2=*/0, /*mixed_mode=*/0,
                                               /*text_mode=*/1, mock_read6502, framebuffer);
 
     for (int i = 0; i < BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT; i++) {
-        if (framebuffer[i] != 0xAAAA) {
-            fprintf(stderr, "FAIL: framebuffer[%d] = 0x%04X, expected untouched poison 0xAAAA "
-                            "(full TEXT mode incorrectly rendered graphics)\n", i, framebuffer[i]);
+        if (framebuffer[i] != 0x0000) {
+            fprintf(stderr, "FAIL: framebuffer[%d] = 0x%04X, expected black fill 0x0000 "
+                            "(full TEXT mode incorrectly rendered graphics or left stale content)\n",
+                    i, framebuffer[i]);
             return 1;
         }
     }
@@ -60,8 +62,8 @@ static int test_text_mode_hires_variant_also_noop(void) {
     bio_display_render_frame_auto_text_aware(/*hires_mode=*/1, /*page2=*/0, /*mixed_mode=*/0,
                                               /*text_mode=*/1, mock_read6502, framebuffer);
 
-    if (framebuffer[0] != 0xAAAA) {
-        fprintf(stderr, "FAIL: framebuffer[0] = 0x%04X, expected untouched poison -- "
+    if (framebuffer[0] != 0x0000) {
+        fprintf(stderr, "FAIL: framebuffer[0] = 0x%04X, expected black fill 0x0000 -- "
                         "TEXT mode with hires_mode=1 still incorrectly rendered\n", framebuffer[0]);
         return 1;
     }
