@@ -53,7 +53,23 @@ def embed_to_c_header(data: bytes, array_name: str) -> str:
 
     Emits:
         const uint32_t <array_name>_len = N;
-        const uint8_t <array_name>[N] = { 0x.., 0x.., ... };
+        const uint8_t <array_name>[N] __attribute__((section(".dsk_images"))) = { 0x.., 0x.., ... };
+
+    The __attribute__((section(".dsk_images"))) placement is required:
+    linker.ld defines a dedicated .dsk_images output section (ReRAM,
+    separate from .rodata) specifically so embedded game images are
+    budget-visible and independently relocatable as more games are added
+    -- see linker.ld's own comment on that section. Without this
+    attribute, GCC/Clang place the array in ordinary .rodata by default,
+    silently defeating that entire section (caught 2026-08-01: nothing
+    in this file ever emitted the attribute, discovered by inspection
+    rather than a build failure, since a plain .rodata placement still
+    links and runs fine -- it just isn't the intended, budget-tracked
+    region).
+
+    Only the byte array gets the section attribute; the _len constant
+    is a 4-byte uint32_t with no reason to consume .dsk_images budget-
+    tracking attention, so it stays in ordinary .rodata.
 
     array_name must be a valid C identifier.
     """
@@ -65,7 +81,7 @@ def embed_to_c_header(data: bytes, array_name: str) -> str:
         "#include <stdint.h>",
         "",
         f"const uint32_t {array_name}_len = {len(data)}u;",
-        f"const uint8_t {array_name}[{len(data)}] = {{",
+        f'const uint8_t {array_name}[{len(data)}] __attribute__((section(".dsk_images"))) = {{',
     ]
 
     for row_start in range(0, len(data), BYTES_PER_LINE):
@@ -86,7 +102,8 @@ def extract_from_c_header(header_text: str, array_name: str) -> bytes:
     formatting/boundary bug before it reaches a real game image.
     """
     pattern = re.compile(
-        r"const\s+uint8_t\s+" + re.escape(array_name) + r"\s*\[\s*\d+\s*\]\s*=\s*\{(.*?)\};",
+        r"const\s+uint8_t\s+" + re.escape(array_name) + r"\s*\[\s*\d+\s*\]"
+        r"(?:\s*__attribute__\s*\(\(.*?\)\))?\s*=\s*\{(.*?)\};",
         re.DOTALL,
     )
     match = pattern.search(header_text)
