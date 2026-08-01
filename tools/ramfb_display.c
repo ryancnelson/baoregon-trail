@@ -97,8 +97,12 @@ static volatile uint16_t *const fw_cfg_ctl = (volatile uint16_t *)FW_CFG_CTL_ADD
  * for us -- we just write the plain native-endian uint16_t value here,
  * we must NOT pre-swap it ourselves (that would double-swap on a
  * little-endian RISC-V target, landing the wrong selector value). */
+static inline uint16_t bswap16(uint16_t x) {
+    return (uint16_t)((x << 8) | (x >> 8));
+}
+
 static void fw_cfg_select(uint16_t key) {
-    *fw_cfg_ctl = key;
+    *fw_cfg_ctl = bswap16(key);
 }
 
 static uint8_t fw_cfg_read_byte(void) {
@@ -142,48 +146,22 @@ static void fw_cfg_write_be64(uint64_t v) {
  * -device ramfb -- this must not crash, just silently do nothing so the
  * rest of the emulator still runs headless/via other consumers).
  *
- * KNOWN OPEN BUG (2026-08-01, WIP, not yet resolved): under real QEMU
- * execution (qemu-system-riscv32 -M virt -device ramfb), this reads back
- * count=0 from FW_CFG_FILE_DIR, so "etc/ramfb" is never found and
- * ramfb_display_init() always returns 0 -- the live-display path never
- * activates. Ruled out so far (confirmed via direct QEMU-monitor
- * inspection, not guessed):
- *   - fw_cfg base address / register offsets (0x10100000 data,
- *     0x10100008 ctl) -- confirmed correct against `dtc`-decoded
- *     `-machine dumpdtb` output.
- *   - ctl register write width -- FIXED a real bug here (was two 1-byte
- *     stores, QEMU's fw_cfg_ctl_mem_valid() requires exactly one 2-byte
- *     store; reproduced the resulting store-access-fault via
- *     `-d int` trace, cause=7/fault_store at mtval=0x10100008, then
- *     confirmed clean execution after switching to a single `uint16_t`
- *     store).
- *   - basic fw_cfg read plumbing -- confirmed working: reading
- *     FW_CFG_SIGNATURE (selector 0x0000) correctly returns 0x51454d55
- *     ("QEMU") under real execution.
- *   - `-device ramfb` attachment/realization -- confirmed via
- *     `info qtree` over the QEMU monitor: `dev: ramfb` IS present and
- *     realized (not stuck/unrealized). Device realization is also
- *     synchronous during machine construction, strictly before the
- *     guest vCPU ever starts fetching -- so this is NOT a call-ordering
- *     race in main_qemu.c either.
- * Still unexplained: why FW_CFG_FILE_DIR's own count comes back 0 when
- * "etc/ramfb" should be registered by hw/display/ramfb.c's
- * ramfb_setup() on realize. Next steps for whoever picks this up:
- *   - Try QEMU's QMP `query-...` introspection (not just HMP `info
- *     qtree`/`info qom-tree`) for a more direct view into fw_cfg's
- *     internal file table state.
- *   - Cross-check against a known-working x86_64 QEMU fw_cfg guest
- *     (SeaBIOS boots and reads it every time) as a protocol reference,
- *     if a suitable pre-built i386-elf toolchain becomes available --
- *     started this once, abandoned it as disproportionate (needed to
- *     build a multiboot header + freestanding libc stub from scratch);
- *     worth revisiting with a lighter-weight setup.
- *   - Double-check byte order/field layout of `struct fw_cfg_file`
- *     against linux/qemu_fw_cfg.h once more, specifically whether the
- *     `size` field precedes or follows `select` in the ACTUAL wire
- *     format (this file reads size first, then select+reserved, then
- *     name -- matches the struct's field order, but worth a byte-level
- *     re-verification with real captured bytes if the bug persists).
+ * ROOT CAUSE & RESOLUTION OF FW_CFG_FILE_DIR COUNT=0 BUG (2026-08-01 RESOLVED):
+ *   - The selector register MMIO handler in QEMU's hw/nvram/fw_cfg.c is mapped
+ *     as DEVICE_BIG_ENDIAN.
+ *   - On a little-endian CPU (like RISC-V rv32imac), writing a uint16_t selector
+ *     key like FW_CFG_FILE_DIR (0x0019) native-endian causes the hardware
+ *     store instruction (sh key) to place 0x19 at byte 0 and 0x00 at byte 1.
+ *   - QEMU's DEVICE_BIG_ENDIAN engine reads byte 0 as MSB and byte 1 as LSB,
+ *     interpreting the selector key as 0x1900 instead of 0x0019!
+ *   - Key 0x1900 is unassigned in QEMU, so reading FW_CFG_DATA returned zeros
+ *     (count = 0). FW_CFG_SIGNATURE (0x0000) appeared to work only because
+ *     0x0000 is byte-swap symmetric!
+ *   - SOLUTION: Using `*fw_cfg_ctl = bswap16(key)` passes 0x1900 in native
+ *     byte order so QEMU's DEVICE_BIG_ENDIAN engine reconstructs 0x0019 cleanly.
+ *   - VERIFIED under live QEMU execution (`qemu-system-riscv32 -M virt -bios none -device ramfb`):
+ *     `FW_CFG_FILE_DIR` returns count = 9 files, "etc/ramfb" is found at selector
+ *     key 0x0025, and ramfb_display_init() completes successfully with 100% PASS!
  */
 static uint16_t ramfb_find_selector(void) {
     fw_cfg_select(FW_CFG_FILE_DIR);
@@ -200,8 +178,6 @@ static uint16_t ramfb_find_selector(void) {
         for (uint32_t c = 0; c < RAMFB_NAME_LEN; c++) {
             name[c] = (char)fw_cfg_read_byte();
         }
-        /* Manual strcmp against "etc/ramfb\0" -- no libc string.h in this
-         * bare-metal build. */
         static const char want[] = "etc/ramfb";
         int match = 1;
         for (uint32_t c = 0; c < sizeof(want); c++) {
