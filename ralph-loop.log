@@ -1573,3 +1573,4 @@ d512b74 Update ralph-loop.log with latest pass 176 status
 36a4156 Update ralph-loop.log: system ROM - resolution verified clean
 465f505 apple2_mem: serve $C100-$CFFF (I/O firmware/expansion ROM) from loaded system ROM
 [2026-08-01 11:14:32] sleeping 300s...
+[2026-08-01 11:19:32] --- checking Woz ---
