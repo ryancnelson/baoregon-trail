@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">STEP 3 COMPLETE (232 Tests) GREEN</span>
+                    <span class="pill pill-green">STEP 3 ALL SOFTSWITCHES (250 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -379,8 +379,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 3: Pushbutton Softswitches ($C061-$C063) Landed</span>
-                        <span class="pill pill-green">GREEN (42/42 PASS)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 3: Paddle Timers ($C070/$C064) + Annunciators ($C058-$C05F)</span>
+                        <span class="pill pill-green">GREEN (50/50 PASS)</span>
                     </div>
                 </div>
 
@@ -395,7 +395,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Retro Boot-Splash Selector (<code class="code-inline">boot_splash.c</code>) &amp; 3-Button Nav</span>
-                        <span class="pill pill-green">GREEN (11.5 KB Binary)</span>
+                        <span class="pill pill-green">GREEN (12.0 KB Binary)</span>
                     </div>
                 </div>
 
@@ -409,7 +409,7 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Verilator <code class="code-inline">bio-sim</code> Palette &amp; PL230 Workaround</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Video PAGE2 Decode (<code class="code-inline">video_apple2.c</code>) &amp; Verilator <code class="code-inline">bio-sim</code></span>
                         <span class="pill pill-green">GREEN (bio-sim PASS)</span>
                     </div>
                 </div>
@@ -480,15 +480,15 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 3 – 4: Memory Router &amp; Softswitches (COMPLETE)</h4>
-                            <p>Woz landed Language Card (<code class="code-inline">$C080-$C08F</code>), Display Softswitches (<code class="code-inline">$C050-$C057</code>), Keyboard Latch (<code class="code-inline">$C000/$C010</code>), and Pushbutton Softswitches (<code class="code-inline">$C061-$C063</code>)!</p>
+                            <h4>Days 3 – 4: Memory Router &amp; Full Softswitch Matrix (COMPLETE)</h4>
+                            <p>Woz landed Language Card (<code class="code-inline">$C080-$C08F</code>), Display (<code class="code-inline">$C050-$C057</code>), Keyboard (<code class="code-inline">$C000/$C010</code>), Pushbuttons (<code class="code-inline">$C061-$C063</code>), Paddle Timers (<code class="code-inline">$C070/$C064</code>), and Annunciators (<code class="code-inline">$C058-$C05F</code>)!</p>
                         </div>
                     </div>
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
                             <h4>Days 5 – 6: BIO Sim (<code class="code-inline">baochip/bio-sim</code>) &amp; Boot Selector (IN PROGRESS)</h4>
-                            <p>Duke landed <code class="code-inline">boot_splash.c</code> 3-button game menu selector; Bunnie landed Verilator <code class="code-inline">bio-sim</code> palette tests.</p>
+                            <p>Duke landed <code class="code-inline">boot_splash.c</code> 3-button game menu selector; Bunnie landed PAGE2 decode (<code class="code-inline">video_apple2.c</code>) and Verilator <code class="code-inline">bio-sim</code> palette tests.</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,30 +510,30 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. Pushbutton Softswitches ($C061-$C063) Landed</div>
+                    <div class="decision-title">1. Full Apple II Memory Softswitch Matrix Complete (250 Tests)</div>
                     <div class="decision-desc">
-                        Woz landed PB0/PB1/PB2 softswitches in <code class="code-inline">src/apple2_mem.c</code> mapped directly to physical badge Buttons 0, 1, 2 (Bit 7 set = pressed) with <code class="code-inline">apple2_mem_set_button_state()</code>.
+                        Woz landed Paddle Timers ($C070 PDRIVE countdown, $C064-$C067 PADDLE0-3) and Annunciator outputs AN0-AN3 ($C058-$C05F), completing 100% of the Apple II I/O softswitch matrix!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Display Softswitches ($C050-$C057) &amp; Keyboard Latch ($C000/$C010) Landed</div>
+                    <div class="decision-title">2. Video PAGE2 Render Path Landed (<code class="code-inline">video_apple2.c</code>)</div>
                     <div class="decision-desc">
-                        Woz landed GRAPHICS/TEXT, FULL/MIXED, PAGE1/PAGE2, LORES/HIRES softswitches plus $C000 keyboard ASCII latch (with 0x80 strobe bit) and $C010 strobe clear!
+                        Bunnie landed PAGE2 video rendering (<code class="code-inline">$0800-$0BFF</code> Text Page 2 &amp; <code class="code-inline">$4000-$7FFF</code> Hi-Res Page 2) wired directly to Woz's <code class="code-inline">apple2_mem_is_page2_selected()</code> softswitch accessor!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">3. Apple II Language Card Bank-Switching ($C080-$C08F) Landed</div>
+                    <div class="decision-title">3. Boot-Splash Game Selector Landed (<code class="code-inline">boot_splash.c</code>)</div>
                     <div class="decision-desc">
-                        Woz landed full Language Card softswitches in <code class="code-inline">src/apple2_mem.c</code>, implementing Bank 1 &amp; Bank 2 4KB RAM switching ($D000-$DFFF) plus read-RAM/write-enable gating across $D000-$FFFF.
+                        Duke landed <code class="code-inline">src/boot_splash.c</code> with 3-button navigation (PREV/NEXT/SELECT), cycling 6 game slots and pointing <code class="code-inline">disk_trap_set_image()</code> at selected ReRAM offset.
                     </div>
                 </div>
 
                 <div class="decision-item">
                     <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (232 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (250 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
