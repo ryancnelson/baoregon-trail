@@ -650,6 +650,7 @@ $(BUILD_DIR)/test_functional_suite: $(TEST_DIR)/test_functional_suite.c $(SRC_DI
 .PHONY: test-firmware
 test-firmware:
 	@./tools/run_bio_audio_qemu_test.sh
+	@./tools/run_ramfb_qemu_test.sh
 
 # BIO Core RTL-level test requiring an external bio-sim checkout
 # (github.com/baochip/bio-sim) + Verilator + a ziglang-equipped Python venv.
