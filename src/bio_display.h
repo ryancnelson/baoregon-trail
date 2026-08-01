@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "video_apple2.h"
+#include "lores_apple2.h"
 
 /*
  * BIO Core 0 domain: display DMA driver stub.
@@ -87,6 +88,42 @@ void bio_display_render_frame_page(int page2, read6502_fn read_mem,
  */
 void bio_display_render_frame_mixed(int page2, int mixed_mode, read6502_fn read_mem,
                                      uint16_t framebuffer[BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT]);
+
+/*
+ * Decode the full Lo-Res screen (via lores_decode_screen_page(), see
+ * lores_apple2.h) into the SAME native 280x192 RGB565 framebuffer shape
+ * as bio_display_render_frame*() use. Each Lo-Res block is exactly 7x4
+ * pixels in the 280x192 space (280/40=7, 192/48=4 -- an exact fit, no
+ * fractional scaling needed), so every pixel within a block's footprint
+ * gets that block's color.
+ *
+ * page2 matches apple2_mem_is_page2_selected()'s convention (Lo-Res Page
+ * 1 is $0400, Page 2 is $0800 -- see lores_apple2.h).
+ */
+void bio_display_render_lores_frame(int page2, read6502_fn read_mem,
+                                     uint16_t framebuffer[BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT]);
+
+/*
+ * Mode-aware entry point: picks Hi-Res or Lo-Res rendering based on the
+ * hires_mode flag, matching apple2_mem_is_hires_mode()'s convention
+ * (nonzero = HIRES/$C057, 0 = LORES/$C056). This is the closest thing to
+ * a single "render whatever mode is currently active" call this module
+ * offers -- TEXT mode ($C050/$C051, character ROM rendering) is
+ * explicitly NOT handled here, since no character ROM data exists in
+ * this codebase yet (see bio_display_render_frame_mixed()'s doc comment
+ * for the same caveat on the MIXED-mode text region). Callers in TEXT
+ * mode should not call this function.
+ *
+ * mixed_mode is honored for the HIRES path exactly as
+ * bio_display_render_frame_mixed() already does; for LORES mode,
+ * mixed_mode has no effect currently (real Apple II Lo-Res + MIXED mode
+ * is not yet covered by any test in this codebase -- a follow-up
+ * iteration if it turns out to matter for this project's target
+ * screens).
+ */
+void bio_display_render_frame_auto(int hires_mode, int page2, int mixed_mode,
+                                    read6502_fn read_mem,
+                                    uint16_t framebuffer[BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT]);
 
 /*
  * DMA push stub. Records that a push was requested (pointer + size) via

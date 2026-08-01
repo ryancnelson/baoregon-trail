@@ -57,6 +57,38 @@ void bio_display_render_frame_mixed(int page2, int mixed_mode, read6502_fn read_
      * renderer, not this module (see bio_display.h doc comment). */
 }
 
+void bio_display_render_lores_frame(int page2, read6502_fn read_mem,
+                                     uint16_t framebuffer[BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT]) {
+    uint8_t blocks[LORES_BLOCK_COLS * LORES_BLOCK_ROWS];
+    lores_decode_screen_page(page2, read_mem, blocks);
+
+    for (int block_row = 0; block_row < LORES_BLOCK_ROWS; block_row++) {
+        for (int block_col = 0; block_col < LORES_BLOCK_COLS; block_col++) {
+            uint8_t color_index = blocks[block_row * LORES_BLOCK_COLS + block_col];
+            uint16_t rgb565 = lores_color_to_rgb565(color_index);
+
+            int px_row_base = block_row * 4; /* each block is 4px tall */
+            int px_col_base = block_col * 7; /* each block is 7px wide */
+            for (int dy = 0; dy < 4; dy++) {
+                int fb_row_base = (px_row_base + dy) * BIO_DISPLAY_WIDTH;
+                for (int dx = 0; dx < 7; dx++) {
+                    framebuffer[fb_row_base + px_col_base + dx] = rgb565;
+                }
+            }
+        }
+    }
+}
+
+void bio_display_render_frame_auto(int hires_mode, int page2, int mixed_mode,
+                                    read6502_fn read_mem,
+                                    uint16_t framebuffer[BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT]) {
+    if (hires_mode) {
+        bio_display_render_frame_mixed(page2, mixed_mode, read_mem, framebuffer);
+    } else {
+        bio_display_render_lores_frame(page2, read_mem, framebuffer);
+    }
+}
+
 /* DMA push stub state -- see bio_display.h doc comment: no real SPI/DMA
  * peripheral exists yet, this just records the call for host-test
  * inspection until baochip's hardware-init sequence / register map lands. */
