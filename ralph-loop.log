@@ -1220,3 +1220,9 @@ a20a19c Update ralph-loop.log with latest pass 140 status
 2c54fe7 cpu6502: lock in JSR/RTS round-trip when the instruction fetch itself straddles the address wrap
 707a992 Update ralph-loop.log with latest pass 139 status
 [2026-08-01 08:31:34] sleeping 300s...
+[2026-08-01 08:36:34] --- checking Woz ---
+[2026-08-01 08:39:43] Woz reply (truncated): ��───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 
+[2026-08-01 08:39:43] --- checking Bunnie ---
