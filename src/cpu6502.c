@@ -1103,6 +1103,16 @@ void step6502(void) {
             clockticks6502 += 3;
             break;
 
+        case 0xE4: /* CPX zeropage */
+            compare(x, read6502(fetch_zeropage_addr()));
+            clockticks6502 += 3;
+            break;
+
+        case 0xC4: /* CPY zeropage */
+            compare(y, read6502(fetch_zeropage_addr()));
+            clockticks6502 += 3;
+            break;
+
         default:
             /* Unimplemented opcode: not yet driven by a failing test. */
             clockticks6502 += 2;

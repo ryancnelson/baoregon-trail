@@ -1808,6 +1808,31 @@ static void test_sbc_decimal_borrows_across_nibble_boundary(void) {
           "test_sbc_decimal_borrows_across_nibble_boundary"); /* 40-13=27 */
 }
 
+static void test_cpx_zeropage_compares_x_register(void) {
+    /* Found via Klaus Dormann's functional_test.bin integration run:
+     * CPX/CPY zeropage were both missing. */
+    setup();
+    x = 0x40;
+    test_ram[0x0400] = 0xE4; /* CPX $10 */
+    test_ram[0x0401] = 0x10;
+    test_ram[0x0010] = 0x40;
+    step6502();
+    CHECK((status & FLAG_ZERO) != 0 && (status & FLAG_CARRY) != 0 &&
+          pc == 0x0402 && clockticks6502 == 3,
+          "test_cpx_zeropage_compares_x_register");
+}
+
+static void test_cpy_zeropage_compares_y_register(void) {
+    setup();
+    y = 0x20;
+    test_ram[0x0400] = 0xC4; /* CPY $10 */
+    test_ram[0x0401] = 0x10;
+    test_ram[0x0010] = 0x40;
+    step6502();
+    CHECK((status & FLAG_CARRY) == 0 && pc == 0x0402 && clockticks6502 == 3,
+          "test_cpy_zeropage_compares_y_register");
+}
+
 int main(void) {
     test_nop_advances_pc_and_takes_2_cycles();
     test_lda_immediate_loads_value();
@@ -1962,6 +1987,8 @@ int main(void) {
     test_adc_decimal_low_nibble_carries_into_high_nibble();
     test_sbc_decimal_subtracts_bcd_digits_with_carry_set();
     test_sbc_decimal_borrows_across_nibble_boundary();
+    test_cpx_zeropage_compares_x_register();
+    test_cpy_zeropage_compares_y_register();
 
     if (failures > 0) {
         printf("\n%d test(s) FAILED\n", failures);
