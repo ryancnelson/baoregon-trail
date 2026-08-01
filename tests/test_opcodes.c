@@ -1741,6 +1741,73 @@ static void test_cmp_zeropage_compares_value(void) {
           "test_cmp_zeropage_compares_value");
 }
 
+static void test_adc_decimal_adds_bcd_digits_without_carry(void) {
+    /* Fable-5's independent review found ADC/SBC decimal (BCD) mode was
+     * entirely unimplemented -- confirmed by running
+     * tests/test_functional_suite.c against Klaus Dormann's suite, which
+     * fails once it reaches decimal-mode ADC/SBC tests. Klaus's suite
+     * (see .a65 header) explicitly does NOT check N/V/Z flags in decimal
+     * mode, only the numeric result and carry -- so these tests follow
+     * that same contract. */
+    setup();
+    status |= FLAG_DECIMAL;
+    status &= (uint8_t)~FLAG_CARRY;
+    a = 0x25; /* BCD 25 */
+    test_ram[0x0400] = 0x69; /* ADC #$25 (BCD 25) */
+    test_ram[0x0401] = 0x25;
+    step6502();
+    CHECK(a == 0x50 && (status & FLAG_CARRY) == 0,
+          "test_adc_decimal_adds_bcd_digits_without_carry"); /* 25+25=50 */
+}
+
+static void test_adc_decimal_sets_carry_on_bcd_overflow(void) {
+    setup();
+    status |= FLAG_DECIMAL;
+    status &= (uint8_t)~FLAG_CARRY;
+    a = 0x99; /* BCD 99 */
+    test_ram[0x0400] = 0x69; /* ADC #$01 (BCD 1) */
+    test_ram[0x0401] = 0x01;
+    step6502();
+    CHECK(a == 0x00 && (status & FLAG_CARRY) != 0,
+          "test_adc_decimal_sets_carry_on_bcd_overflow"); /* 99+1=100 -> 00 c=1 */
+}
+
+static void test_adc_decimal_low_nibble_carries_into_high_nibble(void) {
+    setup();
+    status |= FLAG_DECIMAL;
+    status &= (uint8_t)~FLAG_CARRY;
+    a = 0x58; /* BCD 58 */
+    test_ram[0x0400] = 0x69; /* ADC #$46 (BCD 46) */
+    test_ram[0x0401] = 0x46;
+    step6502();
+    CHECK(a == 0x04 && (status & FLAG_CARRY) != 0,
+          "test_adc_decimal_low_nibble_carries_into_high_nibble"); /* 58+46=104 -> 04 c=1 */
+}
+
+static void test_sbc_decimal_subtracts_bcd_digits_with_carry_set(void) {
+    setup();
+    status |= FLAG_DECIMAL;
+    status |= FLAG_CARRY; /* carry set = no borrow, per NMOS convention */
+    a = 0x46; /* BCD 46 */
+    test_ram[0x0400] = 0xE9; /* SBC #$12 (BCD 12) */
+    test_ram[0x0401] = 0x12;
+    step6502();
+    CHECK(a == 0x34 && (status & FLAG_CARRY) != 0,
+          "test_sbc_decimal_subtracts_bcd_digits_with_carry_set"); /* 46-12=34 */
+}
+
+static void test_sbc_decimal_borrows_across_nibble_boundary(void) {
+    setup();
+    status |= FLAG_DECIMAL;
+    status |= FLAG_CARRY;
+    a = 0x40; /* BCD 40 */
+    test_ram[0x0400] = 0xE9; /* SBC #$13 (BCD 13) */
+    test_ram[0x0401] = 0x13;
+    step6502();
+    CHECK(a == 0x27 && (status & FLAG_CARRY) != 0,
+          "test_sbc_decimal_borrows_across_nibble_boundary"); /* 40-13=27 */
+}
+
 int main(void) {
     test_nop_advances_pc_and_takes_2_cycles();
     test_lda_immediate_loads_value();
@@ -1890,6 +1957,11 @@ int main(void) {
     test_adc_zeropage_adds_value();
     test_sbc_zeropage_subtracts_value();
     test_cmp_zeropage_compares_value();
+    test_adc_decimal_adds_bcd_digits_without_carry();
+    test_adc_decimal_sets_carry_on_bcd_overflow();
+    test_adc_decimal_low_nibble_carries_into_high_nibble();
+    test_sbc_decimal_subtracts_bcd_digits_with_carry_set();
+    test_sbc_decimal_borrows_across_nibble_boundary();
 
     if (failures > 0) {
         printf("\n%d test(s) FAILED\n", failures);

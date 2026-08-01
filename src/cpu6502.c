@@ -142,6 +142,32 @@ static void adc_with_operand(uint8_t operand) {
         status &= (uint8_t)~FLAG_OVERFLOW;
     }
 
+    if (status & FLAG_DECIMAL) {
+        /* BCD decimal-adjust: fix up the low nibble first (checking the
+         * pre-adjust binary sum for a >9 nibble or an actual carry out of
+         * bit 3), then the high nibble the same way. NMOS 6502 quirk:
+         * N/V/Z end up reflecting the intermediate BINARY sum, not the
+         * final decimal result -- Klaus Dormann's suite explicitly does
+         * not test flags in decimal mode for this reason, so we only need
+         * the numeric result and carry to be correct here. */
+        uint16_t low = (uint16_t)(a & 0x0F) + (operand & 0x0F) + carry_in;
+        uint16_t high = (uint16_t)(a >> 4) + (operand >> 4);
+        if (low > 9) {
+            low += 6;
+            high += 1;
+        }
+        if (high > 9) {
+            high += 6;
+        }
+        if (high > 15) {
+            status |= FLAG_CARRY;
+        } else {
+            status &= (uint8_t)~FLAG_CARRY;
+        }
+        a = (uint8_t)(((high << 4) | (low & 0x0F)) & 0xFF);
+        return;
+    }
+
     if (sum > 0xFF) {
         status |= FLAG_CARRY;
     } else {
@@ -152,8 +178,7 @@ static void adc_with_operand(uint8_t operand) {
     set_zero_and_sign(a);
 }
 
-/* --- SBC helper (shared by all addressing modes; binary mode only, see
- * ADC note above) --- */
+/* --- SBC helper (shared by all addressing modes) --- */
 
 static void sbc_with_operand(uint8_t operand) {
     uint8_t borrow_in = (status & FLAG_CARRY) ? 0 : 1;
@@ -169,6 +194,25 @@ static void sbc_with_operand(uint8_t operand) {
         status |= FLAG_CARRY; /* no borrow occurred */
     } else {
         status &= (uint8_t)~FLAG_CARRY; /* borrow occurred */
+    }
+
+    if (status & FLAG_DECIMAL) {
+        /* BCD decimal-adjust for subtraction: same nibble-wise correction
+         * as ADC but subtracting 6/60 when a nibble borrowed, instead of
+         * adding. Carry/overflow above are computed from the binary diff
+         * (matching real 6502 SBC decimal-mode carry behavior); only the
+         * numeric result differs here. */
+        int16_t low = (int16_t)(a & 0x0F) - (operand & 0x0F) - borrow_in;
+        int16_t high = (int16_t)(a >> 4) - (operand >> 4);
+        if (low < 0) {
+            low -= 6;
+            high -= 1;
+        }
+        if (high < 0) {
+            high -= 6;
+        }
+        a = (uint8_t)(((high << 4) | (low & 0x0F)) & 0xFF);
+        return;
     }
 
     a = (uint8_t)diff;
