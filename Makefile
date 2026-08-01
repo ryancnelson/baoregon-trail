@@ -78,5 +78,13 @@ $(BUILD_DIR)/test_bio_display: $(TEST_DIR)/test_bio_display.c $(SRC_DIR)/bio_dis
 test-firmware:
 	@./tools/run_bio_audio_qemu_test.sh
 
+# BIO Core RTL-level test requiring an external bio-sim checkout
+# (github.com/baochip/bio-sim) + Verilator + a ziglang-equipped Python venv.
+# Not part of the default `test` target -- see bio-sim-tests/README.md for
+# one-time setup. Override BIO_SIM_DIR / ZIGLANG_PYTHON as needed.
+.PHONY: test-biosim
+test-biosim:
+	@python3 tools/run_bio_display_palette_biosim.py
+
 clean:
 	rm -rf $(BUILD_DIR)
