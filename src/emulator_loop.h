@@ -45,4 +45,16 @@ const uint16_t *baoregon_emulator_get_framebuffer(void);
  * rendered content; the rest are unwritten margin pixels. */
 int baoregon_emulator_copy_framebuffer(uint16_t *dest, size_t dest_count);
 
+/* Read-only access to which cartridge slot is currently selected in the
+ * boot-splash menu (or was last selected before the emulator left splash
+ * mode and started running that game). Returns NULL only if state hasn't
+ * been initialized yet (baoregon_emulator_init() not yet called) --
+ * otherwise always returns a valid pointer into cartridge_layout.h's
+ * cartridge_slots[] table, since boot_splash_current_slot() itself
+ * clamps out-of-range indices back to slot 0 rather than ever returning
+ * NULL for a valid state. Useful for a "now playing" HUD/debug overlay
+ * or logging which game is loaded without exposing boot_splash.c's
+ * internal state struct directly. */
+const cartridge_slot_t *baoregon_emulator_get_current_slot(void);
+
 #endif /* EMULATOR_LOOP_H */

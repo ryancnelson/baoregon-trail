@@ -79,3 +79,7 @@ int baoregon_emulator_copy_framebuffer(uint16_t *dest, size_t dest_count) {
     }
     return 0;
 }
+
+const cartridge_slot_t *baoregon_emulator_get_current_slot(void) {
+    return boot_splash_current_slot(&g_splash_state);
+}
