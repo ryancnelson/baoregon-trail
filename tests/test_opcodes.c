@@ -2342,8 +2342,6 @@ int main(void) {
     test_eor_absolute_y_toggles_bits_with_index();
     test_sbc_absolute_x_subtracts_value_with_index();
     test_sbc_absolute_y_subtracts_value_with_index();
-    test_sbc_absolute_x_subtracts_value_with_index();
-    test_sbc_absolute_y_subtracts_value_with_index();
 
     if (failures > 0) {
         printf("\n%d test(s) FAILED\n", failures);

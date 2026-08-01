@@ -7,9 +7,11 @@ BUILD_DIR = build
 
 .PHONY: test clean
 
-test: $(BUILD_DIR)/test_reset $(BUILD_DIR)/test_opcodes $(BUILD_DIR)/test_disk_sector_layout $(BUILD_DIR)/test_disk_trap $(BUILD_DIR)/test_video_apple2 $(BUILD_DIR)/test_video_apple2_color $(BUILD_DIR)/test_video_apple2_color_edges $(BUILD_DIR)/test_video_apple2_fullframe $(BUILD_DIR)/test_video_apple2_realbus $(BUILD_DIR)/test_bunnie_audio $(BUILD_DIR)/test_apple2_mem $(BUILD_DIR)/test_bio_display $(BUILD_DIR)/test_rram_driver $(BUILD_DIR)/test_cartridge_layout $(BUILD_DIR)/test_rram_cartridge_integration $(BUILD_DIR)/test_boot_splash
+test: $(BUILD_DIR)/test_reset $(BUILD_DIR)/test_opcodes $(BUILD_DIR)/test_functional_suite $(BUILD_DIR)/test_disk_sector_layout $(BUILD_DIR)/test_disk_trap $(BUILD_DIR)/test_video_apple2 $(BUILD_DIR)/test_video_apple2_color $(BUILD_DIR)/test_video_apple2_color_edges $(BUILD_DIR)/test_video_apple2_fullframe $(BUILD_DIR)/test_video_apple2_realbus $(BUILD_DIR)/test_bunnie_audio $(BUILD_DIR)/test_apple2_mem $(BUILD_DIR)/test_bio_display $(BUILD_DIR)/test_rram_driver $(BUILD_DIR)/test_cartridge_layout $(BUILD_DIR)/test_rram_cartridge_integration $(BUILD_DIR)/test_boot_splash
 	@$(BUILD_DIR)/test_reset
 	@$(BUILD_DIR)/test_opcodes
+	@./tests/fetch_functional_test.sh
+	@$(BUILD_DIR)/test_functional_suite
 	@$(BUILD_DIR)/test_disk_sector_layout
 	@$(BUILD_DIR)/test_disk_trap
 	@$(BUILD_DIR)/test_video_apple2
@@ -91,13 +93,15 @@ $(BUILD_DIR)/test_boot_splash: $(TEST_DIR)/test_boot_splash.c $(SRC_DIR)/boot_sp
 	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_boot_splash.c $(SRC_DIR)/boot_splash.c $(SRC_DIR)/cartridge_layout.c $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_trap.c
 
 # Full 6502 functional-correctness integration test against Klaus Dormann's
-# 6502_functional_test.bin (see tests/test_functional_suite.c). Not yet part
-# of the default `test` target because it does not pass yet (BCD/decimal-mode
-# ADC/SBC gap, in progress) -- run explicitly via `make test-functional` so
-# CI/local runs get visibility into this gap instead of it being silently
-# absent from `make test`. Promote into the main `test` target once green.
+# 6502_functional_test.bin (see tests/test_functional_suite.c). Promoted
+# into the main `test` target above -- it PASSES (all documented NMOS 6502
+# opcodes + flags, including BCD decimal-mode ADC/SBC, verified against
+# Klaus Dormann's suite; trapped at the real success address $3469).
+# `make test-functional` remains as a standalone convenience alias for
+# running just this one check without the rest of the suite.
 # Requires the fixture binary: run tests/fetch_functional_test.sh once
-# (downloads to tests/fixtures/, gitignored).
+# (downloads to tests/fixtures/, gitignored) -- `make test` does this
+# automatically.
 .PHONY: test-functional
 test-functional: $(BUILD_DIR)/test_functional_suite
 	@./tests/fetch_functional_test.sh
