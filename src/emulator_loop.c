@@ -27,6 +27,13 @@ int baoregon_emulator_is_in_splash_menu(void) {
     return g_in_splash_menu;
 }
 
+void baoregon_emulator_reset_to_splash(void) {
+    boot_splash_init(&g_splash_state);
+    boot_splash_button_edge_state_init(&g_edge_state);
+    g_in_splash_menu = 1;
+    reset6502();
+}
+
 void baoregon_emulator_poll_input(void) {
     if (g_in_splash_menu) {
         int game_selected = boot_splash_poll_apple2_mem_buttons(&g_splash_state, &g_edge_state, disk_trap_set_image);
