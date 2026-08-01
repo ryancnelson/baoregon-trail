@@ -132,6 +132,9 @@ def main(argv: list[str] | None = None) -> int:
     except DiskImageSizeError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
+    except OSError as exc:
+        print(f"error: could not read {args.dsk_path}: {exc.strerror}", file=sys.stderr)
+        return 1
 
     header = embed_to_c_header(data, args.array_name)
 
