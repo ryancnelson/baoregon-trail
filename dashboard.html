@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">STEP 5 NO STALE FRAMEBUFFER RESET (310 Tests) GREEN</span>
+                    <span class="pill pill-green">STEP 5 EMULATOR TOTAL CYCLES (311 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -394,7 +394,7 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Reset Memory State Guard (<code class="code-inline">emulator_loop.c</code>)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Cumulative Cycle Counter (<code class="code-inline">emulator_loop.c</code>)</span>
                         <span class="pill pill-green">GREEN (13.9 KB Binary)</span>
                     </div>
                 </div>
@@ -410,7 +410,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Framebuffer Artifact Prevention (<code class="code-inline">test_emulator_loop_no_stale_framebuffer.c</code>)</span>
-                        <span class="pill pill-green">GREEN (310 PASS)</span>
+                        <span class="pill pill-green">GREEN (311 PASS)</span>
                     </div>
                 </div>
 
@@ -487,8 +487,8 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 5 – 6: No Stale Framebuffer Reset Safety (<code class="code-inline">emulator_loop.c</code>) (COMPLETE)</h4>
-                            <p>Duke &amp; Bunnie added memory state reset on splash menu reset with unit tests in <code class="code-inline">tests/test_emulator_loop_no_stale_framebuffer.c</code> (310 tests GREEN)!</p>
+                            <h4>Days 5 – 6: Emulator Loop Cumulative Cycle Counter (<code class="code-inline">emulator_loop.c</code>) (COMPLETE)</h4>
+                            <p>Duke added <code class="code-inline">baoregon_emulator_get_total_cycles()</code> with unit tests in <code class="code-inline">tests/test_emulator_loop_total_cycles.c</code> (311 tests GREEN)!</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,30 +510,30 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. No Stale Framebuffer Reset Safety Landed (<code class="code-inline">emulator_loop.c</code>)</div>
+                    <div class="decision-title">1. Cumulative Cycle Counter Landed (<code class="code-inline">emulator_loop.c</code>)</div>
                     <div class="decision-desc">
-                        Duke &amp; Bunnie added memory state reset on splash menu reset with unit tests in <code class="code-inline">tests/test_emulator_loop_no_stale_framebuffer.c</code> (310 tests GREEN)!
+                        Duke added <code class="code-inline">baoregon_emulator_get_total_cycles()</code> with unit tests in <code class="code-inline">tests/test_emulator_loop_total_cycles.c</code> (311 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Emulator Loop Reset to Splash Landed (<code class="code-inline">emulator_loop.c</code>)</div>
+                    <div class="decision-title">2. No Stale Framebuffer Reset Safety Landed (<code class="code-inline">emulator_loop.c</code>)</div>
                     <div class="decision-desc">
-                        Duke added <code class="code-inline">baoregon_emulator_reset_to_splash()</code> with unit tests in <code class="code-inline">tests/test_emulator_loop_reset_to_splash.c</code> (310 tests GREEN)!
+                        Duke &amp; Bunnie added memory state reset on splash menu reset with unit tests in <code class="code-inline">tests/test_emulator_loop_no_stale_framebuffer.c</code> (311 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">3. Main Boot Metrics Getter Landed (<code class="code-inline">main.c</code>)</div>
+                    <div class="decision-title">3. Emulator Loop Reset to Splash Landed (<code class="code-inline">emulator_loop.c</code>)</div>
                     <div class="decision-desc">
-                        Duke added <code class="code-inline">baoregon_get_boot_metrics()</code> accessor with unit tests in <code class="code-inline">tests/test_main_boot_metrics_getter.c</code> (310 tests GREEN)!
+                        Duke added <code class="code-inline">baoregon_emulator_reset_to_splash()</code> with unit tests in <code class="code-inline">tests/test_emulator_loop_reset_to_splash.c</code> (311 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
                     <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (310 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (311 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
