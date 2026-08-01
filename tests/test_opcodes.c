@@ -574,6 +574,37 @@ static void test_dec_zeropage_decrements_memory(void) {
           "test_dec_zeropage_decrements_memory");
 }
 
+static void test_inc_zeropage_wraps_0xff_to_0x00_and_sets_zero_flag(void) {
+    /* Untested boundary: INC on a byte already at 0xFF must wrap to 0x00
+     * (not saturate, not become undefined), setting the zero flag and
+     * clearing sign -- exactly the kind of unsigned wraparound edge that
+     * the exec6502() overflow bug (found separately this session) shows
+     * is worth explicitly locking in rather than assuming "obviously
+     * correct" from the arithmetic alone. */
+    setup();
+    test_ram[0x0020] = 0xFF;
+    test_ram[0x0400] = 0xE6; /* INC $20 */
+    test_ram[0x0401] = 0x20;
+    step6502();
+    CHECK(test_ram[0x0020] == 0x00 && (status & FLAG_ZERO) != 0 &&
+          (status & FLAG_SIGN) == 0,
+          "test_inc_zeropage_wraps_0xff_to_0x00_and_sets_zero_flag");
+}
+
+static void test_dec_zeropage_wraps_0x00_to_0xff_and_sets_sign_flag(void) {
+    /* Mirror of the INC wraparound test: DEC on a byte already at 0x00
+     * must wrap to 0xFF (not go negative/undefined), setting the sign
+     * flag (0xFF has the high bit set) and clearing zero. */
+    setup();
+    test_ram[0x0020] = 0x00;
+    test_ram[0x0400] = 0xC6; /* DEC $20 */
+    test_ram[0x0401] = 0x20;
+    step6502();
+    CHECK(test_ram[0x0020] == 0xFF && (status & FLAG_SIGN) != 0 &&
+          (status & FLAG_ZERO) == 0,
+          "test_dec_zeropage_wraps_0x00_to_0xff_and_sets_sign_flag");
+}
+
 static void test_cli_clears_interrupt_disable_flag(void) {
     setup();
     status |= FLAG_INTERRUPT;
@@ -2322,6 +2353,8 @@ int main(void) {
     test_bit_zeropage_copies_bits_6_and_7_to_flags();
     test_inc_zeropage_increments_memory();
     test_dec_zeropage_decrements_memory();
+    test_inc_zeropage_wraps_0xff_to_0x00_and_sets_zero_flag();
+    test_dec_zeropage_wraps_0x00_to_0xff_and_sets_sign_flag();
     test_cli_clears_interrupt_disable_flag();
     test_sei_sets_interrupt_disable_flag();
     test_clv_clears_overflow_flag();
