@@ -80,6 +80,11 @@ static uint16_t fetch_zeropage_x_addr(void) {
     return (uint8_t)(read6502(pc++) + x);
 }
 
+/* zeropage,Y -- same wraparound rule as zeropage,X, used only by LDX/STX. */
+static uint16_t fetch_zeropage_y_addr(void) {
+    return (uint8_t)(read6502(pc++) + y);
+}
+
 /* absolute,X / absolute,Y -- 16-bit base + index register, with normal
  * carry into the next page. Sets *page_crossed for callers that charge an
  * extra cycle on page crossing (reads only; writes are always the slow
@@ -145,6 +150,55 @@ static void adc_with_operand(uint8_t operand) {
 
     a = (uint8_t)sum;
     set_zero_and_sign(a);
+}
+
+/* --- read-modify-write helpers (shared by all addressing modes of
+ * ASL/LSR/ROL/ROR/INC/DEC) --- */
+
+static uint8_t asl_value(uint8_t value) {
+    if (value & 0x80) {
+        status |= FLAG_CARRY;
+    } else {
+        status &= (uint8_t)~FLAG_CARRY;
+    }
+    value = (uint8_t)(value << 1);
+    set_zero_and_sign(value);
+    return value;
+}
+
+static uint8_t lsr_value(uint8_t value) {
+    if (value & 0x01) {
+        status |= FLAG_CARRY;
+    } else {
+        status &= (uint8_t)~FLAG_CARRY;
+    }
+    value = (uint8_t)(value >> 1);
+    set_zero_and_sign(value);
+    return value;
+}
+
+static uint8_t rol_value(uint8_t value) {
+    uint8_t carry_in = (status & FLAG_CARRY) ? 1 : 0;
+    if (value & 0x80) {
+        status |= FLAG_CARRY;
+    } else {
+        status &= (uint8_t)~FLAG_CARRY;
+    }
+    value = (uint8_t)((value << 1) | carry_in);
+    set_zero_and_sign(value);
+    return value;
+}
+
+static uint8_t ror_value(uint8_t value) {
+    uint8_t carry_in = (status & FLAG_CARRY) ? 0x80 : 0;
+    if (value & 0x01) {
+        status |= FLAG_CARRY;
+    } else {
+        status &= (uint8_t)~FLAG_CARRY;
+    }
+    value = (uint8_t)((value >> 1) | carry_in);
+    set_zero_and_sign(value);
+    return value;
 }
 
 void step6502(void) {
@@ -347,52 +401,24 @@ void step6502(void) {
             break;
 
         case 0x0A: /* ASL accumulator */
-            if (a & 0x80) {
-                status |= FLAG_CARRY;
-            } else {
-                status &= (uint8_t)~FLAG_CARRY;
-            }
-            a = (uint8_t)(a << 1);
-            set_zero_and_sign(a);
+            a = asl_value(a);
             clockticks6502 += 2;
             break;
 
         case 0x4A: /* LSR accumulator */
-            if (a & 0x01) {
-                status |= FLAG_CARRY;
-            } else {
-                status &= (uint8_t)~FLAG_CARRY;
-            }
-            a = (uint8_t)(a >> 1);
-            set_zero_and_sign(a);
+            a = lsr_value(a);
             clockticks6502 += 2;
             break;
 
-        case 0x2A: { /* ROL accumulator */
-            uint8_t carry_in = (status & FLAG_CARRY) ? 1 : 0;
-            if (a & 0x80) {
-                status |= FLAG_CARRY;
-            } else {
-                status &= (uint8_t)~FLAG_CARRY;
-            }
-            a = (uint8_t)((a << 1) | carry_in);
-            set_zero_and_sign(a);
+        case 0x2A: /* ROL accumulator */
+            a = rol_value(a);
             clockticks6502 += 2;
             break;
-        }
 
-        case 0x6A: { /* ROR accumulator */
-            uint8_t carry_in = (status & FLAG_CARRY) ? 0x80 : 0;
-            if (a & 0x01) {
-                status |= FLAG_CARRY;
-            } else {
-                status &= (uint8_t)~FLAG_CARRY;
-            }
-            a = (uint8_t)((a >> 1) | carry_in);
-            set_zero_and_sign(a);
+        case 0x6A: /* ROR accumulator */
+            a = ror_value(a);
             clockticks6502 += 2;
             break;
-        }
 
         case 0x48: /* PHA */
             push8(a);

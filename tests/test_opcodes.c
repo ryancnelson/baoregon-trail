@@ -853,6 +853,341 @@ static void test_cmp_absolute_y_extra_cycle_when_page_crossed(void) {
           "test_cmp_absolute_y_extra_cycle_when_page_crossed");
 }
 
+static void test_ldx_absolute_y_loads_value_with_index(void) {
+    setup();
+    y = 0x05;
+    test_ram[0x0400] = 0xBE; /* LDX $8000,Y */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x80;
+    test_ram[0x8005] = 0x2B;
+    step6502();
+    CHECK(x == 0x2B && pc == 0x0403 && clockticks6502 == 4,
+          "test_ldx_absolute_y_loads_value_with_index");
+}
+
+static void test_ldx_absolute_y_extra_cycle_when_page_crossed(void) {
+    setup();
+    y = 0x01;
+    test_ram[0x0400] = 0xBE; /* LDX $80FF,Y -> $8100 crosses page */
+    test_ram[0x0401] = 0xFF;
+    test_ram[0x0402] = 0x80;
+    test_ram[0x8100] = 0x3C;
+    step6502();
+    CHECK(x == 0x3C && pc == 0x0403 && clockticks6502 == 5,
+          "test_ldx_absolute_y_extra_cycle_when_page_crossed");
+}
+
+static void test_ldy_absolute_x_loads_value_with_index(void) {
+    setup();
+    x = 0x05;
+    test_ram[0x0400] = 0xBC; /* LDY $9000,X */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x90;
+    test_ram[0x9005] = 0x4D;
+    step6502();
+    CHECK(y == 0x4D && pc == 0x0403 && clockticks6502 == 4,
+          "test_ldy_absolute_x_loads_value_with_index");
+}
+
+static void test_ldy_absolute_x_extra_cycle_when_page_crossed(void) {
+    setup();
+    x = 0x01;
+    test_ram[0x0400] = 0xBC; /* LDY $90FF,X -> $9100 crosses page */
+    test_ram[0x0401] = 0xFF;
+    test_ram[0x0402] = 0x90;
+    test_ram[0x9100] = 0x5E;
+    step6502();
+    CHECK(y == 0x5E && pc == 0x0403 && clockticks6502 == 5,
+          "test_ldy_absolute_x_extra_cycle_when_page_crossed");
+}
+
+static void test_ldx_zeropage_y_loads_value_with_index(void) {
+    setup();
+    y = 0x03;
+    test_ram[0x0400] = 0xB6; /* LDX $10,Y */
+    test_ram[0x0401] = 0x10;
+    test_ram[0x0013] = 0x6F; /* $10 + Y = $13 */
+    step6502();
+    CHECK(x == 0x6F && pc == 0x0402 && clockticks6502 == 4,
+          "test_ldx_zeropage_y_loads_value_with_index");
+}
+
+static void test_ldx_zeropage_y_wraps_within_zero_page(void) {
+    setup();
+    y = 0xFF;
+    test_ram[0x0400] = 0xB6; /* LDX $80,Y -> ($80+$FF)&$FF = $7F */
+    test_ram[0x0401] = 0x80;
+    test_ram[0x007F] = 0x19;
+    test_ram[0x017F] = 0xEE; /* decoy: would be hit if wrap were wrong */
+    step6502();
+    CHECK(x == 0x19 && pc == 0x0402 && clockticks6502 == 4,
+          "test_ldx_zeropage_y_wraps_within_zero_page");
+}
+
+static void test_asl_zeropage_shifts_left_and_sets_carry(void) {
+    setup();
+    test_ram[0x0010] = 0x81; /* 1000_0001 */
+    test_ram[0x0400] = 0x06; /* ASL $10 */
+    test_ram[0x0401] = 0x10;
+    step6502();
+    CHECK(test_ram[0x0010] == 0x02 && (status & FLAG_CARRY) != 0 &&
+          pc == 0x0402 && clockticks6502 == 5,
+          "test_asl_zeropage_shifts_left_and_sets_carry");
+}
+
+static void test_asl_zeropage_x_shifts_left_with_index(void) {
+    setup();
+    x = 0x02;
+    test_ram[0x0012] = 0x40;
+    test_ram[0x0400] = 0x16; /* ASL $10,X */
+    test_ram[0x0401] = 0x10;
+    step6502();
+    CHECK(test_ram[0x0012] == 0x80 && (status & FLAG_SIGN) != 0 &&
+          pc == 0x0402 && clockticks6502 == 6,
+          "test_asl_zeropage_x_shifts_left_with_index");
+}
+
+static void test_asl_absolute_shifts_left_and_sets_carry(void) {
+    setup();
+    test_ram[0xA000] = 0x81;
+    test_ram[0x0400] = 0x0E; /* ASL $A000 */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0xA0;
+    step6502();
+    CHECK(test_ram[0xA000] == 0x02 && (status & FLAG_CARRY) != 0 &&
+          pc == 0x0403 && clockticks6502 == 6,
+          "test_asl_absolute_shifts_left_and_sets_carry");
+}
+
+static void test_asl_absolute_x_shifts_left_with_index(void) {
+    setup();
+    x = 0x02;
+    test_ram[0xB002] = 0x40;
+    test_ram[0x0400] = 0x1E; /* ASL $B000,X */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0xB0;
+    step6502();
+    /* ASL absolute,X is always 7 cycles regardless of page crossing (RMW
+     * instruction, no read-side early termination). */
+    CHECK(test_ram[0xB002] == 0x80 && pc == 0x0403 && clockticks6502 == 7,
+          "test_asl_absolute_x_shifts_left_with_index");
+}
+
+static void test_lsr_zeropage_shifts_right_and_sets_carry(void) {
+    setup();
+    test_ram[0x0010] = 0x03;
+    test_ram[0x0400] = 0x46; /* LSR $10 */
+    test_ram[0x0401] = 0x10;
+    step6502();
+    CHECK(test_ram[0x0010] == 0x01 && (status & FLAG_CARRY) != 0 &&
+          pc == 0x0402 && clockticks6502 == 5,
+          "test_lsr_zeropage_shifts_right_and_sets_carry");
+}
+
+static void test_lsr_zeropage_x_shifts_right_with_index(void) {
+    setup();
+    x = 0x02;
+    test_ram[0x0012] = 0x03;
+    test_ram[0x0400] = 0x56; /* LSR $10,X */
+    test_ram[0x0401] = 0x10;
+    step6502();
+    CHECK(test_ram[0x0012] == 0x01 && (status & FLAG_CARRY) != 0 &&
+          pc == 0x0402 && clockticks6502 == 6,
+          "test_lsr_zeropage_x_shifts_right_with_index");
+}
+
+static void test_lsr_absolute_shifts_right_and_sets_carry(void) {
+    setup();
+    test_ram[0xA000] = 0x03;
+    test_ram[0x0400] = 0x4E; /* LSR $A000 */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0xA0;
+    step6502();
+    CHECK(test_ram[0xA000] == 0x01 && (status & FLAG_CARRY) != 0 &&
+          pc == 0x0403 && clockticks6502 == 6,
+          "test_lsr_absolute_shifts_right_and_sets_carry");
+}
+
+static void test_lsr_absolute_x_shifts_right_with_index(void) {
+    setup();
+    x = 0x02;
+    test_ram[0xB002] = 0x03;
+    test_ram[0x0400] = 0x5E; /* LSR $B000,X */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0xB0;
+    step6502();
+    CHECK(test_ram[0xB002] == 0x01 && pc == 0x0403 && clockticks6502 == 7,
+          "test_lsr_absolute_x_shifts_right_with_index");
+}
+
+static void test_rol_zeropage_rotates_left_through_carry(void) {
+    setup();
+    status |= FLAG_CARRY;
+    test_ram[0x0010] = 0x40; /* carry-in=1 -> 1000_0001, carry-out=0 */
+    test_ram[0x0400] = 0x26; /* ROL $10 */
+    test_ram[0x0401] = 0x10;
+    step6502();
+    CHECK(test_ram[0x0010] == 0x81 && (status & FLAG_CARRY) == 0 &&
+          pc == 0x0402 && clockticks6502 == 5,
+          "test_rol_zeropage_rotates_left_through_carry");
+}
+
+static void test_rol_zeropage_x_rotates_left_with_index(void) {
+    setup();
+    status |= FLAG_CARRY;
+    x = 0x02;
+    test_ram[0x0012] = 0x40;
+    test_ram[0x0400] = 0x36; /* ROL $10,X */
+    test_ram[0x0401] = 0x10;
+    step6502();
+    CHECK(test_ram[0x0012] == 0x81 && pc == 0x0402 && clockticks6502 == 6,
+          "test_rol_zeropage_x_rotates_left_with_index");
+}
+
+static void test_rol_absolute_rotates_left_through_carry(void) {
+    setup();
+    status |= FLAG_CARRY;
+    test_ram[0xA000] = 0x40;
+    test_ram[0x0400] = 0x2E; /* ROL $A000 */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0xA0;
+    step6502();
+    CHECK(test_ram[0xA000] == 0x81 && pc == 0x0403 && clockticks6502 == 6,
+          "test_rol_absolute_rotates_left_through_carry");
+}
+
+static void test_rol_absolute_x_rotates_left_with_index(void) {
+    setup();
+    status |= FLAG_CARRY;
+    x = 0x02;
+    test_ram[0xB002] = 0x40;
+    test_ram[0x0400] = 0x3E; /* ROL $B000,X */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0xB0;
+    step6502();
+    CHECK(test_ram[0xB002] == 0x81 && pc == 0x0403 && clockticks6502 == 7,
+          "test_rol_absolute_x_rotates_left_with_index");
+}
+
+static void test_ror_zeropage_rotates_right_through_carry(void) {
+    setup();
+    status |= FLAG_CARRY;
+    test_ram[0x0010] = 0x02; /* carry-in=1 -> 1000_0001, carry-out=0 */
+    test_ram[0x0400] = 0x66; /* ROR $10 */
+    test_ram[0x0401] = 0x10;
+    step6502();
+    CHECK(test_ram[0x0010] == 0x81 && (status & FLAG_CARRY) == 0 &&
+          pc == 0x0402 && clockticks6502 == 5,
+          "test_ror_zeropage_rotates_right_through_carry");
+}
+
+static void test_ror_zeropage_x_rotates_right_with_index(void) {
+    setup();
+    status |= FLAG_CARRY;
+    x = 0x02;
+    test_ram[0x0012] = 0x02;
+    test_ram[0x0400] = 0x76; /* ROR $10,X */
+    test_ram[0x0401] = 0x10;
+    step6502();
+    CHECK(test_ram[0x0012] == 0x81 && pc == 0x0402 && clockticks6502 == 6,
+          "test_ror_zeropage_x_rotates_right_with_index");
+}
+
+static void test_ror_absolute_rotates_right_through_carry(void) {
+    setup();
+    status |= FLAG_CARRY;
+    test_ram[0xA000] = 0x02;
+    test_ram[0x0400] = 0x6E; /* ROR $A000 */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0xA0;
+    step6502();
+    CHECK(test_ram[0xA000] == 0x81 && pc == 0x0403 && clockticks6502 == 6,
+          "test_ror_absolute_rotates_right_through_carry");
+}
+
+static void test_ror_absolute_x_rotates_right_with_index(void) {
+    setup();
+    status |= FLAG_CARRY;
+    x = 0x02;
+    test_ram[0xB002] = 0x02;
+    test_ram[0x0400] = 0x7E; /* ROR $B000,X */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0xB0;
+    step6502();
+    CHECK(test_ram[0xB002] == 0x81 && pc == 0x0403 && clockticks6502 == 7,
+          "test_ror_absolute_x_rotates_right_with_index");
+}
+
+static void test_inc_zeropage_x_increments_memory_with_index(void) {
+    setup();
+    x = 0x02;
+    test_ram[0x0012] = 0x7F;
+    test_ram[0x0400] = 0xF6; /* INC $10,X */
+    test_ram[0x0401] = 0x10;
+    step6502();
+    CHECK(test_ram[0x0012] == 0x80 && (status & FLAG_SIGN) != 0 &&
+          pc == 0x0402 && clockticks6502 == 6,
+          "test_inc_zeropage_x_increments_memory_with_index");
+}
+
+static void test_inc_absolute_increments_memory(void) {
+    setup();
+    test_ram[0xA000] = 0x7F;
+    test_ram[0x0400] = 0xEE; /* INC $A000 */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0xA0;
+    step6502();
+    CHECK(test_ram[0xA000] == 0x80 && pc == 0x0403 && clockticks6502 == 6,
+          "test_inc_absolute_increments_memory");
+}
+
+static void test_inc_absolute_x_increments_memory_with_index(void) {
+    setup();
+    x = 0x02;
+    test_ram[0xB002] = 0x7F;
+    test_ram[0x0400] = 0xFE; /* INC $B000,X */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0xB0;
+    step6502();
+    CHECK(test_ram[0xB002] == 0x80 && pc == 0x0403 && clockticks6502 == 7,
+          "test_inc_absolute_x_increments_memory_with_index");
+}
+
+static void test_dec_zeropage_x_decrements_memory_with_index(void) {
+    setup();
+    x = 0x02;
+    test_ram[0x0012] = 0x01;
+    test_ram[0x0400] = 0xD6; /* DEC $10,X */
+    test_ram[0x0401] = 0x10;
+    step6502();
+    CHECK(test_ram[0x0012] == 0x00 && (status & FLAG_ZERO) != 0 &&
+          pc == 0x0402 && clockticks6502 == 6,
+          "test_dec_zeropage_x_decrements_memory_with_index");
+}
+
+static void test_dec_absolute_decrements_memory(void) {
+    setup();
+    test_ram[0xA000] = 0x01;
+    test_ram[0x0400] = 0xCE; /* DEC $A000 */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0xA0;
+    step6502();
+    CHECK(test_ram[0xA000] == 0x00 && pc == 0x0403 && clockticks6502 == 6,
+          "test_dec_absolute_decrements_memory");
+}
+
+static void test_dec_absolute_x_decrements_memory_with_index(void) {
+    setup();
+    x = 0x02;
+    test_ram[0xB002] = 0x01;
+    test_ram[0x0400] = 0xDE; /* DEC $B000,X */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0xB0;
+    step6502();
+    CHECK(test_ram[0xB002] == 0x00 && pc == 0x0403 && clockticks6502 == 7,
+          "test_dec_absolute_x_decrements_memory_with_index");
+}
+
 int main(void) {
     test_nop_advances_pc_and_takes_2_cycles();
     test_lda_immediate_loads_value();
@@ -928,6 +1263,34 @@ int main(void) {
     test_adc_absolute_y_extra_cycle_when_page_crossed();
     test_cmp_absolute_x_compares_with_index();
     test_cmp_absolute_y_extra_cycle_when_page_crossed();
+    test_ldx_absolute_y_loads_value_with_index();
+    test_ldx_absolute_y_extra_cycle_when_page_crossed();
+    test_ldy_absolute_x_loads_value_with_index();
+    test_ldy_absolute_x_extra_cycle_when_page_crossed();
+    test_ldx_zeropage_y_loads_value_with_index();
+    test_ldx_zeropage_y_wraps_within_zero_page();
+    test_asl_zeropage_shifts_left_and_sets_carry();
+    test_asl_zeropage_x_shifts_left_with_index();
+    test_asl_absolute_shifts_left_and_sets_carry();
+    test_asl_absolute_x_shifts_left_with_index();
+    test_lsr_zeropage_shifts_right_and_sets_carry();
+    test_lsr_zeropage_x_shifts_right_with_index();
+    test_lsr_absolute_shifts_right_and_sets_carry();
+    test_lsr_absolute_x_shifts_right_with_index();
+    test_rol_zeropage_rotates_left_through_carry();
+    test_rol_zeropage_x_rotates_left_with_index();
+    test_rol_absolute_rotates_left_through_carry();
+    test_rol_absolute_x_rotates_left_with_index();
+    test_ror_zeropage_rotates_right_through_carry();
+    test_ror_zeropage_x_rotates_right_with_index();
+    test_ror_absolute_rotates_right_through_carry();
+    test_ror_absolute_x_rotates_right_with_index();
+    test_inc_zeropage_x_increments_memory_with_index();
+    test_inc_absolute_increments_memory();
+    test_inc_absolute_x_increments_memory_with_index();
+    test_dec_zeropage_x_decrements_memory_with_index();
+    test_dec_absolute_decrements_memory();
+    test_dec_absolute_x_decrements_memory_with_index();
 
     if (failures > 0) {
         printf("\n%d test(s) FAILED\n", failures);

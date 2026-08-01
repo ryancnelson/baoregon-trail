@@ -10,3 +10,19 @@
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  
 [2026-07-31 22:13:23] --- checking Duke ---
+[2026-07-31 22:15:51] Duke reply (truncated): ��───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 
+[2026-07-31 22:15:51] --- checking baochip ---
+[2026-07-31 22:16:35] baochip reply (truncated): ��──────────────────────────────────────────────────────────────────────────────────────
+  ● [22:15:39] maestri ask "Woz" "Awesome work landing indirect addressing mo... running
+  ● [22:13:31] maestri ask "Bunnie" "Fantastic work landing the 6-color NTSC ... running
+────────────────────────────────────────────────────────────────────────────────────────
+? for shortcuts                             Gemini 3.6 Flash · high · 2 task(s) · /tasks
+[2026-07-31 22:16:35] recent commits: f3732cb Update dashboard.html: Document display spec status (unconfirmed, decoupled via bio_display.c)
+70f9f6e Update dashboard.html: Ralph Loop pass 4 (60 opcodes GREEN, 90 total tests GREEN)
+85d939e Ralph Loop iteration 4: 60 opcodes GREEN (added 6502 indirect (zp,X) and (zp),Y modes) and RISC-V build verified
+8baa6b1 Update dashboard.html: Bunnie color edges test suite landed (all 9 test targets GREEN)
+969b558 linker.ld: fold .sdata/.sbss into .data/.bss (RISC-V small-data fix)
+[2026-07-31 22:16:35] sleeping 300s...
