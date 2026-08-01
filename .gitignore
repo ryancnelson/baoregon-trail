@@ -9,6 +9,12 @@ bin/
 *.a
 *.d
 *.map
+# ...except preserved research/capture artifacts -- these .bin files are
+# real data (MAME memory dumps, ROM extraction attempts), not build output.
+!tools/fixtures/mame-captures/*.bin
+
+# Build coordination (see MEMO_BUILD_LOCK_PROTOCOL.md)
+.build-lock
 
 # IDE / Editor files
 .vscode/
