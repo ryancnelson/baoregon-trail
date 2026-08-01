@@ -1292,8 +1292,19 @@ void step6502(void) {
 }
 
 void exec6502(uint32_t tickcount) {
-    uint32_t target = clockticks6502 + tickcount;
-    while (clockticks6502 < target) {
+    /* Track elapsed ticks via a running total rather than an absolute
+     * target (clockticks6502 + tickcount) -- clockticks6502 accumulates
+     * for the entire lifetime of a continuously-running badge and is
+     * NEVER reset except at cold boot / soft-reset combo, so it will
+     * eventually approach UINT32_MAX. Computing an absolute target that
+     * way can wrap around to a value SMALLER than the current
+     * clockticks6502, making the loop condition false immediately and
+     * silently executing zero instructions (a permanently frozen CPU).
+     * Measuring elapsed ticks as a difference (which is well-defined
+     * under unsigned wraparound arithmetic in C) sidesteps the overflow
+     * entirely, regardless of what clockticks6502's absolute value is. */
+    uint32_t start = clockticks6502;
+    while ((uint32_t)(clockticks6502 - start) < tickcount) {
         step6502();
     }
 }

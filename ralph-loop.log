@@ -448,3 +448,4 @@ ac0193e emulator_loop: add baoregon_emulator_get_total_cycles cumulative cycle c
 9176c86 tests: verify 3-button-combo reset path is also stale-framebuffer-free
 f72faef Update dashboard.html: 310 tests GREEN, 13.9 KB RISC-V binary, No Stale Framebuffer Reset Safety landed
 [2026-08-01 02:56:43] sleeping 300s...
+[2026-08-01 03:01:43] --- checking Woz ---

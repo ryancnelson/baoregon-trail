@@ -122,12 +122,41 @@ static void test_exec_accumulates_across_multiple_calls(void) {
           "test_exec_accumulates_across_multiple_calls");
 }
 
+static void test_exec_does_not_hang_when_clockticks6502_is_near_overflow(void) {
+    /* clockticks6502 is a uint32_t and NEVER resets during a badge's
+     * continuous runtime (only baoregon_emulator_init() resets it to 0,
+     * which only happens at cold boot / soft-reset combo) -- it just
+     * keeps accumulating every frame forever. After ~4.29 billion cycles
+     * (well within reach for a badge meant to run continuously for
+     * hours/days at ~1MHz+ emulated clock), clockticks6502 approaches
+     * UINT32_MAX. exec6502()'s 'target = clockticks6502 + tickcount'
+     * computation can then wrap AROUND past UINT32_MAX to a value
+     * SMALLER than clockticks6502 -- if that happens, the loop condition
+     * 'while (clockticks6502 < target)' is false on the very first
+     * check, and exec6502() silently executes ZERO instructions instead
+     * of the requested tick count. For emulator_loop.c that means a
+     * single dropped frame becomes a permanently frozen CPU (pc never
+     * advances again, every subsequent exec6502() call also computes an
+     * overflowed target relative to the same stuck clockticks6502). */
+    setup();
+    for (int i = 0; i < 100; i++) {
+        test_ram[0x0400 + i] = 0xEA; /* NOP */
+    }
+    clockticks6502 = 0xFFFFFFF0u; /* 16 ticks from wraparound */
+
+    exec6502(20); /* naive clockticks6502+20 wraps to a SMALLER value */
+
+    CHECK(clockticks6502 != 0xFFFFFFF0u && pc != 0x0400,
+          "test_exec_does_not_hang_when_clockticks6502_is_near_overflow");
+}
+
 int main(void) {
     test_exec_runs_at_least_the_requested_ticks();
     test_exec_stops_promptly_when_ticks_divide_evenly();
     test_exec_with_zero_tickcount_executes_nothing();
     test_exec_advances_pc_by_the_correct_instruction_count();
     test_exec_accumulates_across_multiple_calls();
+    test_exec_does_not_hang_when_clockticks6502_is_near_overflow();
 
     if (failures == 0) {
         printf("All tests passed.\n");
