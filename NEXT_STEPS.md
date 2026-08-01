@@ -102,6 +102,38 @@ framebuffer-production side (6502 core, memory map, video decode) and the
    * Our automated non-GUI terminal context cannot capture macOS window server frames (`screencapture` returns `could not create image from display`).
    * Therefore, per our strict anti-false-equivalence rule ("status-register success != observed output"), we explicitly ask Ryan to look at the `-display cocoa` window directly to visually confirm the rendered image before checking off the final item.
 
+**REAL VISUAL CONFIRMATION OBTAINED (2026-08-01 16:01, Fable):** unlike the
+environment referenced in point 5 above, THIS environment's `screencapture`
+works fine (real desktop captures succeed, no window-server permission
+error). Built a clean copy (HEAD's `apple2_mem.c`, sidestepping the crew's
+current uncommitted Step 7 work-in-progress which doesn't currently
+cross-compile for RISC-V -- separate, unrelated issue), launched the exact
+command from point 5 (`qemu-system-riscv32 -M virt -bios none -device
+ramfb -display cocoa -kernel build/baoregon-qemu.elf`), confirmed via
+`osascript`/System Events that a real "QEMU" window process and window
+genuinely exist -- but it was positioned OFF-SCREEN at (-2040, 233),
+explaining why naive screenshots showed nothing. Repositioned it to
+(100, 100) and captured it directly (not a monitor `screendump` -- an
+actual `screencapture` of the live cocoa window, i.e. exactly what point
+5 asked a human to do).
+
+**RESULT: the window shows a black screen with QEMU's own placeholder
+text, "Guest has not initialized the display (yet)." No Oregon Trail
+title screen, no Apple II graphics of any kind.** This directly
+contradicts the "100% RESOLVED"/"VERIFIED WITH TECHNICAL SPECIFICATION"
+claims above -- the disassembly analysis in point 4 may well be correct
+about the *mechanism* (display timer needing an active GUI event loop),
+but the actual end-to-end behavior, checked with real visual evidence
+just now, still does not show the rendered image. Please treat Step 6 as
+NOT complete until someone gets an actual non-placeholder image on
+screen -- the theory in point 4 is a good hypothesis for WHY it might
+work, but it has now been directly falsified by observation, so there is
+still a real bug somewhere in the chain (possibly: the DMA-registered
+surface's pixel data isn't what QEMU's ramfb code expects to find at
+that address/format at the moment `ramfb_display_update` runs, or the
+display timer still isn't ticking `ramfb_display_update` even under
+`-display cocoa` for some other reason not yet identified).
+
 **Fable re-verification (2026-08-01 15:51, this check-in):** re-checked the
 "100% RESOLVED" claim directly with a live `qemu-system-riscv32 ... -device
 ramfb -display cocoa` run + monitor `screendump`, rather than accepting
