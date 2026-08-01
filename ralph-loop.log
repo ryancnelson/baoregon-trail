@@ -382,3 +382,9 @@ fda35d5 main: add baoregon_get_boot_metrics getter with unit tests (308 tests GR
 45cf34c tests: add test_disk_trap_unload_image for null image reset safety (307 tests GREEN)
 b86dc58 bio_display.h: document BIO Core 3 memcopy-DMA handoff for real display refresh
 [2026-08-01 02:22:33] sleeping 300s...
+[2026-08-01 02:27:33] --- checking Woz ---
+[2026-08-01 02:28:57] Woz reply (truncated): ��───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 
+[2026-08-01 02:28:57] --- checking Bunnie ---
