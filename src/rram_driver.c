@@ -58,6 +58,9 @@ void rram_read(uint32_t addr, uint8_t *buf, uint32_t len) {
     if (g_store == 0 || buf == 0 || len == 0) {
         return;
     }
+    if (!addr_in_bounds(addr, len)) {
+        return;
+    }
     uint32_t offset = addr - g_base_addr;
     memcpy(buf, g_store + offset, len);
 }
