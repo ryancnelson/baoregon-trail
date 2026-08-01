@@ -61,6 +61,32 @@ int main(void) {
     apple2_mem_load_system_rom(NULL);
     assert(read6502(0xD000) == 0x00);
 
+    /* 9. $C100-$CFFF (I/O firmware + expansion ROM region) must ALSO be
+     * served from the loaded system ROM image when present -- real Apple
+     * IIe hardware's peripheral-card ROM space lives here, and boot code
+     * (Disk II boot PROM, DOS 3.3's own bootstrap) can JMP into this
+     * range as part of a real boot sequence. Previously only $D000-$FFFF
+     * (gated by the LC softswitch) was wired up; $C100-$CFFF fell
+     * through to the always-zeroed g_ram[] fallback even with a real ROM
+     * loaded, silently serving garbage/zero bytes instead of the actual
+     * firmware -- exactly the "JMP-into-peripheral-ROM boundary" gap
+     * documented in tools/boot_with_real_rom.c's file comment. This
+     * range is NOT gated by the LC softswitch on real hardware (that
+     * only controls $D000-$FFFF); it's always-ROM whenever a system ROM
+     * image is loaded, matching how $C100-$CFFF has no bank-switching at
+     * all on the Apple IIe. */
+    static uint8_t mock_rom2[16384];
+    memset(mock_rom2, 0x00, sizeof(mock_rom2));
+    mock_rom2[0x0100] = 0x77; /* $C100 offset is $C100 - $C000 = $0100 */
+    mock_rom2[0x0FFF] = 0x88; /* $CFFF offset is $CFFF - $C000 = $0FFF */
+    apple2_mem_load_system_rom(mock_rom2);
+
+    assert(read6502(0xC100) == 0x77);
+    assert(read6502(0xCFFF) == 0x88);
+
+    apple2_mem_load_system_rom(NULL);
+    assert(read6502(0xC100) == 0x00);
+
     printf("PASS: apple2_mem_load_system_rom verified\n");
     printf("All tests passed.\n");
     return 0;

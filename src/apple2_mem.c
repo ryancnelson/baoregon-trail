@@ -31,10 +31,11 @@ static int g_lc_bank1_selected = 0; /* 0 = bank 2, 1 = bank 1 */
 /* Optional real (or synthetic) $C000-$FFFF system ROM backing -- see
  * apple2_mem_load_system_rom() doc comment in apple2_mem.h. NULL by
  * default (RISC-V/ReRAM target behavior: unchanged, falls through to
- * g_ram[]). SYSTEM_ROM_SIZE covers the full $C000-$FFFF span so a future
- * caller could also back $C100-$CFFF (I/O firmware/expansion ROM) with
- * the same image, even though only $D000-$FFFF is actually gated by the
- * g_lc_read_ram softswitch today. */
+ * g_ram[]). SYSTEM_ROM_SIZE covers the full $C000-$FFFF span: $C100-$CFFF
+ * (I/O firmware/expansion ROM) is served whenever a ROM is loaded (no
+ * bank-switching there on real hardware), and $D000-$FFFF is additionally
+ * gated by the g_lc_read_ram softswitch, matching real Apple IIe LC
+ * semantics. */
 #define SYSTEM_ROM_SIZE 16384u
 #define SYSTEM_ROM_BASE 0xC000u
 static const uint8_t *g_system_rom = 0;
@@ -389,6 +390,17 @@ static uint8_t handle_soft_switch_read(uint16_t address) {
 uint8_t read6502(uint16_t address) {
     if (address >= 0xC000 && address <= 0xC0FF) {
         return handle_soft_switch_read(address);
+    }
+    if (address >= 0xC100 && address <= 0xCFFF && g_system_rom) {
+        /* $C100-$CFFF: I/O firmware + expansion ROM region. NOT gated by
+         * the LC softswitch on real Apple IIe hardware (that only
+         * controls $D000-$FFFF) -- this range is always served from ROM
+         * whenever a system ROM image is loaded, with no bank-switching
+         * at all. Boot code (Disk II boot PROM, DOS 3.3's own
+         * bootstrap) can JMP into this range as part of a real boot
+         * sequence, so it must be wired up alongside $D000-$FFFF below,
+         * not left falling through to the g_ram[] fallback. */
+        return g_system_rom[address - SYSTEM_ROM_BASE];
     }
     if (address >= LC_BANKED_REGION_START && g_lc_read_ram) {
         /* $D000-$DFFF is banked (two independent 4KB images); $E000-$FFFF
