@@ -464,3 +464,20 @@ f72faef Update dashboard.html: 310 tests GREEN, 13.9 KB RISC-V binary, No Stale 
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  
 [2026-08-01 03:23:54] --- checking baochip ---
+[2026-08-01 03:26:10] baochip reply (truncated): �────
+  ###    Repository Sync
+
+  All commits pushed to Gitea origin main at http://biggie:3000/ryan/baoregon-
+  trail.git.
+  Live Status Dashboard: **dashboard.html**.
+
+────────────────────────────────────────────────────────────────────────────────────────
+>
+────────────────────────────────────────────────────────────────────────────────────────
+? for shortcuts                                                  Gemini 3.6 Flash · high
+[2026-08-01 03:26:10] recent commits: f119e72 Update dashboard.html: 313 tests GREEN, 14.0 KB RISC-V binary, Audio Active Getter landed
+0a96efa emulator_loop: add baoregon_emulator_is_audio_active getter with unit tests (313 tests GREEN)
+0f538ac emulator_loop: reset_to_splash() now zeroes total_cycles, matching init()
+803a2f3 emulator_loop: integrate bio_display_render_frame_auto_text_aware into main loop (312 tests GREEN)
+245d8d2 tests: select GRAPHICS mode () in combo reset stale framebuffer test (312 tests GREEN)
+[2026-08-01 03:26:10] sleeping 300s...
