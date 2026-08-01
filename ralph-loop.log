@@ -1418,3 +1418,4 @@ eb0c9e5 Update ralph-loop.log with latest pass 150 status
 8e2260c Update ralph-loop.log with latest pass 157 status
 7569f53 Update dashboard.html: 347 tests GREEN, 14.2 KB RISC-V binary, Video Apple2 Row Offsets Test landed
 [2026-08-01 09:52:00] sleeping 300s...
+[2026-08-01 09:57:00] --- checking Woz ---
