@@ -55,5 +55,25 @@ int main(void) {
     }
 
     printf("PASS: test_reset_sets_interrupt_disable_flag\n");
+
+    /* Real NMOS 6502 hardware does NOT clear the decimal-mode flag (D)
+     * on RESET -- that's a 65C02 (CMOS) behavior change, out of scope
+     * for this project's NMOS-only opcode set. A common porting mistake
+     * is to clear D on reset by analogy with I, so this locks in the
+     * correct NMOS-specific behavior: D must survive a reset exactly as
+     * it was set before, not get force-cleared like I does. */
+    memset(test_ram, 0, sizeof(test_ram));
+    test_ram[0xFFFC] = 0x00;
+    test_ram[0xFFFD] = 0x04;
+    status = FLAG_DECIMAL; /* D-flag explicitly SET before reset */
+
+    reset6502();
+
+    if (!(status & FLAG_DECIMAL)) {
+        printf("FAIL: test_reset_does_not_clear_decimal_flag - D-flag cleared by reset (NMOS hardware does not clear D on RESET)\n");
+        return 1;
+    }
+
+    printf("PASS: test_reset_does_not_clear_decimal_flag\n");
     return 0;
 }
