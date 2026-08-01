@@ -225,6 +225,49 @@ static void test_nmi_fires_during_a_masked_irq_situation_unaffected(void) {
           "test_nmi_fires_during_a_masked_irq_situation_unaffected: NMI still fires despite I-flag set");
 }
 
+static void test_irq_and_nmi_round_trip_survives_stack_wraparound(void) {
+    /* Same intersection-of-features gap as
+     * test_brk_rti_round_trip_survives_stack_wraparound in
+     * test_stack_wraparound.c, but for the hardware entry points
+     * (irq6502()/nmi6502()) rather than the BRK opcode -- these are
+     * separate C functions with their own copy of the same 3-byte push
+     * sequence, never previously exercised at the sp 0x00/0xFF
+     * wraparound boundary. sp=0x02 means the 3-byte push crosses
+     * through 0x01, 0x00, and wraps to 0xFF for BOTH irq6502() and
+     * nmi6502() in sequence, confirming neither corrupts the other's
+     * pushed frame nor mishandles the wraparound. */
+    setup();
+    test_ram[0xFFFE] = 0x00;
+    test_ram[0xFFFF] = 0x09; /* IRQ/BRK vector -> $0900 */
+    test_ram[0x0900] = 0x40; /* RTI, for the IRQ round trip */
+    sp = 0x02;
+    pc = 0x0500;
+    status = FLAG_CARRY;
+
+    irq6502(); /* pushes PC/status: sp 0x02->0x01->0x00->0xFF */
+    uint8_t sp_after_irq = sp;
+    step6502(); /* RTI: sp 0xFF->0x00->0x01->0x02 */
+
+    CHECK(sp_after_irq == 0xFF && pc == 0x0500 && sp == 0x02 &&
+          (status & FLAG_CARRY) != 0,
+          "test_irq_and_nmi_round_trip_survives_stack_wraparound: IRQ leg");
+
+    test_ram[0xFFFA] = 0x00;
+    test_ram[0xFFFB] = 0x0A; /* NMI vector -> $0A00 */
+    test_ram[0x0A00] = 0x40; /* RTI, for the NMI round trip */
+    sp = 0x02;
+    pc = 0x0600;
+    status = FLAG_OVERFLOW;
+
+    nmi6502(); /* pushes PC/status: sp 0x02->0x01->0x00->0xFF */
+    uint8_t sp_after_nmi = sp;
+    step6502(); /* RTI: sp 0xFF->0x00->0x01->0x02 */
+
+    CHECK(sp_after_nmi == 0xFF && pc == 0x0600 && sp == 0x02 &&
+          (status & FLAG_OVERFLOW) != 0,
+          "test_irq_and_nmi_round_trip_survives_stack_wraparound: NMI leg");
+}
+
 int main(void) {
     test_irq_jumps_through_irq_brk_vector();
     test_irq_pushes_unmodified_pc_not_pc_plus_1();
@@ -237,6 +280,7 @@ int main(void) {
     test_nmi_pushes_status_without_break_flag();
     test_nmi_then_rti_returns_to_interrupted_pc();
     test_nmi_fires_during_a_masked_irq_situation_unaffected();
+    test_irq_and_nmi_round_trip_survives_stack_wraparound();
 
     if (failures == 0) {
         printf("All tests passed.\n");
