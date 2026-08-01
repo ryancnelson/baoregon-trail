@@ -35,6 +35,23 @@ static int g_lc_bank1_selected = 0; /* 0 = bank 2, 1 = bank 1 */
 static uint8_t g_disk_stream_cursor = 0;
 static uint8_t g_pending_track = 0;
 
+/* Display-mode softswitch state ($C050-$C057). Post-reset defaults match
+ * real Apple II hardware: TEXT mode, PAGE1, LORES, full-screen (not
+ * MIXED). */
+static int g_display_text_mode = 1;
+static int g_display_mixed_mode = 0;
+static int g_display_page2_selected = 0;
+static int g_display_hires_mode = 0;
+
+/* Keyboard input latch ($C000) + strobe ($C010). g_keyboard_ascii holds
+ * the last injected key's ASCII value (7-bit); g_keyboard_strobe_pending
+ * tracks whether the high bit (0x80, "strobe") should be reported on the
+ * next $C000 read -- cleared by ANY access to $C010, matching real
+ * hardware's "any access clears strobe" semantics (same rule as the
+ * other soft-switches in this file). */
+static uint8_t g_keyboard_ascii = 0;
+static int g_keyboard_strobe_pending = 0;
+
 void apple2_mem_reset(void) {
     for (uint32_t i = 0; i < APPLE2_RAM_SIZE; i++) {
         g_ram[i] = 0;
@@ -49,6 +66,12 @@ void apple2_mem_reset(void) {
     bunnie_audio_init(&g_audio_state);
     g_disk_stream_cursor = 0;
     g_pending_track = 0;
+    g_display_text_mode = 1;
+    g_display_mixed_mode = 0;
+    g_display_page2_selected = 0;
+    g_display_hires_mode = 0;
+    g_keyboard_ascii = 0;
+    g_keyboard_strobe_pending = 0;
 }
 
 void apple2_mem_set_disk_image(const uint8_t *image) {
@@ -57,6 +80,27 @@ void apple2_mem_set_disk_image(const uint8_t *image) {
 
 bunnie_audio_state_t *apple2_mem_get_audio_state(void) {
     return &g_audio_state;
+}
+
+int apple2_mem_is_text_mode(void) {
+    return g_display_text_mode;
+}
+
+int apple2_mem_is_mixed_mode(void) {
+    return g_display_mixed_mode;
+}
+
+int apple2_mem_is_page2_selected(void) {
+    return g_display_page2_selected;
+}
+
+int apple2_mem_is_hires_mode(void) {
+    return g_display_hires_mode;
+}
+
+void apple2_mem_inject_key(uint8_t ascii_value) {
+    g_keyboard_ascii = (uint8_t)(ascii_value & 0x7F);
+    g_keyboard_strobe_pending = 1;
 }
 
 /* Apply the Language Card softswitch selected by a $C080-$C08F access.
@@ -108,6 +152,30 @@ static uint8_t *current_lc_bank(void) {
     return g_lc_bank1_selected ? g_lc_bank1 : g_lc_bank2;
 }
 
+/* Apply the display-mode softswitch selected by a $C050-$C057 access.
+ * Standard Apple II decode: each even/odd pair is one on/off switch,
+ * triggered by ANY access (read or write), same rule as the other
+ * soft-switches in this file:
+ *   $C050 = GRAPHICS   $C051 = TEXT
+ *   $C052 = FULL       $C053 = MIXED
+ *   $C054 = PAGE1      $C055 = PAGE2
+ *   $C056 = LORES      $C057 = HIRES
+ * The four pairs are independent -- setting one never touches the
+ * others. */
+static void apply_display_mode_switch(uint16_t address) {
+    switch (address) {
+        case 0xC050: g_display_text_mode = 0; break;
+        case 0xC051: g_display_text_mode = 1; break;
+        case 0xC052: g_display_mixed_mode = 0; break;
+        case 0xC053: g_display_mixed_mode = 1; break;
+        case 0xC054: g_display_page2_selected = 0; break;
+        case 0xC055: g_display_page2_selected = 1; break;
+        case 0xC056: g_display_hires_mode = 0; break;
+        case 0xC057: g_display_hires_mode = 1; break;
+        default: break;
+    }
+}
+
 /* Shared soft-switch handling for both read and write -- the Apple II
  * toggles $C030 on ANY access, and the disk trap's data port ($C0EC) is
  * meant to be read, but write6502() still needs to recognize $C0E0/$C0E1
@@ -122,6 +190,10 @@ static void handle_soft_switch_write(uint16_t address, uint8_t value) {
         g_disk_stream_cursor = 0;
     } else if (address >= 0xC080 && address <= 0xC08F) {
         apply_language_card_switch(address);
+    } else if (address == 0xC010) {
+        g_keyboard_strobe_pending = 0;
+    } else if (address >= 0xC050 && address <= 0xC057) {
+        apply_display_mode_switch(address);
     }
     /* Any other $C0xx write: not yet implemented, silently ignored. */
 }
@@ -138,6 +210,21 @@ static uint8_t handle_soft_switch_read(uint16_t address) {
     }
     if (address >= 0xC080 && address <= 0xC08F) {
         apply_language_card_switch(address);
+        return 0x00;
+    }
+    if (address == 0xC000) {
+        uint8_t result = g_keyboard_ascii;
+        if (g_keyboard_strobe_pending) {
+            result |= 0x80;
+        }
+        return result;
+    }
+    if (address == 0xC010) {
+        g_keyboard_strobe_pending = 0;
+        return 0x00;
+    }
+    if (address >= 0xC050 && address <= 0xC057) {
+        apply_display_mode_switch(address);
         return 0x00;
     }
     /* Any other $C0xx read (including $C0E0/$C0E1, write-only): inert 0. */

@@ -28,9 +28,20 @@
  *
  * Soft-switch dispatch inside $C000-$C0FF (per baochip's sketch, locked
  * 2026-07-31):
+ *   $C000          : keyboard input latch (read) -- returns the last
+ *                     injected key's ASCII value with the high bit
+ *                     (0x80, "strobe") set if a key is pending.
+ *   $C010          : keyboard strobe clear (any access, read or write).
  *   $C030          : Bunnie's speaker toggle -- calls
  *                     bunnie_audio_trigger_toggle() (fire-and-forget,
  *                     non-blocking, mechanism (b) memory-mapped flag).
+ *   $C050/$C051    : GRAPHICS / TEXT mode select (any access).
+ *   $C052/$C053    : FULL-screen / MIXED mode select (any access).
+ *   $C054/$C055    : PAGE1 / PAGE2 select (any access).
+ *   $C056/$C057    : LORES / HIRES mode select (any access).
+ *   $C080-$C08F    : Language Card bank-switching -- see
+ *                     apply_language_card_switch() in apple2_mem.c for
+ *                     the full read/write/bank truth table.
  *   $C0E0          : Duke's disk trap -- stage a track number (write-only).
  *   $C0E1          : Duke's disk trap -- stage a sector number and select
  *                     the (track, sector) via disk_trap_select_sector();
@@ -59,5 +70,21 @@ void apple2_mem_set_disk_image(const uint8_t *image);
  * call bunnie_audio_poll_and_apply() on it. apple2_mem.c owns the single
  * instance; this returns a pointer to it, not a copy. */
 bunnie_audio_state_t *apple2_mem_get_audio_state(void);
+
+/* Display-mode softswitch state ($C050-$C057), read by Bunnie's
+ * video_apple2.c to pick which decode path/page to render. All four are
+ * plain booleans (1/0); default state after apple2_mem_reset() is TEXT
+ * mode, PAGE1, LORES (matches real Apple II post-reset state) -- MIXED
+ * defaults to off (full-screen). */
+int apple2_mem_is_text_mode(void);   /* 1 = TEXT ($C051), 0 = GRAPHICS ($C050) */
+int apple2_mem_is_mixed_mode(void);  /* 1 = MIXED ($C053), 0 = FULL ($C052) */
+int apple2_mem_is_page2_selected(void); /* 1 = PAGE2 ($C055), 0 = PAGE1 ($C054) */
+int apple2_mem_is_hires_mode(void);  /* 1 = HIRES ($C057), 0 = LORES ($C056) */
+
+/* Keyboard input latch ($C000 read) + strobe-clear ($C010 access).
+ * apple2_mem_inject_key() is the test/host-side hook standing in for a
+ * real physical keystroke -- sets the ASCII value and raises the strobe
+ * (high bit) exactly as real Apple II keyboard hardware would. */
+void apple2_mem_inject_key(uint8_t ascii_value);
 
 #endif /* APPLE2_MEM_H */

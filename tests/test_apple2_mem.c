@@ -258,6 +258,144 @@ static void test_lc_e000_ffff_is_shared_across_banks(void) {
           "test_lc_e000_ffff_is_shared_across_banks");
 }
 
+/*
+ * Display-mode softswitch tests ($C050-$C057). Real Apple II semantics:
+ * any access (read OR write) to the address triggers the mode change --
+ * same "any access" rule as $C030/$C08x already implemented above. Each
+ * pair is a simple on/off switch, no latching/toggling logic needed.
+ */
+
+static void test_display_mode_defaults_to_text_page1_lores(void) {
+    apple2_mem_reset();
+
+    CHECK(apple2_mem_is_text_mode() == 1,
+          "test_display_mode_defaults_to_text_page1_lores: TEXT");
+    CHECK(apple2_mem_is_mixed_mode() == 0,
+          "test_display_mode_defaults_to_text_page1_lores: not MIXED");
+    CHECK(apple2_mem_is_page2_selected() == 0,
+          "test_display_mode_defaults_to_text_page1_lores: PAGE1");
+    CHECK(apple2_mem_is_hires_mode() == 0,
+          "test_display_mode_defaults_to_text_page1_lores: LORES");
+}
+
+static void test_c050_selects_graphics_mode(void) {
+    apple2_mem_reset();
+    (void)read6502(0xC050);
+    CHECK(apple2_mem_is_text_mode() == 0,
+          "test_c050_selects_graphics_mode");
+}
+
+static void test_c051_selects_text_mode(void) {
+    apple2_mem_reset();
+    write6502(0xC050, 0); /* GRAPHICS first */
+    write6502(0xC051, 0); /* back to TEXT -- write access must also trigger */
+    CHECK(apple2_mem_is_text_mode() == 1,
+          "test_c051_selects_text_mode");
+}
+
+static void test_c052_selects_full_screen_c053_selects_mixed(void) {
+    apple2_mem_reset();
+    (void)read6502(0xC053);
+    CHECK(apple2_mem_is_mixed_mode() == 1,
+          "test_c052_selects_full_screen_c053_selects_mixed: C053 sets MIXED");
+    (void)read6502(0xC052);
+    CHECK(apple2_mem_is_mixed_mode() == 0,
+          "test_c052_selects_full_screen_c053_selects_mixed: C052 clears MIXED");
+}
+
+static void test_c054_selects_page1_c055_selects_page2(void) {
+    apple2_mem_reset();
+    (void)read6502(0xC055);
+    CHECK(apple2_mem_is_page2_selected() == 1,
+          "test_c054_selects_page1_c055_selects_page2: C055 sets PAGE2");
+    (void)read6502(0xC054);
+    CHECK(apple2_mem_is_page2_selected() == 0,
+          "test_c054_selects_page1_c055_selects_page2: C054 restores PAGE1");
+}
+
+static void test_c056_selects_lores_c057_selects_hires(void) {
+    apple2_mem_reset();
+    (void)read6502(0xC057);
+    CHECK(apple2_mem_is_hires_mode() == 1,
+          "test_c056_selects_lores_c057_selects_hires: C057 sets HIRES");
+    (void)read6502(0xC056);
+    CHECK(apple2_mem_is_hires_mode() == 0,
+          "test_c056_selects_lores_c057_selects_hires: C056 restores LORES");
+}
+
+static void test_display_mode_switches_do_not_disturb_each_other(void) {
+    /* TEXT/GRAPHICS, MIXED/FULL, PAGE1/PAGE2, and HIRES/LORES are four
+     * INDEPENDENT switches -- flipping one must not touch the others. */
+    apple2_mem_reset();
+
+    (void)read6502(0xC050); /* GRAPHICS */
+    (void)read6502(0xC053); /* MIXED */
+    (void)read6502(0xC055); /* PAGE2 */
+    (void)read6502(0xC057); /* HIRES */
+
+    CHECK(apple2_mem_is_text_mode() == 0 && apple2_mem_is_mixed_mode() == 1 &&
+          apple2_mem_is_page2_selected() == 1 && apple2_mem_is_hires_mode() == 1,
+          "test_display_mode_switches_do_not_disturb_each_other");
+}
+
+/*
+ * Keyboard input latch ($C000) + strobe clear ($C010) tests. Real Apple
+ * II semantics: $C000 read returns the last key's ASCII value with the
+ * high bit (0x80) set as the "strobe" flag while a key is pending;
+ * ANY access to $C010 (read or write) clears the strobe bit (but the
+ * ASCII value itself is left in place until the next keypress, matching
+ * real hardware -- only the strobe bit is cleared, not the data).
+ */
+
+static void test_keyboard_c000_reads_ascii_with_strobe_bit_set(void) {
+    apple2_mem_reset();
+    apple2_mem_inject_key('A'); /* 0x41 */
+
+    uint8_t got = read6502(0xC000);
+    CHECK(got == (0x41 | 0x80),
+          "test_keyboard_c000_reads_ascii_with_strobe_bit_set");
+}
+
+static void test_keyboard_c010_clears_strobe_bit(void) {
+    apple2_mem_reset();
+    apple2_mem_inject_key('B'); /* 0x42 */
+
+    (void)read6502(0xC010); /* any access clears strobe */
+    uint8_t after_clear = read6502(0xC000);
+
+    CHECK(after_clear == 0x42, /* strobe (0x80) gone, ASCII value retained */
+          "test_keyboard_c010_clears_strobe_bit");
+}
+
+static void test_keyboard_c010_write_also_clears_strobe(void) {
+    apple2_mem_reset();
+    apple2_mem_inject_key('C'); /* 0x43 */
+
+    write6502(0xC010, 0xFF); /* write access must also clear, not just read */
+    uint8_t after_clear = read6502(0xC000);
+
+    CHECK(after_clear == 0x43,
+          "test_keyboard_c010_write_also_clears_strobe");
+}
+
+static void test_keyboard_no_key_pressed_reads_zero(void) {
+    apple2_mem_reset();
+    CHECK(read6502(0xC000) == 0x00,
+          "test_keyboard_no_key_pressed_reads_zero");
+}
+
+static void test_keyboard_new_key_resets_strobe_even_before_c010(void) {
+    /* A second injected key raises the strobe again with the NEW ascii
+     * value, even if the previous key's strobe was never cleared. */
+    apple2_mem_reset();
+    apple2_mem_inject_key('X');
+    apple2_mem_inject_key('Y'); /* overwrite before $C010 was ever touched */
+
+    uint8_t got = read6502(0xC000);
+    CHECK(got == ('Y' | 0x80),
+          "test_keyboard_new_key_resets_strobe_even_before_c010");
+}
+
 int main(void) {
     fill_mock_disk_image();
 
@@ -273,6 +411,18 @@ int main(void) {
     test_lc_c082_restores_rom_read_and_write_protection();
     test_lc_bank1_and_bank2_are_independent_at_d000();
     test_lc_e000_ffff_is_shared_across_banks();
+    test_display_mode_defaults_to_text_page1_lores();
+    test_c050_selects_graphics_mode();
+    test_c051_selects_text_mode();
+    test_c052_selects_full_screen_c053_selects_mixed();
+    test_c054_selects_page1_c055_selects_page2();
+    test_c056_selects_lores_c057_selects_hires();
+    test_display_mode_switches_do_not_disturb_each_other();
+    test_keyboard_c000_reads_ascii_with_strobe_bit_set();
+    test_keyboard_c010_clears_strobe_bit();
+    test_keyboard_c010_write_also_clears_strobe();
+    test_keyboard_no_key_pressed_reads_zero();
+    test_keyboard_new_key_resets_strobe_even_before_c010();
 
     if (failures == 0) {
         printf("All tests passed.\n");
