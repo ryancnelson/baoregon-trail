@@ -473,6 +473,24 @@ static void test_keyboard_new_key_resets_strobe_even_before_c010(void) {
           "test_keyboard_new_key_resets_strobe_even_before_c010");
 }
 
+static void test_apple2_mem_reset_clears_pending_keyboard_strobe(void) {
+    /* Same reset-completeness class as the paddle/disk-cursor/
+     * pending-track gaps fixed earlier this session: g_keyboard_ascii/
+     * g_keyboard_strobe_pending are zeroed inline in apple2_mem_reset(),
+     * but nothing proved a PENDING (un-acknowledged) strobe -- i.e. a
+     * key injected but never read via $C000 nor cleared via $C010 --
+     * actually clears across a reset rather than surviving it and
+     * appearing as a phantom keypress to the freshly-reset program. */
+    apple2_mem_reset();
+    apple2_mem_inject_key('Z'); /* strobe now pending, never acknowledged */
+
+    apple2_mem_reset();
+
+    uint8_t after_reset = read6502(0xC000);
+    CHECK(after_reset == 0x00,
+          "test_apple2_mem_reset_clears_pending_keyboard_strobe");
+}
+
 /*
  * Pushbutton/paddle input tests ($C061-$C063). Real Apple II semantics:
  * bit 7 (0x80) of the read reflects the button's current held/released
@@ -688,6 +706,7 @@ int main(void) {
     test_keyboard_c010_write_also_clears_strobe();
     test_keyboard_no_key_pressed_reads_zero();
     test_keyboard_new_key_resets_strobe_even_before_c010();
+    test_apple2_mem_reset_clears_pending_keyboard_strobe();
     test_buttons_default_to_released();
     test_pb0_reflects_button0_state();
     test_pb1_reflects_button1_state();
