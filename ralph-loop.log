@@ -218,3 +218,8 @@ acb9806 embed_disk.py: place embedded .dsk arrays in .dsk_images section (not .r
 9bf3da2 Update dashboard.html: 298 tests GREEN, 13.3 KB RISC-V binary, ANSI Terminal Viewer landed
 [2026-08-01 00:50:55] sleeping 300s...
 [2026-08-01 00:55:55] --- checking Woz ---
+[2026-08-01 01:01:50] Woz reply (truncated): ��───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 
+[2026-08-01 01:01:50] --- checking Bunnie ---

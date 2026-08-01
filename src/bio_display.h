@@ -104,6 +104,21 @@ void bio_display_render_lores_frame(int page2, read6502_fn read_mem,
                                      uint16_t framebuffer[BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT]);
 
 /*
+ * Mixed-mode-aware variant of bio_display_render_lores_frame(): real
+ * Apple II MIXED mode ($C052/$C053) forces the bottom 4 text rows (32
+ * scanlines) to TEXT regardless of HIRES/LORES, exactly like
+ * bio_display_render_frame_mixed()'s HIRES path. In Lo-Res's 48-block-row
+ * grid (4px/block), that's the bottom 8 block rows
+ * (HIRES_MIXED_MODE_TEXT_ROWS / 4 = 8) -- LORES_BLOCK_ROWS - 8 = 40
+ * block rows of graphics remain. When mixed_mode is nonzero, pixel rows
+ * [HIRES_MIXED_MODE_GRAPHICS_ROWS, BIO_DISPLAY_HEIGHT) are left
+ * UNTOUCHED (same convention as bio_display_render_frame_mixed()) --
+ * owned by a future text-mode renderer, not this module.
+ */
+void bio_display_render_lores_frame_mixed(int page2, int mixed_mode, read6502_fn read_mem,
+                                           uint16_t framebuffer[BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT]);
+
+/*
  * Mode-aware entry point: picks Hi-Res or Lo-Res rendering based on the
  * hires_mode flag, matching apple2_mem_is_hires_mode()'s convention
  * (nonzero = HIRES/$C057, 0 = LORES/$C056). This is the closest thing to
@@ -114,12 +129,10 @@ void bio_display_render_lores_frame(int page2, read6502_fn read_mem,
  * for the same caveat on the MIXED-mode text region). Callers in TEXT
  * mode should not call this function.
  *
- * mixed_mode is honored for the HIRES path exactly as
- * bio_display_render_frame_mixed() already does; for LORES mode,
- * mixed_mode has no effect currently (real Apple II Lo-Res + MIXED mode
- * is not yet covered by any test in this codebase -- a follow-up
- * iteration if it turns out to matter for this project's target
- * screens).
+ * mixed_mode is honored for BOTH the HIRES path (via
+ * bio_display_render_frame_mixed()) and the LORES path (via
+ * bio_display_render_lores_frame_mixed()) -- both leave the bottom 4
+ * text rows (32 scanlines) untouched when mixed_mode is set.
  */
 void bio_display_render_frame_auto(int hires_mode, int page2, int mixed_mode,
                                     read6502_fn read_mem,
