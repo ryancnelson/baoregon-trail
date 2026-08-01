@@ -812,3 +812,20 @@ b00a453 Update dashboard.html: 324 tests GREEN, 14.1 KB RISC-V binary, Disk Trap
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  
 [2026-08-01 06:04:11] --- checking baochip ---
+[2026-08-01 06:04:51] baochip reply (truncated): �────
+  ###    Repository Sync
+
+  All commits pushed to Gitea origin main at http://biggie:3000/ryan/baoregon-
+  trail.git.
+  Live Status Dashboard: **dashboard.html**.
+
+────────────────────────────────────────────────────────────────────────────────────────
+>
+────────────────────────────────────────────────────────────────────────────────────────
+? for shortcuts                                                  Gemini 3.6 Flash · high
+[2026-08-01 06:04:51] recent commits: e453f6e Update dashboard.html: 327 tests GREEN, 14.1 KB RISC-V binary, Slot 1 Disk Integration Test landed
+2cd341f emulator_loop: add test_emulator_loop_select_slot1_attaches_disk_image integration test (327 tests GREEN)
+5a453d0 Update dashboard.html: 326 tests GREEN, 14.1 KB RISC-V binary, Select Attaches Disk Integration Test landed
+e2d380b emulator_loop: add test_emulator_loop_select_attaches_disk_image integration test (326 tests GREEN)
+6aa39bd apple2_mem: lock in reset() restoring display-mode defaults with regression test
+[2026-08-01 06:04:51] sleeping 300s...
