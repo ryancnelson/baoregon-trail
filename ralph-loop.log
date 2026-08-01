@@ -1088,3 +1088,9 @@ b7c93bb Update ralph-loop.log with latest pass 131 status
 e19b294 cpu6502: lock in irq6502()/nmi6502() stack-wraparound round-trip with regression test
 535e66b Update ralph-loop.log with latest pass 130 status
 [2026-08-01 07:48:25] sleeping 300s...
+[2026-08-01 07:53:25] --- checking Woz ---
+[2026-08-01 07:54:56] Woz reply (truncated): ��───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 
+[2026-08-01 07:54:56] --- checking Bunnie ---
