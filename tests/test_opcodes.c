@@ -2037,6 +2037,21 @@ static void test_cmp_indirect_indexed_compares_value(void) {
           "test_cmp_indirect_indexed_compares_value");
 }
 
+static void test_bit_absolute_sets_flags_from_memory(void) {
+    /* Found via Klaus Dormann's functional_test.bin integration run:
+     * BIT absolute was missing (only zeropage existed). */
+    setup();
+    a = 0xFF;
+    test_ram[0x0400] = 0x2C; /* BIT $0200 */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x02;
+    test_ram[0x0200] = 0xC3; /* bits 7,6 set -> N=1,V=1; A&M!=0 -> Z=0 */
+    step6502();
+    CHECK((status & FLAG_SIGN) != 0 && (status & FLAG_OVERFLOW) != 0 &&
+          (status & FLAG_ZERO) == 0 && pc == 0x0403 && clockticks6502 == 4,
+          "test_bit_absolute_sets_flags_from_memory");
+}
+
 int main(void) {
     test_nop_advances_pc_and_takes_2_cycles();
     test_lda_immediate_loads_value();
