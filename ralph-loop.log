@@ -514,3 +514,9 @@ f022ff8 emulator_loop: add baoregon_emulator_get_cycles_per_frame getter with un
 65114df emulator_loop: refactor reset_to_splash_menu helper & add init/reset parity test (314 tests GREEN)
 8f82d52 Update ralph-loop.log with latest pass 70 status
 [2026-08-01 03:37:47] sleeping 300s...
+[2026-08-01 03:42:47] --- checking Woz ---
+[2026-08-01 03:45:34] Woz reply (truncated): ��───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 
+[2026-08-01 03:45:34] --- checking Bunnie ---
