@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bao-Oregon-Trail | DEF CON 34 Badge Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0d14;
+            --card-bg: #121824;
+            --card-border: #1e293b;
+            --card-hover: #26334d;
+            --accent-green: #10b981;
+            --accent-green-glow: rgba(16, 185, 129, 0.25);
+            --accent-amber: #f59e0b;
+            --accent-amber-glow: rgba(245, 158, 11, 0.25);
+            --accent-cyan: #06b6d4;
+            --accent-cyan-glow: rgba(6, 182, 212, 0.25);
+            --accent-purple: #8b5cf6;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--card-border);
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .title-group h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .title-group p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-top: 0.25rem;
+        }
+
+        .badge-status {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 0.75rem 1.25rem;
+            border-radius: 12px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .dot.pulse {
+            background-color: var(--accent-green);
+            box-shadow: 0 0 12px var(--accent-green);
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse-ring {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.15); }
+        }
+
+        /* Grid Layout */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .col-12 { grid-column: span 12; }
+        .col-8 { grid-column: span 8; }
+        .col-4 { grid-column: span 4; }
+        .col-6 { grid-column: span 6; }
+
+        @media (max-width: 1024px) {
+            .col-8, .col-4, .col-6 { grid-column: span 12; }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: border-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .card:hover {
+            border-color: #334155;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Specialists Status Table */
+        .specialist-card {
+            background: #0f1522;
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .specialist-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .specialist-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+        }
+
+        .avatar.woz { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .avatar.bunnie { background: rgba(6, 182, 212, 0.15); color: #06b6d4; border: 1px solid rgba(6, 182, 212, 0.3); }
+        .avatar.duke { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .avatar.danny { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; border: 1px solid rgba(139, 92, 246, 0.3); }
+
+        .name-role h3 {
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+
+        .name-role p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .pill-green { background: var(--accent-green-glow); color: var(--accent-green); border: 1px solid var(--accent-green); }
+        .pill-amber { background: var(--accent-amber-glow); color: var(--accent-amber); border: 1px solid var(--accent-amber); }
+        .pill-cyan { background: var(--accent-cyan-glow); color: var(--accent-cyan); border: 1px solid var(--accent-cyan); }
+
+        /* Timeline / Sprint Schedule */
+        .timeline {
+            position: relative;
+            padding-left: 1.5rem;
+            border-left: 2px solid var(--card-border);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .timeline-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -2.05rem;
+            top: 0.25rem;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--bg-dark);
+            border: 2px solid var(--text-muted);
+        }
+
+        .timeline-item.active .timeline-dot {
+            border-color: var(--accent-green);
+            background: var(--accent-green);
+            box-shadow: 0 0 10px var(--accent-green);
+        }
+
+        .timeline-content h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .timeline-content p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Decisions Log */
+        .decision-item {
+            background: #0f1522;
+            border-left: 4px solid var(--accent-cyan);
+            padding: 1rem;
+            border-radius: 0 10px 10px 0;
+            margin-bottom: 1rem;
+        }
+
+        .decision-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .decision-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 0.35rem;
+            color: var(--text-primary);
+        }
+
+        .decision-desc {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .code-inline {
+            font-family: 'JetBrains Mono', monospace;
+            background: #1a2333;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: var(--accent-cyan);
+        }
+
+        /* Hardware Specs Box */
+        .spec-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .spec-box {
+            background: #0f1522;
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--card-border);
+        }
+
+        .spec-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
+        .spec-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+
+        footer {
+            text-align: center;
+            padding-top: 2rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--card-border);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header -->
+    <header>
+        <div class="title-group">
+            <h1>🌲 Bao-Oregon-Trail</h1>
+            <p>DEF CON 34 Badge Bare-Metal Apple II Emulator | Baochip-1x Open Silicon</p>
+        </div>
+        <div class="badge-status">
+            <div class="status-indicator">
+                <span class="dot pulse"></span>
+                <span>TARGET: DEF CON 34 BADGE</span>
+            </div>
+            <div class="status-indicator" style="color: var(--accent-cyan)">
+                <span>BOOT: &lt; 50ms</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Grid -->
+    <div class="grid">
+        
+        <!-- Specialists Status (Col 8) -->
+        <div class="col-8">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">👥 Crew Status & Active Iterations</div>
+                    <span class="pill pill-green">4 Agents Active</span>
+                </div>
+
+                <!-- Specialist 1: Woz -->
+                <div class="specialist-card">
+                    <div class="specialist-info">
+                        <div class="avatar woz">W</div>
+                        <div class="name-role">
+                            <h3>Woz</h3>
+                            <p>6502 Engine & CPU Verification Specialist</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 2: <code class="code-inline">fake6502.c</code> + Klaus Dormann Test Suite</span>
+                        <span class="pill pill-amber">In Progress (TDD)</span>
+                    </div>
+                </div>
+
+                <!-- Specialist 2: Duke -->
+                <div class="specialist-card">
+                    <div class="specialist-info">
+                        <div class="avatar duke">D</div>
+                        <div class="name-role">
+                            <h3>Duke</h3>
+                            <p>ReRAM Storage & Disk Controller Engineer</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 3: <code class="code-inline">apple2_mem.c</code> + ReRAM Sector Read Trap</span>
+                        <span class="pill pill-amber">In Progress (TDD)</span>
+                    </div>
+                </div>
+
+                <!-- Specialist 3: Bunnie -->
+                <div class="specialist-card">
+                    <div class="specialist-info">
+                        <div class="avatar bunnie">B</div>
+                        <div class="name-role">
+                            <h3>Bunnie</h3>
+                            <p>BIO Coprocessor & Graphics/Audio Engineer</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 4: Hi-Res Video Un-Swizzler &amp; $C030 PWM</span>
+                        <span class="pill pill-cyan">Scoping RED Tests</span>
+                    </div>
+                </div>
+
+                <!-- Specialist 4: Danny Ocean -->
+                <div class="specialist-card">
+                    <div class="specialist-info">
+                        <div class="avatar danny">O</div>
+                        <div class="name-role">
+                            <h3>Danny Ocean (Maestro)</h3>
+                            <p>Crew Coordinator & Canvas Lead</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Canvas Connections &amp; Sprint Alignment</span>
+                        <span class="pill pill-green">Active</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hardware Specs (Col 4) -->
+        <div class="col-4">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">⚡ Baochip-1x Silicon Specs</div>
+                </div>
+                <div class="spec-grid">
+                    <div class="spec-box">
+                        <div class="spec-label">Main CPU</div>
+                        <div class="spec-val">350 MHz</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted)">Vexriscv RV32-IMAC</div>
+                    </div>
+                    <div class="spec-box">
+                        <div class="spec-label">BIO Cores</div>
+                        <div class="spec-val">4x 700 MHz</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted)">PicoRV32 RV32E</div>
+                    </div>
+                    <div class="spec-box">
+                        <div class="spec-label">SRAM Memory</div>
+                        <div class="spec-val">2.0 MiB</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted)">64K Apple RAM = 3%</div>
+                    </div>
+                    <div class="spec-box">
+                        <div class="spec-label">ReRAM Flash</div>
+                        <div class="spec-val">4.0 MiB</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted)">XIP (3.8 MB Free)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sprint Timeline (Col 6) -->
+        <div class="col-6">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📅 DEF CON 34 Bring-Up Sprint</div>
+                    <span class="pill pill-amber">Target: Next Week</span>
+                </div>
+                <div class="timeline">
+                    <div class="timeline-item active">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <h4>Days 1 – 2: 6502 Core &amp; Memory Traps</h4>
+                            <p>Woz passes 100% Klaus Dormann 6502 tests. Duke implements <code class="code-inline">apple2_mem.c</code> &amp; ReRAM fast sector read traps.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <h4>Days 3 – 4: RISC-V Cross-Compilation &amp; Linker Script</h4>
+                            <p>Build <code class="code-inline">linker.ld</code> mapping ReRAM (<code class="code-inline">0x20000000</code>) &amp; SRAM (<code class="code-inline">0x40000000</code>). Package <code class="code-inline">baoregon.bin</code>.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <h4>Days 5 – 6: BIO Display &amp; Audio Integration</h4>
+                            <p>Bunnie connects BIO Core 0 SPI display DMA &amp; BIO Core 1 $C030 speaker PWM pin driver.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <h4>DEF CON Week: Live Badge Silicon Flash! 🌲</h4>
+                            <p>Flash binary directly onto physical Baochip-1x badge silicon at DEF CON 34!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cross-Domain Architectural Decisions (Col 6) -->
+        <div class="col-6">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📐 Key Architectural Decisions</div>
+                </div>
+
+                <div class="decision-item">
+                    <div class="decision-title">1. Memory Bus Contract (<code class="code-inline">read6502</code> / <code class="code-inline">write6502</code>)</div>
+                    <div class="decision-desc">
+                        Woz's CPU loop uses standard C function hooks. <code class="code-inline">apple2_mem.c</code> delegates $C030 to Bunnie's audio module and $C0E0-$C0EF to Duke's ReRAM disk read trap.
+                    </div>
+                </div>
+
+                <div class="decision-item">
+                    <div class="decision-title">2. Non-Blocking Fast Sector Reads (&lt; 5 Cycles)</div>
+                    <div class="decision-desc">
+                        Instead of block copies, <code class="code-inline">duke_disk_read_trap(0xC0EC)</code> returns single bytes directly from the ReRAM disk pointer, taking under 5 RISC-V cycles!
+                    </div>
+                </div>
+
+                <div class="decision-item">
+                    <div class="decision-title">3. BIO Core ISA Correction (RV32E)</div>
+                    <div class="decision-desc">
+                        Danny confirmed BIO PicoRV32 cores use 16-register <b>RV32E</b>. Compiler flags set to <code class="code-inline">-march=rv32e -mabi=ilp32e</code>.
+                    </div>
+                </div>
+
+                <div class="decision-item">
+                    <div class="decision-title">4. Zero Blockers Currently Flagged</div>
+                    <div class="decision-desc">
+                        All specialists aligned on interface contracts and hardware bring-up schedule.
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>Bao-Oregon-Trail Live Dashboard &bull; Auto-generated for Maestri Canvas &bull; Location: <code>~/devel/baoregon-trail/dashboard.html</code></p>
+    </footer>
+</div>
+
+</body>
+</html>
