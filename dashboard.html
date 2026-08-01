@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">STEP 5 BOOT PERF NULL METRICS TEST (346 Tests) GREEN</span>
+                    <span class="pill pill-green">STEP 5 VIDEO APPLE2 ROW OFFSETS TEST (347 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -380,7 +380,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Boot Perf NULL Metrics &amp; 50ms Boundary Test (<code class="code-inline">test_boot_perf_null_metrics.c</code>)</span>
-                        <span class="pill pill-green">GREEN (346 PASS)</span>
+                        <span class="pill pill-green">GREEN (347 PASS)</span>
                     </div>
                 </div>
 
@@ -409,8 +409,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Emulator Loop Is Audio Active Speaker Toggle Test (<code class="code-inline">test_emulator_loop_is_audio_active.c</code>)</span>
-                        <span class="pill pill-green">GREEN (346 PASS)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Hi-Res Video Row Offsets &amp; Bounds Safety Test (<code class="code-inline">test_video_apple2_row_offsets_bounds.c</code>)</span>
+                        <span class="pill pill-green">GREEN (347 PASS)</span>
                     </div>
                 </div>
 
@@ -487,8 +487,8 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 5 – 6: Boot Perf NULL Metrics &amp; 50ms Boundary Test (<code class="code-inline">boot_perf.c</code>) (COMPLETE)</h4>
-                            <p>Woz added <code class="code-inline">test_boot_perf_null_metrics.c</code> verifying NULL pointer safety and exact 50,000us boundary semantics (346 tests GREEN)!</p>
+                            <h4>Days 5 – 6: Hi-Res Video Row Offsets &amp; Bounds Safety Test (<code class="code-inline">video_apple2.c</code>) (COMPLETE)</h4>
+                            <p>Bunnie added <code class="code-inline">test_video_apple2_row_offsets_bounds.c</code> verifying all 192 row offsets fit within 8KB Hi-Res page and row bounds safety (347 tests GREEN)!</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,30 +510,30 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. Boot Perf NULL Metrics &amp; 50ms Boundary Test Landed (<code class="code-inline">boot_perf.c</code>)</div>
+                    <div class="decision-title">1. Hi-Res Video Row Offsets &amp; Bounds Safety Test Landed (<code class="code-inline">video_apple2.c</code>)</div>
                     <div class="decision-desc">
-                        Woz added <code class="code-inline">test_boot_perf_null_metrics.c</code> proving <code class="code-inline">boot_perf_init()</code>, <code class="code-inline">boot_perf_record_boot()</code>, and <code class="code-inline">boot_perf_is_sub_50ms()</code> safely handle NULL pointers and enforce strict &lt; 50ms semantics (346 tests GREEN)!
+                        Bunnie added <code class="code-inline">test_video_apple2_row_offsets_bounds.c</code> proving <code class="code-inline">hires_line_offsets[]</code> entries stay strictly inside the 8KB Hi-Res page and out-of-bounds rows are handled cleanly (347 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Disk Sector Layout Max Track &amp; Sector Boundary Test Landed (<code class="code-inline">disk_sector_layout.c</code>)</div>
+                    <div class="decision-title">2. Boot Perf NULL Metrics &amp; 50ms Boundary Test Landed (<code class="code-inline">boot_perf.c</code>)</div>
                     <div class="decision-desc">
-                        Duke added <code class="code-inline">test_disk_sector_layout_max_track_sector.c</code> proving <code class="code-inline">dos33_sector_offset()</code> computes correct offset 143104 for track 34 sector 15 and rejects out-of-bounds inputs cleanly (346 tests GREEN)!
+                        Woz added <code class="code-inline">test_boot_perf_null_metrics.c</code> proving <code class="code-inline">boot_perf_init()</code>, <code class="code-inline">boot_perf_record_boot()</code>, and <code class="code-inline">boot_perf_is_sub_50ms()</code> safely handle NULL pointers and enforce strict &lt; 50ms semantics (347 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">3. Emulator Loop Is Audio Active Speaker Toggle Test Landed (<code class="code-inline">emulator_loop.c</code>)</div>
+                    <div class="decision-title">3. Disk Sector Layout Max Track &amp; Sector Boundary Test Landed (<code class="code-inline">disk_sector_layout.c</code>)</div>
                     <div class="decision-desc">
-                        Bunnie added <code class="code-inline">test_emulator_loop_is_audio_active.c</code> proving <code class="code-inline">baoregon_emulator_is_audio_active()</code> accurately tracks $C030 accesses across frame execution (346 tests GREEN)!
+                        Duke added <code class="code-inline">test_disk_sector_layout_max_track_sector.c</code> proving <code class="code-inline">dos33_sector_offset()</code> computes correct offset 143104 for track 34 sector 15 and rejects out-of-bounds inputs cleanly (347 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
                     <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (346 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (347 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
