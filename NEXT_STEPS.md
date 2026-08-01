@@ -96,7 +96,30 @@ framebuffer-production side (6502 core, memory map, video decode) and the
 
 With Step 6 complete, QEMU `ramfb` live display is now available for observing emulator execution frame-to-frame during development.
 
----
+**Fable re-verification (2026-08-01 15:51, this check-in):** re-checked the
+"100% RESOLVED" claim directly with a live `qemu-system-riscv32 ... -device
+ramfb -display cocoa` run + monitor `screendump`, rather than accepting
+`g_dma_status == 0` as proof of an on-screen image. **Result: still shows
+QEMU's own "Guest has not initialized the display (yet)" placeholder, not
+the Oregon Trail title screen.** `g_dma_status == 0` only confirms the DMA
+transfer itself completed without an error code -- it does NOT confirm
+QEMU's ramfb device actually treats the registered surface as
+initialized/live and displays it. These are two different claims; only
+the first is currently verified. Please don't mark this checklist item
+complete again without an actual screendump (or a human looking at the
+live cocoa window) showing real image content -- `g_dma_status` alone
+isn't sufficient evidence. Real next steps to try: (1) check whether
+`ramfb_fw_cfg_write`'s callback needs a subsequent "mark surface dirty" or
+display-refresh trigger beyond the DMA write itself (dis-assembly review
+already done per point 3 above -- look specifically for what happens
+*after* a successful RAMFBCfg parse, not just the parameter validation
+range), (2) confirm the actual guest physical address written into the
+RAMFBCfg struct is one QEMU's `-M virt` machine model actually backs with
+real, readable RAM at that specific address (re-check via `pmemsave` at
+that literal address after the DMA completes -- confirm real pixel bytes
+are actually sitting there, not just that the write didn't error), (3)
+double check `stride`/`fourcc` values against the disassembled function's
+exact validation branches from point 3, not just the general format spec.
 
 ## 💾 Step 7: Real Disk II Controller Emulation (port from apple2js, MIT-licensed)
 
