@@ -103,3 +103,8 @@ int baoregon_emulator_copy_framebuffer(uint16_t *dest, size_t dest_count) {
 const cartridge_slot_t *baoregon_emulator_get_current_slot(void) {
     return boot_splash_current_slot(&g_splash_state);
 }
+
+int baoregon_emulator_is_audio_active(void) {
+    const bunnie_audio_state_t *state = apple2_mem_get_audio_state();
+    return state ? (int)state->pwm_pin_state : 0;
+}
