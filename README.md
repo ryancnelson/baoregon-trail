@@ -29,7 +29,7 @@ By leveraging the Baochip's **350 MHz Vexriscv RISC-V CPU**, **4x 700 MHz PicoRV
 |  +------------------------------------+----------------------------------------+  |
 |  |  2.0 MiB Internal SRAM             |  4.0 MiB ReRAM (XIP Flash-like Storage)|  |
 |  |  - 64 KB Emulated Apple II RAM     |  - Bootloader & Emulator Runtime (~32KB|  |
-|  |  - 8 KB Apple II Raw Video Buffer  |  - Apple IIe Autostart ROM (12 KB)     |  |
+|  |  - 8 KB Apple II Raw Video Buffer  |  - Apple IIe System Firmware ROM (16 KB)  |  |
 |  |  - 150 KB BIO RGB565 Framebuffer   |  - OregonTrail.dsk Floppy Image (140 KB|  |
 |  |  - Emulator Stack & Variables      |  - 3.8 MB Free (25+ Extra Apple II Games)|  |
 |  +------------------------------------+----------------------------------------+  |
