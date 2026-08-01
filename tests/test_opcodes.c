@@ -479,6 +479,31 @@ static void test_rts_returns_to_address_after_jsr(void) {
           "test_rts_returns_to_address_after_jsr");
 }
 
+static void test_jsr_rts_round_trip_when_instruction_straddles_address_wrap(void) {
+    /* Intersection of PC wraparound (test_pc_wraps_mid_instruction_for_a_
+     * two_byte_opcode) and JSR/RTS's return-address push/pull -- never
+     * tested together, and JSR's 3-byte fetch (opcode + 2-byte operand)
+     * makes this a different wraparound shape than the 2-byte LDA case
+     * already covered. Opcode at $FFFD, operand lo at $FFFE, operand hi
+     * at $FFFF -- pc after the full fetch wraps to $0000. The pushed
+     * return address (pc-1 at the moment of push, i.e. $FFFF) must
+     * round-trip through RTS back to $0000 (pc = return_addr + 1),
+     * proving the wraparound doesn't corrupt the return-address math. */
+    setup();
+    pc = 0xFFFD;
+    test_ram[0xFFFD] = 0x20; /* JSR $0500 */
+    test_ram[0xFFFE] = 0x00;
+    test_ram[0xFFFF] = 0x05;
+    test_ram[0x0500] = 0x60; /* RTS */
+
+    step6502(); /* JSR: pc wraps to $0000 during fetch, then jumps to $0500 */
+    CHECK(pc == 0x0500, "test_jsr_rts_round_trip_when_instruction_straddles_address_wrap: jumped correctly");
+
+    step6502(); /* RTS: pulls the pushed return address */
+    CHECK(pc == 0x0000,
+          "test_jsr_rts_round_trip_when_instruction_straddles_address_wrap: returned to wrapped address 0x0000");
+}
+
 static void test_bcc_branches_when_carry_clear(void) {
     setup();
     status &= (uint8_t)~FLAG_CARRY;
@@ -2396,6 +2421,7 @@ int main(void) {
     test_pla_pulls_accumulator_from_stack();
     test_jsr_pushes_return_address_and_jumps();
     test_rts_returns_to_address_after_jsr();
+    test_jsr_rts_round_trip_when_instruction_straddles_address_wrap();
     test_bcc_branches_when_carry_clear();
     test_bcc_does_not_branch_when_carry_set();
     test_bcs_branches_when_carry_set();
