@@ -43,3 +43,42 @@ void hires_decode_scanline_mono(int row, read6502_fn read_mem,
         }
     }
 }
+
+void hires_decode_scanline_color(int row, read6502_fn read_mem,
+                                  hires_color_t out_colors[HIRES_PIXELS_WIDE]) {
+    uint16_t row_base = HIRES_BASE_ADDR + hires_line_offsets[row];
+    uint8_t mono[HIRES_PIXELS_WIDE];
+    uint8_t palette_bit[HIRES_PIXELS_WIDE]; /* high bit of the byte each pixel came from */
+
+    hires_decode_scanline_mono(row, read_mem, mono);
+
+    for (int byte_idx = 0; byte_idx < HIRES_COLS_BYTES; byte_idx++) {
+        uint8_t byte = read_mem(row_base + byte_idx);
+        uint8_t hi = (byte >> 7) & 0x01;
+        int pixel_base = byte_idx * 7;
+        for (int bit = 0; bit < 7; bit++) {
+            palette_bit[pixel_base + bit] = hi;
+        }
+    }
+
+    for (int col = 0; col < HIRES_PIXELS_WIDE; col++) {
+        if (!mono[col]) {
+            out_colors[col] = HIRES_COLOR_BLACK;
+            continue;
+        }
+
+        uint8_t prev_lit = (col > 0) && mono[col - 1];
+        uint8_t next_lit = (col < HIRES_PIXELS_WIDE - 1) && mono[col + 1];
+        if (prev_lit || next_lit) {
+            out_colors[col] = HIRES_COLOR_WHITE;
+            continue;
+        }
+
+        int even_col = (col % 2) == 0;
+        if (palette_bit[col] == 0) {
+            out_colors[col] = even_col ? HIRES_COLOR_GREEN : HIRES_COLOR_VIOLET;
+        } else {
+            out_colors[col] = even_col ? HIRES_COLOR_ORANGE : HIRES_COLOR_BLUE;
+        }
+    }
+}

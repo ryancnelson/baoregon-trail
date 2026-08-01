@@ -33,14 +33,47 @@ extern const uint16_t hires_line_offsets[HIRES_ROWS];
  * Decode one Hi-Res scanline into a monochrome pixel buffer.
  *
  * out_pixels must have room for HIRES_PIXELS_WIDE (280) bytes; each byte is
- * 0 (off) or 1 (on). Color/artifacting rules are NOT applied here -- that is
- * a later iteration (BRAINSTORM.md section 2 step 4, green/purple/orange/blue
- * artifacting). This first pass only proves the row-offset table and the
- * 7-bit-group -> pixel expansion are correct.
+ * 0 (off) or 1 (on). Color/artifacting rules are NOT applied here -- see
+ * hires_decode_scanline_color() below. This first pass only proves the
+ * row-offset table and the 7-bit-group -> pixel expansion are correct.
  *
  * row must be in [0, HIRES_ROWS).
  */
 void hires_decode_scanline_mono(int row, read6502_fn read_mem,
                                  uint8_t out_pixels[HIRES_PIXELS_WIDE]);
+
+/*
+ * Apple II Hi-Res NTSC artifact colors (BRAINSTORM.md section 2 step 4).
+ *
+ * Classic Apple II Hi-Res composite-video artifacting model: an isolated
+ * lit pixel (no lit neighbor immediately before or after it) renders as one
+ * of 4 colors based on (a) its column parity (even/odd) and (b) the
+ * high bit (bit 7, the "palette bit") of the byte it came from. Two or more
+ * *consecutive* lit pixels merge into WHITE (the color subcarrier phases
+ * cancel). An unlit pixel with no lit neighbors is BLACK.
+ *
+ *   high bit = 0 (palette group "violet/green"): even col -> GREEN,  odd col -> VIOLET
+ *   high bit = 1 (palette group "blue/orange"):  even col -> ORANGE, odd col -> BLUE
+ */
+typedef enum {
+    HIRES_COLOR_BLACK = 0,
+    HIRES_COLOR_GREEN,
+    HIRES_COLOR_VIOLET,
+    HIRES_COLOR_ORANGE,
+    HIRES_COLOR_BLUE,
+    HIRES_COLOR_WHITE,
+} hires_color_t;
+
+/*
+ * Decode one Hi-Res scanline into NTSC-artifact colors.
+ *
+ * out_colors must have room for HIRES_PIXELS_WIDE (280) entries. Internally
+ * calls hires_decode_scanline_mono() for the raw on/off bits plus tracks the
+ * per-byte high bit, then applies the artifacting rule above per pixel.
+ *
+ * row must be in [0, HIRES_ROWS).
+ */
+void hires_decode_scanline_color(int row, read6502_fn read_mem,
+                                  hires_color_t out_colors[HIRES_PIXELS_WIDE]);
 
 #endif /* VIDEO_APPLE2_H */
