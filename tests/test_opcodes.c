@@ -1833,6 +1833,33 @@ static void test_cpy_zeropage_compares_y_register(void) {
           "test_cpy_zeropage_compares_y_register");
 }
 
+static void test_cpx_absolute_compares_x_register(void) {
+    /* Found via Klaus Dormann's functional_test.bin integration run:
+     * CPX/CPY absolute were both missing. */
+    setup();
+    x = 0xC3;
+    test_ram[0x0400] = 0xEC; /* CPX $0200 */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x02;
+    test_ram[0x0200] = 0xC3;
+    step6502();
+    CHECK((status & FLAG_ZERO) != 0 && (status & FLAG_CARRY) != 0 &&
+          pc == 0x0403 && clockticks6502 == 4,
+          "test_cpx_absolute_compares_x_register");
+}
+
+static void test_cpy_absolute_compares_y_register(void) {
+    setup();
+    y = 0x10;
+    test_ram[0x0400] = 0xCC; /* CPY $0200 */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x02;
+    test_ram[0x0200] = 0x40;
+    step6502();
+    CHECK((status & FLAG_CARRY) == 0 && pc == 0x0403 && clockticks6502 == 4,
+          "test_cpy_absolute_compares_y_register");
+}
+
 int main(void) {
     test_nop_advances_pc_and_takes_2_cycles();
     test_lda_immediate_loads_value();
@@ -1989,6 +2016,8 @@ int main(void) {
     test_sbc_decimal_borrows_across_nibble_boundary();
     test_cpx_zeropage_compares_x_register();
     test_cpy_zeropage_compares_y_register();
+    test_cpx_absolute_compares_x_register();
+    test_cpy_absolute_compares_y_register();
 
     if (failures > 0) {
         printf("\n%d test(s) FAILED\n", failures);

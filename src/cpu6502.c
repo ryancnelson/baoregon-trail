@@ -1113,6 +1113,16 @@ void step6502(void) {
             clockticks6502 += 3;
             break;
 
+        case 0xEC: /* CPX absolute */
+            compare(x, read6502(fetch_absolute_addr()));
+            clockticks6502 += 4;
+            break;
+
+        case 0xCC: /* CPY absolute */
+            compare(y, read6502(fetch_absolute_addr()));
+            clockticks6502 += 4;
+            break;
+
         default:
             /* Unimplemented opcode: not yet driven by a failing test. */
             clockticks6502 += 2;
