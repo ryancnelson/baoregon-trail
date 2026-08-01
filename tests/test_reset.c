@@ -75,5 +75,35 @@ int main(void) {
     }
 
     printf("PASS: test_reset_does_not_clear_decimal_flag\n");
+
+    /* Companion to the D-flag test: real 6502 hardware's RESET line
+     * only forces the I-flag; it does NOT touch C, Z, V, N, or the
+     * stack pointer (SP naturally settles wherever it was, since RESET
+     * doesn't drive an SP-clearing sequence the way some documentation
+     * implies -- this emulator's reset6502() correctly leaves sp alone,
+     * matching how apple2_mem_reset()/emulator_loop.c's init() are the
+     * ones responsible for a clean starting SP, not reset6502() itself).
+     * Locks in that ALL of C/Z/V/N/sp survive a reset unchanged, not
+     * just D -- closing the same "clear everything by analogy with I"
+     * porting-mistake class for the remaining flags. */
+    memset(test_ram, 0, sizeof(test_ram));
+    test_ram[0xFFFC] = 0x00;
+    test_ram[0xFFFD] = 0x04;
+    status = FLAG_CARRY | FLAG_ZERO | FLAG_OVERFLOW | FLAG_SIGN;
+    sp = 0x42;
+
+    reset6502();
+
+    if ((status & (FLAG_CARRY | FLAG_ZERO | FLAG_OVERFLOW | FLAG_SIGN)) !=
+        (FLAG_CARRY | FLAG_ZERO | FLAG_OVERFLOW | FLAG_SIGN)) {
+        printf("FAIL: test_reset_does_not_clear_other_flags_or_sp - C/Z/V/N cleared by reset (only I should be forced)\n");
+        return 1;
+    }
+    if (sp != 0x42) {
+        printf("FAIL: test_reset_does_not_clear_other_flags_or_sp - sp changed by reset (expected 0x42, got 0x%02X)\n", sp);
+        return 1;
+    }
+
+    printf("PASS: test_reset_does_not_clear_other_flags_or_sp\n");
     return 0;
 }
