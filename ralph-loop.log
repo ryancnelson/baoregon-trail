@@ -1434,3 +1434,20 @@ eb0c9e5 Update ralph-loop.log with latest pass 150 status
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  
 [2026-08-01 10:11:32] --- checking baochip ---
+[2026-08-01 10:13:33] baochip reply (truncated): �────
+  ###    Repository Sync
+
+  All commits pushed to Gitea origin main at http://biggie:3000/ryan/baoregon-
+  trail.git.
+  Live Status Dashboard: **dashboard.html**.
+
+────────────────────────────────────────────────────────────────────────────────────────
+>
+────────────────────────────────────────────────────────────────────────────────────────
+? for shortcuts                                                  Gemini 3.6 Flash · high
+[2026-08-01 10:13:33] recent commits: 1674c02 Update dashboard.html: 349 tests GREEN, 14.2 KB RISC-V binary, Cartridge Layout Find By Title Test landed
+e9d9377 cartridge_layout: add cartridge_layout_find_slot_by_title API and test (349 tests GREEN)
+cf80cf2 Makefile: remove -g from host CFLAGS to prevent macOS dsymutil race condition (348 tests GREEN)
+2ac56e2 Update ralph-loop.log with latest pass 161 status
+cae98d8 apple2_mem: lock in out-of-range index guard clauses for buttons/annunciators/paddles
+[2026-08-01 10:13:33] sleeping 300s...
