@@ -242,11 +242,15 @@ static volatile uint32_t *const fw_cfg_dma_lo = (volatile uint32_t *)(FW_CFG_DAT
 
 volatile uint32_t g_dma_status = 0xDEADBEEF;
 
+#define FW_CFG_WRITE_CHANNEL 0x4000u
+
 int ramfb_display_init(void) {
     uint16_t selector = ramfb_find_selector();
     if (selector == 0xFFFFu) {
         return 0;
     }
+
+    uint16_t write_selector = selector | FW_CFG_WRITE_CHANNEL;
 
     static ramfb_cfg_t cfg;
     cfg.addr   = bswap64((uint64_t)(uintptr_t)g_ramfb_pixels);
@@ -257,7 +261,7 @@ int ramfb_display_init(void) {
     cfg.stride = bswap32((uint32_t)(BIO_DISPLAY_WIDTH * 4u));
 
     static fw_cfg_dma_access_t dma;
-    dma.control = bswap32(((uint32_t)selector << 16) | FW_CFG_DMA_CTL_WRITE | FW_CFG_DMA_CTL_SELECT);
+    dma.control = bswap32(((uint32_t)write_selector << 16) | FW_CFG_DMA_CTL_WRITE | FW_CFG_DMA_CTL_SELECT);
     dma.length  = bswap32((uint32_t)sizeof(cfg));
     dma.address = bswap64((uint64_t)(uintptr_t)&cfg);
 
