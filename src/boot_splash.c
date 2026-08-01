@@ -4,17 +4,26 @@
  */
 #include "boot_splash.h"
 #include "apple2_mem.h"
+#include <stddef.h>
 
 void boot_splash_init(boot_splash_state_t *state) {
+    if (!state) return;
     state->selected_index = 0;
 }
 
 const cartridge_slot_t *boot_splash_current_slot(const boot_splash_state_t *state) {
-    return &cartridge_slots[state->selected_index];
+    if (!state) return NULL;
+    int idx = state->selected_index;
+    if (idx < 0 || idx >= CARTRIDGE_SLOT_COUNT) {
+        idx = 0;
+    }
+    return &cartridge_slots[idx];
 }
 
 int boot_splash_handle_button(boot_splash_state_t *state, boot_splash_button_t button,
                                boot_splash_disk_image_setter_fn on_select) {
+    if (!state) return 0;
+
     switch (button) {
         case BOOT_SPLASH_BUTTON_PREV:
             state->selected_index--;
@@ -36,7 +45,9 @@ int boot_splash_handle_button(boot_splash_state_t *state, boot_splash_button_t b
             }
             {
                 const cartridge_slot_t *slot = boot_splash_current_slot(state);
-                on_select((const uint8_t *)(uintptr_t)slot->reram_addr);
+                if (slot) {
+                    on_select((const uint8_t *)(uintptr_t)slot->reram_addr);
+                }
             }
             return 1;
 
@@ -47,6 +58,7 @@ int boot_splash_handle_button(boot_splash_state_t *state, boot_splash_button_t b
 }
 
 void boot_splash_button_edge_state_init(boot_splash_button_edge_state_t *edge_state) {
+    if (!edge_state) return;
     edge_state->was_pressed[0] = 0;
     edge_state->was_pressed[1] = 0;
     edge_state->was_pressed[2] = 0;
@@ -65,6 +77,7 @@ static const boot_splash_button_t PB_INDEX_TO_BUTTON[3] = {
 int boot_splash_poll_apple2_mem_buttons(boot_splash_state_t *state,
                                          boot_splash_button_edge_state_t *edge_state,
                                          boot_splash_disk_image_setter_fn on_select) {
+    if (!state || !edge_state) return 0;
     int reset_needed = 0;
 
     for (int pb_index = 0; pb_index < 3; pb_index++) {
