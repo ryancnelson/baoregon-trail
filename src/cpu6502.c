@@ -19,6 +19,11 @@ uint32_t clockticks6502 = 0;
 
 void reset6502(void) {
     pc = read6502(0xFFFC) | (read6502(0xFFFD) << 8);
+    /* Real 6502 hardware always sets the interrupt-disable flag on
+     * RESET, regardless of its prior state -- matters for a warm reset
+     * mid-game (e.g. emulator_loop.c's 3-button soft reset combo), not
+     * just cold boot. */
+    status |= FLAG_INTERRUPT;
 }
 
 /* --- flag helpers --- */

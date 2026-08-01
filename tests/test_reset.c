@@ -34,5 +34,26 @@ int main(void) {
     }
 
     printf("PASS: test_reset_vector_sets_pc\n");
+
+    /* Real 6502 hardware RESET always sets the interrupt-disable flag
+     * (FLAG_INTERRUPT), regardless of what it was before the reset --
+     * this matters for a "warm reset" mid-game (e.g. the 3-button soft
+     * reset combo in emulator_loop.c), not just cold boot: a game that
+     * had cleared I via CLI before the reset must come back up with
+     * interrupts disabled, matching real hardware, not whatever state
+     * happened to be sitting in the status register. */
+    memset(test_ram, 0, sizeof(test_ram));
+    test_ram[0xFFFC] = 0x00;
+    test_ram[0xFFFD] = 0x04;
+    status = 0; /* I-flag explicitly clear before reset */
+
+    reset6502();
+
+    if (!(status & FLAG_INTERRUPT)) {
+        printf("FAIL: test_reset_sets_interrupt_disable_flag - I-flag not set after reset\n");
+        return 1;
+    }
+
+    printf("PASS: test_reset_sets_interrupt_disable_flag\n");
     return 0;
 }
