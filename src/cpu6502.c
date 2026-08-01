@@ -599,6 +599,201 @@ void step6502(void) {
             break;
         }
 
+        case 0xBE: { /* LDX absolute,Y */
+            int page_crossed;
+            x = read6502(fetch_absolute_indexed_addr(y, &page_crossed));
+            set_zero_and_sign(x);
+            clockticks6502 += page_crossed ? 5 : 4;
+            break;
+        }
+
+        case 0xBC: { /* LDY absolute,X */
+            int page_crossed;
+            y = read6502(fetch_absolute_indexed_addr(x, &page_crossed));
+            set_zero_and_sign(y);
+            clockticks6502 += page_crossed ? 5 : 4;
+            break;
+        }
+
+        case 0xB6: /* LDX zeropage,Y */
+            x = read6502(fetch_zeropage_y_addr());
+            set_zero_and_sign(x);
+            clockticks6502 += 4;
+            break;
+
+        case 0x06: { /* ASL zeropage */
+            uint16_t addr = fetch_zeropage_addr();
+            write6502(addr, asl_value(read6502(addr)));
+            clockticks6502 += 5;
+            break;
+        }
+
+        case 0x16: { /* ASL zeropage,X */
+            uint16_t addr = fetch_zeropage_x_addr();
+            write6502(addr, asl_value(read6502(addr)));
+            clockticks6502 += 6;
+            break;
+        }
+
+        case 0x0E: { /* ASL absolute */
+            uint16_t addr = fetch_absolute_addr();
+            write6502(addr, asl_value(read6502(addr)));
+            clockticks6502 += 6;
+            break;
+        }
+
+        case 0x1E: { /* ASL absolute,X -- always 7 cycles (RMW, no
+                        page-cross early termination) */
+            int page_crossed;
+            uint16_t addr = fetch_absolute_indexed_addr(x, &page_crossed);
+            write6502(addr, asl_value(read6502(addr)));
+            clockticks6502 += 7;
+            break;
+        }
+
+        case 0x46: { /* LSR zeropage */
+            uint16_t addr = fetch_zeropage_addr();
+            write6502(addr, lsr_value(read6502(addr)));
+            clockticks6502 += 5;
+            break;
+        }
+
+        case 0x56: { /* LSR zeropage,X */
+            uint16_t addr = fetch_zeropage_x_addr();
+            write6502(addr, lsr_value(read6502(addr)));
+            clockticks6502 += 6;
+            break;
+        }
+
+        case 0x4E: { /* LSR absolute */
+            uint16_t addr = fetch_absolute_addr();
+            write6502(addr, lsr_value(read6502(addr)));
+            clockticks6502 += 6;
+            break;
+        }
+
+        case 0x5E: { /* LSR absolute,X -- always 7 cycles */
+            int page_crossed;
+            uint16_t addr = fetch_absolute_indexed_addr(x, &page_crossed);
+            write6502(addr, lsr_value(read6502(addr)));
+            clockticks6502 += 7;
+            break;
+        }
+
+        case 0x26: { /* ROL zeropage */
+            uint16_t addr = fetch_zeropage_addr();
+            write6502(addr, rol_value(read6502(addr)));
+            clockticks6502 += 5;
+            break;
+        }
+
+        case 0x36: { /* ROL zeropage,X */
+            uint16_t addr = fetch_zeropage_x_addr();
+            write6502(addr, rol_value(read6502(addr)));
+            clockticks6502 += 6;
+            break;
+        }
+
+        case 0x2E: { /* ROL absolute */
+            uint16_t addr = fetch_absolute_addr();
+            write6502(addr, rol_value(read6502(addr)));
+            clockticks6502 += 6;
+            break;
+        }
+
+        case 0x3E: { /* ROL absolute,X -- always 7 cycles */
+            int page_crossed;
+            uint16_t addr = fetch_absolute_indexed_addr(x, &page_crossed);
+            write6502(addr, rol_value(read6502(addr)));
+            clockticks6502 += 7;
+            break;
+        }
+
+        case 0x66: { /* ROR zeropage */
+            uint16_t addr = fetch_zeropage_addr();
+            write6502(addr, ror_value(read6502(addr)));
+            clockticks6502 += 5;
+            break;
+        }
+
+        case 0x76: { /* ROR zeropage,X */
+            uint16_t addr = fetch_zeropage_x_addr();
+            write6502(addr, ror_value(read6502(addr)));
+            clockticks6502 += 6;
+            break;
+        }
+
+        case 0x6E: { /* ROR absolute */
+            uint16_t addr = fetch_absolute_addr();
+            write6502(addr, ror_value(read6502(addr)));
+            clockticks6502 += 6;
+            break;
+        }
+
+        case 0x7E: { /* ROR absolute,X -- always 7 cycles */
+            int page_crossed;
+            uint16_t addr = fetch_absolute_indexed_addr(x, &page_crossed);
+            write6502(addr, ror_value(read6502(addr)));
+            clockticks6502 += 7;
+            break;
+        }
+
+        case 0xF6: { /* INC zeropage,X */
+            uint16_t addr = fetch_zeropage_x_addr();
+            uint8_t value = (uint8_t)(read6502(addr) + 1);
+            write6502(addr, value);
+            set_zero_and_sign(value);
+            clockticks6502 += 6;
+            break;
+        }
+
+        case 0xEE: { /* INC absolute */
+            uint16_t addr = fetch_absolute_addr();
+            uint8_t value = (uint8_t)(read6502(addr) + 1);
+            write6502(addr, value);
+            set_zero_and_sign(value);
+            clockticks6502 += 6;
+            break;
+        }
+
+        case 0xFE: { /* INC absolute,X -- always 7 cycles */
+            int page_crossed;
+            uint16_t addr = fetch_absolute_indexed_addr(x, &page_crossed);
+            uint8_t value = (uint8_t)(read6502(addr) + 1);
+            write6502(addr, value);
+            set_zero_and_sign(value);
+            clockticks6502 += 7;
+            break;
+        }
+
+        case 0xD6: { /* DEC zeropage,X */
+            uint16_t addr = fetch_zeropage_x_addr();
+            uint8_t value = (uint8_t)(read6502(addr) - 1);
+            write6502(addr, value);
+            set_zero_and_sign(value);
+            clockticks6502 += 6;
+            break;
+        }
+
+        case 0xCE: { /* DEC absolute */
+            uint16_t addr = fetch_absolute_addr();
+            uint8_t value = (uint8_t)(read6502(addr) - 1);
+            write6502(addr, value);
+            set_zero_and_sign(value);
+            clockticks6502 += 6;
+            break;
+        }
+
+        case 0xDE: { /* DEC absolute,X -- always 7 cycles */
+            int page_crossed;
+            uint16_t addr = fetch_absolute_indexed_addr(x, &page_crossed);
+            uint8_t value = (uint8_t)(read6502(addr) - 1);
+            write6502(addr, value);
+            set_zero_and_sign(value);
+            clockticks6502 += 7;
+            break;
+        }
+
         default:
             /* Unimplemented opcode: not yet driven by a failing test. */
             clockticks6502 += 2;
