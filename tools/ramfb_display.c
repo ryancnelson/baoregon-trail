@@ -81,17 +81,24 @@
 static uint32_t g_ramfb_pixels[BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT];
 
 static volatile uint8_t *const fw_cfg_data = (volatile uint8_t *)FW_CFG_DATA_ADDR;
-static volatile uint16_t *const fw_cfg_ctl_be = (volatile uint16_t *)FW_CFG_CTL_ADDR;
+static volatile uint16_t *const fw_cfg_ctl = (volatile uint16_t *)FW_CFG_CTL_ADDR;
 
-/* Write the 16-bit selector, big-endian (matches fw_cfg_ctl_mem_ops's
- * DEVICE_BIG_ENDIAN MemoryRegionOps -- the guest CPU's own byte order
- * doesn't matter here since this is a raw MMIO store QEMU interprets as
- * BE regardless; write the two bytes in BE order explicitly rather than
- * relying on any host/target endianness assumption). */
+/* Write the 16-bit selector as ONE 16-bit MMIO store -- REQUIRED, not a
+ * style choice. QEMU's fw_cfg_ctl_mem_valid() (hw/nvram/fw_cfg.c) only
+ * accepts `is_write && size == 2`; two separate 1-byte stores are
+ * REJECTED outright (MemoryRegionOps.valid.accepts returns false ->
+ * external abort -> RISC-V store-access-fault, cause=7). Confirmed by
+ * reproducing this exact fault under real QEMU execution (mtval =
+ * 0x10100008, desc=fault_store) before this fix, then re-verifying GREEN
+ * after switching to a single 16-bit store.
+ *
+ * The register's MemoryRegionOps.endianness is DEVICE_BIG_ENDIAN, which
+ * means QEMU's own memory-access core handles the byte-order conversion
+ * for us -- we just write the plain native-endian uint16_t value here,
+ * we must NOT pre-swap it ourselves (that would double-swap on a
+ * little-endian RISC-V target, landing the wrong selector value). */
 static void fw_cfg_select(uint16_t key) {
-    volatile uint8_t *ctl_bytes = (volatile uint8_t *)fw_cfg_ctl_be;
-    ctl_bytes[0] = (uint8_t)(key >> 8);
-    ctl_bytes[1] = (uint8_t)(key & 0xFF);
+    *fw_cfg_ctl = key;
 }
 
 static uint8_t fw_cfg_read_byte(void) {
