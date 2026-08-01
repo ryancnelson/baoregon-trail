@@ -34,6 +34,11 @@ void baoregon_emulator_poll_input(void) {
             g_in_splash_menu = 0;
             reset6502();
         }
+    } else {
+        /* Check for 3-button soft reset combo (PB0 + PB1 + PB2 held simultaneously) */
+        if (apple2_mem_get_button_state(0) && apple2_mem_get_button_state(1) && apple2_mem_get_button_state(2)) {
+            baoregon_emulator_init();
+        }
     }
 }
 
