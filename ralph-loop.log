@@ -707,3 +707,4 @@ ce5c0c8 apple2_mem: lock in reset() clearing mid-stream disk cursor with regress
 30dc4a1 Update ralph-loop.log with latest pass 90 status
 e271247 Update dashboard.html: 321 tests GREEN, 14.1 KB RISC-V binary, Game Running Predicate landed
 [2026-08-01 05:15:12] sleeping 300s...
+[2026-08-01 05:20:12] --- checking Woz ---
