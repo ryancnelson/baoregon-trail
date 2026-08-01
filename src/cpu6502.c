@@ -609,6 +609,84 @@ void step6502(void) {
             break;
         }
 
+        case 0x01: /* ORA (zp,X) */
+            a |= read6502(fetch_indexed_indirect_addr());
+            set_zero_and_sign(a);
+            clockticks6502 += 6;
+            break;
+
+        case 0x11: { /* ORA (zp),Y */
+            int page_crossed;
+            a |= read6502(fetch_indirect_indexed_addr(&page_crossed));
+            set_zero_and_sign(a);
+            clockticks6502 += page_crossed ? 6 : 5;
+            break;
+        }
+
+        case 0x21: /* AND (zp,X) */
+            a &= read6502(fetch_indexed_indirect_addr());
+            set_zero_and_sign(a);
+            clockticks6502 += 6;
+            break;
+
+        case 0x31: { /* AND (zp),Y */
+            int page_crossed;
+            a &= read6502(fetch_indirect_indexed_addr(&page_crossed));
+            set_zero_and_sign(a);
+            clockticks6502 += page_crossed ? 6 : 5;
+            break;
+        }
+
+        case 0x41: /* EOR (zp,X) */
+            a ^= read6502(fetch_indexed_indirect_addr());
+            set_zero_and_sign(a);
+            clockticks6502 += 6;
+            break;
+
+        case 0x51: { /* EOR (zp),Y */
+            int page_crossed;
+            a ^= read6502(fetch_indirect_indexed_addr(&page_crossed));
+            set_zero_and_sign(a);
+            clockticks6502 += page_crossed ? 6 : 5;
+            break;
+        }
+
+        case 0x61: /* ADC (zp,X) */
+            adc_with_operand(read6502(fetch_indexed_indirect_addr()));
+            clockticks6502 += 6;
+            break;
+
+        case 0x71: { /* ADC (zp),Y */
+            int page_crossed;
+            adc_with_operand(read6502(fetch_indirect_indexed_addr(&page_crossed)));
+            clockticks6502 += page_crossed ? 6 : 5;
+            break;
+        }
+
+        case 0xC1: /* CMP (zp,X) */
+            compare(a, read6502(fetch_indexed_indirect_addr()));
+            clockticks6502 += 6;
+            break;
+
+        case 0xD1: { /* CMP (zp),Y */
+            int page_crossed;
+            compare(a, read6502(fetch_indirect_indexed_addr(&page_crossed)));
+            clockticks6502 += page_crossed ? 6 : 5;
+            break;
+        }
+
+        case 0xE1: /* SBC (zp,X) */
+            sbc_with_operand(read6502(fetch_indexed_indirect_addr()));
+            clockticks6502 += 6;
+            break;
+
+        case 0xF1: { /* SBC (zp),Y */
+            int page_crossed;
+            sbc_with_operand(read6502(fetch_indirect_indexed_addr(&page_crossed)));
+            clockticks6502 += page_crossed ? 6 : 5;
+            break;
+        }
+
         case 0xB5: /* LDA zeropage,X */
             a = read6502(fetch_zeropage_x_addr());
             set_zero_and_sign(a);
@@ -1122,6 +1200,84 @@ void step6502(void) {
             compare(y, read6502(fetch_absolute_addr()));
             clockticks6502 += 4;
             break;
+
+        case 0x21: /* AND (zp,X) */
+            a &= read6502(fetch_indexed_indirect_addr());
+            set_zero_and_sign(a);
+            clockticks6502 += 6;
+            break;
+
+        case 0x01: /* ORA (zp,X) */
+            a |= read6502(fetch_indexed_indirect_addr());
+            set_zero_and_sign(a);
+            clockticks6502 += 6;
+            break;
+
+        case 0x41: /* EOR (zp,X) */
+            a ^= read6502(fetch_indexed_indirect_addr());
+            set_zero_and_sign(a);
+            clockticks6502 += 6;
+            break;
+
+        case 0x61: /* ADC (zp,X) */
+            adc_with_operand(read6502(fetch_indexed_indirect_addr()));
+            clockticks6502 += 6;
+            break;
+
+        case 0xE1: /* SBC (zp,X) */
+            sbc_with_operand(read6502(fetch_indexed_indirect_addr()));
+            clockticks6502 += 6;
+            break;
+
+        case 0xC1: /* CMP (zp,X) */
+            compare(a, read6502(fetch_indexed_indirect_addr()));
+            clockticks6502 += 6;
+            break;
+
+        case 0x31: { /* AND (zp),Y */
+            int page_crossed;
+            a &= read6502(fetch_indirect_indexed_addr(&page_crossed));
+            set_zero_and_sign(a);
+            clockticks6502 += page_crossed ? 6 : 5;
+            break;
+        }
+
+        case 0x11: { /* ORA (zp),Y */
+            int page_crossed;
+            a |= read6502(fetch_indirect_indexed_addr(&page_crossed));
+            set_zero_and_sign(a);
+            clockticks6502 += page_crossed ? 6 : 5;
+            break;
+        }
+
+        case 0x51: { /* EOR (zp),Y */
+            int page_crossed;
+            a ^= read6502(fetch_indirect_indexed_addr(&page_crossed));
+            set_zero_and_sign(a);
+            clockticks6502 += page_crossed ? 6 : 5;
+            break;
+        }
+
+        case 0x71: { /* ADC (zp),Y */
+            int page_crossed;
+            adc_with_operand(read6502(fetch_indirect_indexed_addr(&page_crossed)));
+            clockticks6502 += page_crossed ? 6 : 5;
+            break;
+        }
+
+        case 0xF1: { /* SBC (zp),Y */
+            int page_crossed;
+            sbc_with_operand(read6502(fetch_indirect_indexed_addr(&page_crossed)));
+            clockticks6502 += page_crossed ? 6 : 5;
+            break;
+        }
+
+        case 0xD1: { /* CMP (zp),Y */
+            int page_crossed;
+            compare(a, read6502(fetch_indirect_indexed_addr(&page_crossed)));
+            clockticks6502 += page_crossed ? 6 : 5;
+            break;
+        }
 
         default:
             /* Unimplemented opcode: not yet driven by a failing test. */

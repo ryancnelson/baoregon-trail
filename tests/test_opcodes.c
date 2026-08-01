@@ -1860,6 +1860,183 @@ static void test_cpy_absolute_compares_y_register(void) {
           "test_cpy_absolute_compares_y_register");
 }
 
+static void test_and_indexed_indirect_masks_accumulator(void) {
+    /* Found via Klaus Dormann's functional_test.bin integration run:
+     * AND/ORA/EOR/ADC/SBC/CMP for BOTH (zp,X) and (zp),Y were entirely
+     * missing -- only LDA/STA had these addressing modes implemented. */
+    setup();
+    a = 0xF0;
+    x = 0x04;
+    test_ram[0x0400] = 0x21; /* AND ($20,X) */
+    test_ram[0x0401] = 0x20;
+    test_ram[0x0024] = 0x00;
+    test_ram[0x0025] = 0x05; /* effective addr $0500 */
+    test_ram[0x0500] = 0x0F;
+    step6502();
+    CHECK(a == 0x00 && pc == 0x0402 && clockticks6502 == 6,
+          "test_and_indexed_indirect_masks_accumulator");
+}
+
+static void test_ora_indexed_indirect_sets_bits(void) {
+    setup();
+    a = 0x0F;
+    x = 0x04;
+    test_ram[0x0400] = 0x01; /* ORA ($20,X) */
+    test_ram[0x0401] = 0x20;
+    test_ram[0x0024] = 0x00;
+    test_ram[0x0025] = 0x05;
+    test_ram[0x0500] = 0xF0;
+    step6502();
+    CHECK(a == 0xFF && pc == 0x0402 && clockticks6502 == 6,
+          "test_ora_indexed_indirect_sets_bits");
+}
+
+static void test_eor_indexed_indirect_toggles_bits(void) {
+    setup();
+    a = 0xFF;
+    x = 0x04;
+    test_ram[0x0400] = 0x41; /* EOR ($20,X) */
+    test_ram[0x0401] = 0x20;
+    test_ram[0x0024] = 0x00;
+    test_ram[0x0025] = 0x05;
+    test_ram[0x0500] = 0x0F;
+    step6502();
+    CHECK(a == 0xF0 && pc == 0x0402 && clockticks6502 == 6,
+          "test_eor_indexed_indirect_toggles_bits");
+}
+
+static void test_adc_indexed_indirect_adds_value(void) {
+    setup();
+    status &= (uint8_t)~FLAG_CARRY;
+    a = 0x10;
+    x = 0x04;
+    test_ram[0x0400] = 0x61; /* ADC ($20,X) */
+    test_ram[0x0401] = 0x20;
+    test_ram[0x0024] = 0x00;
+    test_ram[0x0025] = 0x05;
+    test_ram[0x0500] = 0x05;
+    step6502();
+    CHECK(a == 0x15 && pc == 0x0402 && clockticks6502 == 6,
+          "test_adc_indexed_indirect_adds_value");
+}
+
+static void test_sbc_indexed_indirect_subtracts_value(void) {
+    setup();
+    status |= FLAG_CARRY;
+    a = 0x10;
+    x = 0x04;
+    test_ram[0x0400] = 0xE1; /* SBC ($20,X) */
+    test_ram[0x0401] = 0x20;
+    test_ram[0x0024] = 0x00;
+    test_ram[0x0025] = 0x05;
+    test_ram[0x0500] = 0x05;
+    step6502();
+    CHECK(a == 0x0B && pc == 0x0402 && clockticks6502 == 6,
+          "test_sbc_indexed_indirect_subtracts_value");
+}
+
+static void test_cmp_indexed_indirect_compares_value(void) {
+    setup();
+    a = 0x30;
+    x = 0x04;
+    test_ram[0x0400] = 0xC1; /* CMP ($20,X) */
+    test_ram[0x0401] = 0x20;
+    test_ram[0x0024] = 0x00;
+    test_ram[0x0025] = 0x05;
+    test_ram[0x0500] = 0x30;
+    step6502();
+    CHECK((status & FLAG_ZERO) != 0 && (status & FLAG_CARRY) != 0 &&
+          pc == 0x0402 && clockticks6502 == 6,
+          "test_cmp_indexed_indirect_compares_value");
+}
+
+static void test_and_indirect_indexed_masks_accumulator(void) {
+    setup();
+    a = 0xF0;
+    y = 0x10;
+    test_ram[0x0400] = 0x31; /* AND ($30),Y */
+    test_ram[0x0401] = 0x30;
+    test_ram[0x0030] = 0x00;
+    test_ram[0x0031] = 0x06; /* base $0600, +Y=$0610 */
+    test_ram[0x0610] = 0x0F;
+    step6502();
+    CHECK(a == 0x00 && pc == 0x0402 && clockticks6502 == 5,
+          "test_and_indirect_indexed_masks_accumulator");
+}
+
+static void test_ora_indirect_indexed_sets_bits(void) {
+    setup();
+    a = 0x0F;
+    y = 0x10;
+    test_ram[0x0400] = 0x11; /* ORA ($30),Y */
+    test_ram[0x0401] = 0x30;
+    test_ram[0x0030] = 0x00;
+    test_ram[0x0031] = 0x06;
+    test_ram[0x0610] = 0xF0;
+    step6502();
+    CHECK(a == 0xFF && pc == 0x0402 && clockticks6502 == 5,
+          "test_ora_indirect_indexed_sets_bits");
+}
+
+static void test_eor_indirect_indexed_toggles_bits(void) {
+    setup();
+    a = 0xFF;
+    y = 0x10;
+    test_ram[0x0400] = 0x51; /* EOR ($30),Y */
+    test_ram[0x0401] = 0x30;
+    test_ram[0x0030] = 0x00;
+    test_ram[0x0031] = 0x06;
+    test_ram[0x0610] = 0x0F;
+    step6502();
+    CHECK(a == 0xF0 && pc == 0x0402 && clockticks6502 == 5,
+          "test_eor_indirect_indexed_toggles_bits");
+}
+
+static void test_adc_indirect_indexed_adds_value(void) {
+    setup();
+    status &= (uint8_t)~FLAG_CARRY;
+    a = 0x10;
+    y = 0x10;
+    test_ram[0x0400] = 0x71; /* ADC ($30),Y */
+    test_ram[0x0401] = 0x30;
+    test_ram[0x0030] = 0x00;
+    test_ram[0x0031] = 0x06;
+    test_ram[0x0610] = 0x05;
+    step6502();
+    CHECK(a == 0x15 && pc == 0x0402 && clockticks6502 == 5,
+          "test_adc_indirect_indexed_adds_value");
+}
+
+static void test_sbc_indirect_indexed_subtracts_value(void) {
+    setup();
+    status |= FLAG_CARRY;
+    a = 0x10;
+    y = 0x10;
+    test_ram[0x0400] = 0xF1; /* SBC ($30),Y */
+    test_ram[0x0401] = 0x30;
+    test_ram[0x0030] = 0x00;
+    test_ram[0x0031] = 0x06;
+    test_ram[0x0610] = 0x05;
+    step6502();
+    CHECK(a == 0x0B && pc == 0x0402 && clockticks6502 == 5,
+          "test_sbc_indirect_indexed_subtracts_value");
+}
+
+static void test_cmp_indirect_indexed_compares_value(void) {
+    setup();
+    a = 0x30;
+    y = 0x10;
+    test_ram[0x0400] = 0xD1; /* CMP ($30),Y */
+    test_ram[0x0401] = 0x30;
+    test_ram[0x0030] = 0x00;
+    test_ram[0x0031] = 0x06;
+    test_ram[0x0610] = 0x30;
+    step6502();
+    CHECK((status & FLAG_ZERO) != 0 && (status & FLAG_CARRY) != 0 &&
+          pc == 0x0402 && clockticks6502 == 5,
+          "test_cmp_indirect_indexed_compares_value");
+}
+
 int main(void) {
     test_nop_advances_pc_and_takes_2_cycles();
     test_lda_immediate_loads_value();
@@ -2018,6 +2195,18 @@ int main(void) {
     test_cpy_zeropage_compares_y_register();
     test_cpx_absolute_compares_x_register();
     test_cpy_absolute_compares_y_register();
+    test_and_indexed_indirect_masks_accumulator();
+    test_ora_indexed_indirect_sets_bits();
+    test_eor_indexed_indirect_toggles_bits();
+    test_adc_indexed_indirect_adds_value();
+    test_sbc_indexed_indirect_subtracts_value();
+    test_cmp_indexed_indirect_compares_value();
+    test_and_indirect_indexed_masks_accumulator();
+    test_ora_indirect_indexed_sets_bits();
+    test_eor_indirect_indexed_toggles_bits();
+    test_adc_indirect_indexed_adds_value();
+    test_sbc_indirect_indexed_subtracts_value();
+    test_cmp_indirect_indexed_compares_value();
 
     if (failures > 0) {
         printf("\n%d test(s) FAILED\n", failures);
