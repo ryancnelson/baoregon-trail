@@ -78,7 +78,7 @@
  * Lives in plain RAM (this is the QEMU-only harness, not the real
  * Baochip-1x ReRAM/SRAM target) -- placed as a static array so it has a
  * fixed, known physical address for the RAMFBCfg registration below. */
-static uint32_t g_ramfb_pixels[BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT];
+uint32_t g_ramfb_pixels[BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT] __attribute__((aligned(4096)));
 
 static volatile uint8_t *const fw_cfg_data = (volatile uint8_t *)FW_CFG_DATA_ADDR;
 static volatile uint16_t *const fw_cfg_ctl = (volatile uint16_t *)FW_CFG_CTL_ADDR;
