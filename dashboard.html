@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">STEP 5 CARTRIDGE PACKAGER (289 Tests) GREEN</span>
+                    <span class="pill pill-green">STEP 5 RESET COMBO (290 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -395,7 +395,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: ReRAM Multi-Slot Cartridge Packager Tool (<code class="code-inline">build_cartridge_image.py</code>)</span>
-                        <span class="pill pill-green">GREEN (13.2 KB Binary)</span>
+                        <span class="pill pill-green">GREEN (13.3 KB Binary)</span>
                     </div>
                 </div>
 
@@ -409,7 +409,7 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Auto-Switching Video DMA Router (<code class="code-inline">bio_display_render_frame_auto</code>)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: 3-Button Soft Reset Combo (<code class="code-inline">emulator_loop.c</code>)</span>
                         <span class="pill pill-green">GREEN (bio-sim PASS)</span>
                     </div>
                 </div>
@@ -487,8 +487,8 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 5 – 6: ReRAM Multi-Slot Cartridge Packager Tool (<code class="code-inline">build_cartridge_image.py</code>) (COMPLETE)</h4>
-                            <p>Duke landed <code class="code-inline">tools/build_cartridge_image.py</code> to pack up to 6 game <code class="code-inline">.dsk</code> files into a single flat ReRAM binary with 0xFF erased page padding!</p>
+                            <h4>Days 5 – 6: 3-Button Soft Reset Combo (<code class="code-inline">emulator_loop.c</code>) (COMPLETE)</h4>
+                            <p>Landed 3-button soft reset combo (PB0 + PB1 + PB2 held simultaneously) in <code class="code-inline">src/emulator_loop.c</code> allowing users to exit running games and return to the boot splash menu!</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,30 +510,30 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. ReRAM Multi-Slot Cartridge Packager Tool Landed (<code class="code-inline">build_cartridge_image.py</code>)</div>
+                    <div class="decision-title">1. 3-Button Soft Reset Combo Landed (<code class="code-inline">emulator_loop.c</code>)</div>
+                    <div class="decision-desc">
+                        Landed 3-button soft reset combo (PB0 + PB1 + PB2 held simultaneously) in <code class="code-inline">src/emulator_loop.c</code> allowing users to exit running games and return to the boot splash menu!
+                    </div>
+                </div>
+
+                <div class="decision-item">
+                    <div class="decision-title">2. ReRAM Multi-Slot Cartridge Packager Tool Landed (<code class="code-inline">build_cartridge_image.py</code>)</div>
                     <div class="decision-desc">
                         Duke landed <code class="code-inline">tools/build_cartridge_image.py</code> to pack up to 6 game <code class="code-inline">.dsk</code> files into a flat ReRAM binary matching <code class="code-inline">src/cartridge_layout.h</code> with 0xFF erased page padding!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Auto-Switching Video DMA Unswizzler Landed (<code class="code-inline">bio_display.c</code>)</div>
+                    <div class="decision-title">3. Auto-Switching Video DMA Unswizzler Landed (<code class="code-inline">bio_display.c</code>)</div>
                     <div class="decision-desc">
                         Bunnie landed <code class="code-inline">bio_display_render_frame_auto()</code> in <code class="code-inline">src/bio_display.c</code> querying <code class="code-inline">apple2_mem.c</code> softswitch getters to automatically route frame rendering across HIRES, LORES, FULL, MIXED, PAGE 1, and PAGE 2 modes!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">3. Real 6502 Hardware IRQ / NMI Interrupt Entry Points Landed (<code class="code-inline">cpu6502.c</code>)</div>
-                    <div class="decision-desc">
-                        Woz landed <code class="code-inline">irq6502()</code> and <code class="code-inline">nmi6502()</code> entry points in <code class="code-inline">src/cpu6502.c</code> to support real hardware timer and peripheral interrupt vectoring!
-                    </div>
-                </div>
-
-                <div class="decision-item">
                     <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (289 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (290 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
