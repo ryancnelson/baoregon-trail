@@ -2163,6 +2163,52 @@ static void test_sbc_absolute_y_subtracts_value_with_index(void) {
           "test_sbc_absolute_y_subtracts_value_with_index");
 }
 
+static void test_beq_takes_extra_cycle_when_branch_crosses_page(void) {
+    /* Real 6502 timing: a taken branch costs 3 cycles normally, but 4
+     * if the branch target lands in a different 256-byte page than the
+     * instruction following the branch. Placing BEQ at $04FD with offset +5:
+     * instruction following BEQ is at $04FF (page $04); target is
+     * $04FF + 5 = $0504 (page $05). $04 != $05 -> page crossing penalty! */
+    setup();
+    status |= FLAG_ZERO;
+    pc = 0x04FD;
+    test_ram[0x04FD] = 0xF0; /* BEQ +5 */
+    test_ram[0x04FE] = 0x05;
+    step6502();
+    CHECK(pc == 0x0504 && clockticks6502 == 4,
+          "test_beq_takes_extra_cycle_when_branch_crosses_page");
+}
+
+static void test_beq_does_not_take_extra_cycle_within_same_page(void) {
+    /* Sanity check the inverse: same setup style (branch near a page
+     * boundary) but with an offset that stays within the current page
+     * must NOT incur the extra cycle. */
+    setup();
+    status |= FLAG_ZERO;
+    pc = 0x0400;
+    test_ram[0x0400] = 0xF0; /* BEQ +5 */
+    test_ram[0x0401] = 0x05;
+    step6502();
+    CHECK(pc == 0x0407 && clockticks6502 == 3,
+          "test_beq_does_not_take_extra_cycle_within_same_page");
+}
+
+static void test_bne_backward_branch_crosses_page_takes_extra_cycle(void) {
+    /* Backward (negative offset) branches can cross a page boundary
+     * too -- verify the page-cross detection isn't accidentally coupled
+     * to forward-only offsets. */
+    setup();
+    status &= (uint8_t)~FLAG_ZERO;
+    pc = 0x0500;
+    test_ram[0x0500] = 0xD0; /* BNE -5 */
+    test_ram[0x0501] = (uint8_t)-5;
+    /* Instruction after BNE is at $0502; target = $0502 - 5 = $04FD --
+     * crosses from page $05 to page $04. */
+    step6502();
+    CHECK(pc == 0x04FD && clockticks6502 == 4,
+          "test_bne_backward_branch_crosses_page_takes_extra_cycle");
+}
+
 static void test_illegal_opcode_consumes_one_byte_without_crashing(void) {
     /* baochip confirmed illegal/undocumented NMOS opcodes are out of
      * scope for DOS 3.3/ProDOS/Oregon Trail 1985 (documented opcodes
@@ -2366,6 +2412,9 @@ int main(void) {
     test_eor_absolute_y_toggles_bits_with_index();
     test_sbc_absolute_x_subtracts_value_with_index();
     test_sbc_absolute_y_subtracts_value_with_index();
+    test_beq_takes_extra_cycle_when_branch_crosses_page();
+    test_beq_does_not_take_extra_cycle_within_same_page();
+    test_bne_backward_branch_crosses_page_takes_extra_cycle();
     test_illegal_opcode_consumes_one_byte_without_crashing();
 
     if (failures > 0) {

@@ -106,8 +106,15 @@ static uint16_t fetch_absolute_indexed_addr(uint8_t index, int *page_crossed) {
 static void branch_if(int condition, int8_t offset) {
     clockticks6502 += 2;
     if (condition) {
+        uint16_t old_pc = pc;
         pc = (uint16_t)(pc + offset);
         clockticks6502 += 1;
+        if ((old_pc & 0xFF00) != (pc & 0xFF00)) {
+            /* Extra cycle when the branch target lands in a different
+             * 256-byte page than the instruction following the branch,
+             * matching real 6502 hardware timing. */
+            clockticks6502 += 1;
+        }
     }
 }
 
