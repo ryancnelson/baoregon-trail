@@ -374,6 +374,20 @@ disks/hires_demo.dsk: tools/create_hires_demo_dsk.py
 hires-demo: $(BUILD_DIR)/hires_demo_runner disks/hires_demo.dsk
 	@$(BUILD_DIR)/hires_demo_runner
 
+# Real ca65-assembled Hi-Res checkerboard demo (2D pattern, not stripes --
+# see tools/checkerboard.s's commit message for the two hand-assembly bugs
+# this fixed by switching to a real assembler).
+.PHONY: checkerboard-demo
+checkerboard-demo: $(BUILD_DIR)/hires_demo_runner disks/checkerboard_demo.dsk
+	@$(BUILD_DIR)/hires_demo_runner disks/checkerboard_demo.dsk
+
+# Real PNG-converted Oregon Trail title screen, boots directly to
+# full-screen Hi-Res -- see tools/README_oregon_trail.md for the full
+# convert/assemble/pack/run pipeline.
+.PHONY: oregon-trail-title-demo
+oregon-trail-title-demo: $(BUILD_DIR)/hires_demo_runner disks/oregon_trail_title.dsk
+	@$(BUILD_DIR)/hires_demo_runner disks/oregon_trail_title.dsk
+
 disks/dos33_sample.dsk: tools/create_sample_boot_dsk.py
 	@mkdir -p disks
 	python3 tools/create_sample_boot_dsk.py disks/dos33_sample.dsk
