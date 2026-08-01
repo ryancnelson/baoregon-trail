@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">STEP 5 EMULATOR LOOP AUDIO ACTIVE TEST (344 Tests) GREEN</span>
+                    <span class="pill pill-green">STEP 5 DISK SECTOR LAYOUT MAX TRACK TEST (345 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -380,7 +380,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: NMOS Decimal Flag Reset Parity (<code class="code-inline">test_reset_does_not_clear_decimal_flag</code>)</span>
-                        <span class="pill pill-green">GREEN (344 PASS)</span>
+                        <span class="pill pill-green">GREEN (345 PASS)</span>
                     </div>
                 </div>
 
@@ -394,7 +394,7 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Cartridge Layout Get Slot Null Safety Test (<code class="code-inline">test_cartridge_layout_get_slot_null_safety.c</code>)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Disk Sector Layout Max Track &amp; Sector Boundary Test (<code class="code-inline">test_disk_sector_layout_max_track_sector.c</code>)</span>
                         <span class="pill pill-green">GREEN (14.2 KB Binary)</span>
                     </div>
                 </div>
@@ -410,7 +410,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Emulator Loop Is Audio Active Speaker Toggle Test (<code class="code-inline">test_emulator_loop_is_audio_active.c</code>)</span>
-                        <span class="pill pill-green">GREEN (344 PASS)</span>
+                        <span class="pill pill-green">GREEN (345 PASS)</span>
                     </div>
                 </div>
 
@@ -487,8 +487,8 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 5 – 6: Emulator Loop Audio Active Speaker Toggle Test (<code class="code-inline">emulator_loop.c</code>) (COMPLETE)</h4>
-                            <p>Bunnie added <code class="code-inline">test_emulator_loop_is_audio_active.c</code> verifying speaker toggle propagation from $C030 accesses across frame runs (344 tests GREEN)!</p>
+                            <h4>Days 5 – 6: Disk Sector Layout Max Track &amp; Sector Boundary Test (<code class="code-inline">disk_sector_layout.c</code>) (COMPLETE)</h4>
+                            <p>Duke added <code class="code-inline">test_disk_sector_layout_max_track_sector.c</code> verifying max track (34) and sector (15) byte offset computation and out-of-range bounds safety (345 tests GREEN)!</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,30 +510,30 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. Emulator Loop Is Audio Active Speaker Toggle Test Landed (<code class="code-inline">emulator_loop.c</code>)</div>
+                    <div class="decision-title">1. Disk Sector Layout Max Track &amp; Sector Boundary Test Landed (<code class="code-inline">disk_sector_layout.c</code>)</div>
                     <div class="decision-desc">
-                        Bunnie added <code class="code-inline">test_emulator_loop_is_audio_active.c</code> proving <code class="code-inline">baoregon_emulator_is_audio_active()</code> accurately tracks $C030 accesses across frame execution (344 tests GREEN)!
+                        Duke added <code class="code-inline">test_disk_sector_layout_max_track_sector.c</code> proving <code class="code-inline">dos33_sector_offset()</code> computes correct offset 143104 for track 34 sector 15 and rejects out-of-bounds inputs cleanly (345 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Emulator Loop Get Framebuffer Non-NULL Test Landed (<code class="code-inline">emulator_loop.c</code>)</div>
+                    <div class="decision-title">2. Emulator Loop Is Audio Active Speaker Toggle Test Landed (<code class="code-inline">emulator_loop.c</code>)</div>
                     <div class="decision-desc">
-                        Bunnie added <code class="code-inline">test_emulator_loop_get_framebuffer_nonnull.c</code> proving <code class="code-inline">baoregon_emulator_get_framebuffer()</code> returns a non-NULL pointer (344 tests GREEN)!
+                        Bunnie added <code class="code-inline">test_emulator_loop_is_audio_active.c</code> proving <code class="code-inline">baoregon_emulator_is_audio_active()</code> accurately tracks $C030 accesses across frame execution (345 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
                     <div class="decision-title">3. Cartridge Layout Get Slot Null Safety Test Landed (<code class="code-inline">cartridge_layout.c</code>)</div>
                     <div class="decision-desc">
-                        Duke added <code class="code-inline">test_cartridge_layout_get_slot_null_safety.c</code> proving <code class="code-inline">cartridge_layout_get_slot()</code> returns valid pointers for slots 0..5 and NULL on out-of-bounds indices (344 tests GREEN)!
+                        Duke added <code class="code-inline">test_cartridge_layout_get_slot_null_safety.c</code> proving <code class="code-inline">cartridge_layout_get_slot()</code> returns valid pointers for slots 0..5 and NULL on out-of-bounds indices (345 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
                     <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (344 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (345 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
