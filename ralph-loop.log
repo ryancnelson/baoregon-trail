@@ -332,3 +332,20 @@ a423ad8 Update ralph-loop.log with latest pass 48 status
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  
 [2026-08-01 02:04:35] --- checking baochip ---
+[2026-08-01 02:05:20] baochip reply (truncated): �────
+  ###    Repository Sync
+
+  All commits pushed to Gitea origin main at http://biggie:3000/ryan/baoregon-
+  trail.git.
+  Live Status Dashboard: **dashboard.html**.
+
+────────────────────────────────────────────────────────────────────────────────────────
+>
+────────────────────────────────────────────────────────────────────────────────────────
+? for shortcuts                                                  Gemini 3.6 Flash · high
+[2026-08-01 02:05:20] recent commits: 7040507 Update dashboard.html: 305 tests GREEN, 13.8 KB RISC-V binary, Boot Timing Benchmark Safety landed
+d22f68f boot_perf: add null safety and overflow cycle count protection with boot_perf_is_sub_50ms (305 tests GREEN)
+481e43e check_linker_placement.py: catch missing ELF file cleanly, no raw traceback
+31009ae Update dashboard.html: 304 tests GREEN, 13.8 KB RISC-V binary, Emulator Loop Framebuffer Margin Bounds landed
+23d14f6 emulator_loop: document 320x240 framebuffer margin caveats and add test_emulator_loop_framebuffer_bounds (304 tests GREEN)
+[2026-08-01 02:05:20] sleeping 300s...
