@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">STEP 5 LORES MIXED RENDERING (297 Tests) GREEN</span>
+                    <span class="pill pill-green">STEP 2 DISK TRAP SAFE DEFAULTS (297 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -394,7 +394,7 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: ReRAM Driver Out-of-Bounds Protection (<code class="code-inline">rram_driver.c</code>)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 2: Disk Drive Trap Default Fallback Safety (<code class="code-inline">disk_trap.h</code>)</span>
                         <span class="pill pill-green">GREEN (13.6 KB Binary)</span>
                     </div>
                 </div>
@@ -487,8 +487,8 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 5 – 6: Lo-Res Mixed-Mode Split-Screen Frame Rendering (<code class="code-inline">bio_display.c</code>) (COMPLETE)</h4>
-                            <p>Bunnie implemented <code class="code-inline">bio_display_render_lores_frame_mixed()</code> in <code class="code-inline">src/bio_display.c</code> rendering top 160 scanlines of Lo-Res graphics and reserving bottom 32 scanlines for text in mixed mode!</p>
+                            <h4>Days 5 – 6: Disk Drive Trap Default Fallback Safety (<code class="code-inline">disk_trap.h</code>) (COMPLETE)</h4>
+                            <p>Duke documented and locked in default fallback safety behavior (returning <code class="code-inline">0x00</code> when uninitialized) in <code class="code-inline">src/disk_trap.h</code> with regression tests in <code class="code-inline">tests/test_disk_trap_safe_defaults.c</code>!</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,23 +510,23 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. Lo-Res Mixed-Mode Split-Screen Rendering Landed (<code class="code-inline">bio_display.c</code>)</div>
+                    <div class="decision-title">1. Disk Drive Trap Default Fallback Safety Landed (<code class="code-inline">disk_trap.h</code>)</div>
+                    <div class="decision-desc">
+                        Duke documented and locked in default fallback safety behavior (returning <code class="code-inline">0x00</code> when uninitialized) in <code class="code-inline">src/disk_trap.h</code> with regression tests in <code class="code-inline">tests/test_disk_trap_safe_defaults.c</code>!
+                    </div>
+                </div>
+
+                <div class="decision-item">
+                    <div class="decision-title">2. Lo-Res Mixed-Mode Split-Screen Rendering Landed (<code class="code-inline">bio_display.c</code>)</div>
                     <div class="decision-desc">
                         Bunnie implemented <code class="code-inline">bio_display_render_lores_frame_mixed()</code> in <code class="code-inline">src/bio_display.c</code> rendering top 160 scanlines of Lo-Res graphics and reserving bottom 32 scanlines for text in mixed mode!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Real 6502 RESET Interrupt-Disable Flag Fixed (<code class="code-inline">cpu6502.c</code>)</div>
+                    <div class="decision-title">3. Real 6502 RESET Interrupt-Disable Flag Fixed (<code class="code-inline">cpu6502.c</code>)</div>
                     <div class="decision-desc">
                         Woz updated <code class="code-inline">reset6502()</code> to set <code class="code-inline">FLAG_INTERRUPT</code> on CPU reset, matching actual NMOS 6502 silicon specification!
-                    </div>
-                </div>
-
-                <div class="decision-item">
-                    <div class="decision-title">3. ReRAM Driver Out-of-Bounds Protection Landed (<code class="code-inline">rram_driver.c</code>)</div>
-                    <div class="decision-desc">
-                        Duke added <code class="code-inline">addr_in_bounds()</code> safety validation to <code class="code-inline">rram_read()</code> in <code class="code-inline">src/rram_driver.c</code> preventing buffer overreads and out-of-range address accesses!
                     </div>
                 </div>
 
