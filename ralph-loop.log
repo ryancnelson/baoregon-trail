@@ -547,3 +547,9 @@ f022ff8 emulator_loop: add baoregon_emulator_get_cycles_per_frame getter with un
 db3d467 rram_driver.h: fix rram_read() docstring to match actual bounds-checked behavior
 03601a2 Update ralph-loop.log with latest pass 74 status
 [2026-08-01 03:51:41] sleeping 300s...
+[2026-08-01 03:56:41] --- checking Woz ---
+[2026-08-01 03:59:11] Woz reply (truncated): ��───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 
+[2026-08-01 03:59:11] --- checking Bunnie ---
