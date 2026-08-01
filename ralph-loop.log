@@ -184,3 +184,9 @@ a826a4b Update ralph-loop.log with latest pass 33 status
 9cc91ff tests: end-to-end integration proof -- rram_write() -> disk_trap read path
 85c3a43 Update dashboard.html: 293 tests GREEN, 13.3 KB RISC-V binary, Mode-Aware Video DMA Routing landed
 [2026-08-01 00:31:07] sleeping 300s...
+[2026-08-01 00:36:07] --- checking Woz ---
+[2026-08-01 00:39:04] Woz reply (truncated): ��───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 
+[2026-08-01 00:39:04] --- checking Bunnie ---
