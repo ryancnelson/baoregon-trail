@@ -78,4 +78,38 @@ int boot_splash_handle_button(boot_splash_state_t *state, boot_splash_button_t b
 /* Convenience accessor: the cartridge_slot_t currently highlighted. */
 const cartridge_slot_t *boot_splash_current_slot(const boot_splash_state_t *state);
 
+/*
+ * Edge-detection state for boot_splash_poll_apple2_mem_buttons(). Real
+ * badge buttons are level-based (apple2_mem_get_button_state() reports
+ * "currently held", not "just pressed") -- without edge detection, a
+ * button held down for multiple poll calls would fire PREV/NEXT/SELECT
+ * repeatedly per call instead of once per physical press. Tracks the
+ * previous poll's raw pressed/released state for PB0/PB1/PB2 so only the
+ * released->pressed transition (the "edge") triggers a boot_splash event.
+ */
+typedef struct {
+    int was_pressed[3]; /* previous poll's raw state for PB0/PB1/PB2 */
+} boot_splash_button_edge_state_t;
+
+/* Initialize edge-detection state assuming all buttons start released
+ * (matches real hardware's idle state and apple2_mem_reset()'s default). */
+void boot_splash_button_edge_state_init(boot_splash_button_edge_state_t *edge_state);
+
+/*
+ * Poll apple2_mem.c's real pushbutton state (apple2_mem_get_button_state(),
+ * PB0/PB1/PB2 mapped to PREV/NEXT/SELECT per BRAINSTORM.md section 5's
+ * "Logical Mapping") and drive one boot_splash_handle_button() call per
+ * newly-pressed button (edge-triggered, not level-triggered -- a button
+ * held across multiple polls only fires once, on the release->pressed
+ * transition). If more than one button transitions to pressed in the same
+ * poll (unlikely on real hardware, but not impossible), PB0 (PREV) is
+ * serviced first, matching array index order.
+ *
+ * Returns 1 if a game was just selected this poll (caller must
+ * reset6502()), 0 otherwise -- same contract as boot_splash_handle_button().
+ */
+int boot_splash_poll_apple2_mem_buttons(boot_splash_state_t *state,
+                                         boot_splash_button_edge_state_t *edge_state,
+                                         boot_splash_disk_image_setter_fn on_select);
+
 #endif /* BOOT_SPLASH_H */

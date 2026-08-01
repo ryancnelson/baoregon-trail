@@ -142,6 +142,13 @@ void apple2_mem_set_button_state(int button_index, int pressed) {
     g_button_pressed[button_index] = pressed ? 1 : 0;
 }
 
+int apple2_mem_get_button_state(int button_index) {
+    if (button_index < 0 || button_index > 2) {
+        return 0; /* out of range: not one of PB0/PB1/PB2 */
+    }
+    return g_button_pressed[button_index];
+}
+
 int apple2_mem_get_annunciator_state(int annunciator_index) {
     if (annunciator_index < 0 || annunciator_index > 3) {
         return 0; /* out of range: not one of AN0-AN3 */

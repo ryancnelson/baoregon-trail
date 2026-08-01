@@ -110,6 +110,15 @@ void apple2_mem_inject_key(uint8_t ascii_value);
  * PB0/PB1/PB2, pressed is nonzero for "held down". */
 void apple2_mem_set_button_state(int button_index, int pressed);
 
+/* Getter counterpart to apple2_mem_set_button_state() -- reads the
+ * current pressed/released state of PB0/PB1/PB2 without going through
+ * the 6502 $C061-$C063 soft-switch read path. Needed for non-CPU callers
+ * (e.g. boot_splash.c's real-hardware button poll adapter) that want
+ * current button state as a plain C API rather than emulating a 6502
+ * memory read. Returns 1 = pressed, 0 = released or button_index out of
+ * range (not one of 0/1/2). */
+int apple2_mem_get_button_state(int button_index);
+
 /* Paddle analog timer inputs ($C064/$C065 PADDLE0/PADDLE1 reads,
  * $C070 PDRIVE trigger). Real Apple II hardware charges an RC circuit
  * proportional to the paddle's position when $C070 is accessed (any
