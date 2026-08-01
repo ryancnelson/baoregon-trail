@@ -1022,3 +1022,9 @@ cf9da1e disk_trap: add test_disk_trap_unmounted_image_safety unit test (336 test
 2b2ae8f cpu6502: lock in reset() preserving C/Z/V/N/sp unchanged with regression test
 2a5a387 Update ralph-loop.log with latest pass 124 status
 [2026-08-01 07:26:05] sleeping 300s...
+[2026-08-01 07:31:05] --- checking Woz ---
+[2026-08-01 07:34:11] Woz reply (truncated): ��───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 
+[2026-08-01 07:34:11] --- checking Bunnie ---
