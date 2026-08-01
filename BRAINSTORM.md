@@ -74,8 +74,17 @@ Instead of emulating the full physical Disk II stepper motor and raw GCR nibble 
 
 ---
 
-### 5. Multi-Game "Cartridge" Selection Menu
+### 5. Multi-Game "Cartridge" Selection Menu & Hardware Inputs
 
+#### Hardware Input Interface (CONFIRMED-from-photo):
+* **Physical Controls**: The badge module features **3 physical buttons** (Upper-Left, Upper-Right, Bottom-Center), confirmed directly from hardware inspection photos.
+* **Control Mapping**:
+  * **Upper-Left**: `PREV` / Up / Left (Move selection up / retro choice 1).
+  * **Upper-Right**: `NEXT` / Down / Right (Move selection down / retro choice 2).
+  * **Bottom-Center**: `SELECT` / Enter / Action (Confirm game launch / action trigger).
+* **In-Game 6502 Input Binding**: The 3 buttons map directly to standard Apple II keyboard matrix soft-switches (`$C000` / `$C010` strobe).
+
+#### Multi-Game Cartridge Layout:
 With 3.8 MiB of free ReRAM remaining, we can embed multiple `.dsk` files:
 
 ```
@@ -88,4 +97,4 @@ ReRAM Offset     Size      Game Title
 0x2012F000       140 KB    Ultima IV
 ```
 
-A custom retro boot splash screen allows using the badge D-pad to pick a game, pointing the disk controller trap to the selected ReRAM offset and resetting the 6502!
+A custom retro boot splash screen allows using the 3 physical badge buttons (`PREV`, `NEXT`, `SELECT`) to pick a game, pointing the disk controller trap to the selected ReRAM offset and resetting the 6502!

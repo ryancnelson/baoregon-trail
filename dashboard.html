@@ -510,16 +510,16 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. Absolute Indexed Modes Landed (74 Opcodes)</div>
+                    <div class="decision-title">1. Physical Controls: 3 Buttons (CONFIRMED-from-photo)</div>
                     <div class="decision-desc">
-                        Woz added <code class="code-inline">abs,X</code> and <code class="code-inline">abs,Y</code> indexed addressing for <code class="code-inline">LDA</code>/<code class="code-inline">STA</code>/<code class="code-inline">ADC</code>/<code class="code-inline">CMP</code>, plus <code class="code-inline">zeropage,X</code>, with verified page-crossing cycle timing.
+                        Confirmed via badge photo: module has <b>3 physical buttons</b> (Upper-Left <code class="code-inline">PREV</code>, Upper-Right <code class="code-inline">NEXT</code>, Bottom-Center <code class="code-inline">SELECT</code>) for multi-game cartridge menu &amp; 6502 keyboard matrix triggers.
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Display Panel Spec: Currently UNCONFIRMED</div>
+                    <div class="decision-title">2. Display Panel Spec: ASSUMED (TBD)</div>
                     <div class="decision-desc">
-                        Specific display panel/resolution for DEF CON 34 badge is UNCONFIRMED in public docs (drops next week). Emulator outputs canonical 280x192 RGB565 buffer in SRAM; <code class="code-inline">bio_display.c</code> abstracts hardware panel DMA, guaranteeing zero core code changes when hardware drops.
+                        Display resolution/interface is ASSUMED in public docs (drops next week). Emulator outputs canonical 280x192 RGB565 buffer in SRAM; <code class="code-inline">bio_display.c</code> abstracts hardware panel DMA.
                     </div>
                 </div>
 
