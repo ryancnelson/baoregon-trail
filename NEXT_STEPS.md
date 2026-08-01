@@ -161,3 +161,6 @@ its MIT license text.
 - [ ] Once working, revisit whether `ramfb`/QEMU live display (Step 6)
       should show this real-disk-boot path instead of (or alongside) the
       synthetic bootloader demos.
+
+<!-- fable-ralph-loop check-in 2026-08-01 15:50:44 -->
+**Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 582 PASS / 0 FAIL (exit 0). Commits in last ~25min: 5.
