@@ -31,7 +31,8 @@
  * Compute the byte offset of (track, sector) within a flat DOS-order .dsk
  * image. Returns 0 on success and writes the offset to *out_offset.
  * Returns -1 if track or sector is out of range (track >= DOS33_TRACKS or
- * sector >= DOS33_SECTORS_PER_TRACK); *out_offset is left untouched.
+ * sector >= DOS33_SECTORS_PER_TRACK), or if out_offset is NULL;
+ * *out_offset is left untouched in either error case.
  */
 int dos33_sector_offset(uint8_t track, uint8_t sector, uint32_t *out_offset);
 
