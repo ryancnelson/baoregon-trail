@@ -345,12 +345,12 @@
     <header>
         <div class="title-group">
             <h1>🌲 Bao-Oregon-Trail</h1>
-            <p>DEF CON 34 Badge Bare-Metal Apple II Emulator | Baochip-1x Open Silicon</p>
+            <p>DEF CON 34 Badge Bare-Metal Apple II Emulator | Baochip-1x (baosec-lite target)</p>
         </div>
         <div class="badge-status">
             <div class="status-indicator">
                 <span class="dot pulse"></span>
-                <span>TARGET: DEF CON 34 BADGE</span>
+                <span>TARGET: BAOSEC-LITE BADGE</span>
             </div>
             <div class="status-indicator" style="color: var(--accent-cyan)">
                 <span>BOOT: &lt; 50ms</span>
@@ -394,8 +394,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 3: <code class="code-inline">apple2_mem.c</code> Router, Traps &amp; <code class="code-inline">embed_disk.py</code></span>
-                        <span class="pill pill-green">GREEN (28 PASS)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: <code class="code-inline">linker.ld</code> &amp; <code class="code-inline">Makefile.riscv</code></span>
+                        <span class="pill pill-amber">In Progress (Days 3-4)</span>
                     </div>
                 </div>
 
@@ -409,7 +409,7 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 4: Un-Swizzler &amp; <code class="code-inline">bunnie_audio.c</code> $C030 PWM</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 4: NTSC 6-Color Decoder &amp; $C030 PWM</span>
                         <span class="pill pill-green">GREEN (6 PASS)</span>
                     </div>
                 </div>
@@ -424,7 +424,7 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Canvas Connections &amp; Sprint Alignment</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Canvas Connections &amp; Target Alignment</span>
                         <span class="pill pill-green">Active</span>
                     </div>
                 </div>
@@ -480,8 +480,8 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 3 – 4: RISC-V Cross-Compilation &amp; Linker Script</h4>
-                            <p>Build <code class="code-inline">linker.ld</code> mapping ReRAM (<code class="code-inline">0x20000000</code>) &amp; SRAM (<code class="code-inline">0x40000000</code>). Package <code class="code-inline">baoregon.bin</code>.</p>
+                            <h4>Days 3 – 4: RISC-V Cross-Compilation &amp; Linker Script (IN PROGRESS)</h4>
+                            <p>Build <code class="code-inline">linker.ld</code> mapping ReRAM (<code class="code-inline">0x20000000</code>) &amp; SRAM (<code class="code-inline">0x40000000</code>) for <code class="code-inline">baosec-lite</code> target. Package <code class="code-inline">baoregon.bin</code>.</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -495,7 +495,7 @@
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
                             <h4>DEF CON Week: Live Badge Silicon Flash! 🌲</h4>
-                            <p>Flash binary directly onto physical Baochip-1x badge silicon at DEF CON 34!</p>
+                            <p>Flash <code class="code-inline">baoregon.bin</code> directly onto physical <code class="code-inline">baosec-lite</code> badge silicon at DEF CON 34!</p>
                         </div>
                     </div>
                 </div>
@@ -510,16 +510,16 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. Integrated Memory Router (<code class="code-inline">apple2_mem.c</code>)</div>
+                    <div class="decision-title">1. Official Target Naming: <code class="code-inline">baosec-lite</code></div>
                     <div class="decision-desc">
-                        Duke completed real <code class="code-inline">apple2_mem.c</code> memory router wiring <code class="code-inline">read6502</code>/<code class="code-inline">write6502</code> to $C0E0-$C0EF disk traps, $C030 audio PWM, and 64KB RAM.
+                        Confirmed via bunnie huang: the DEF CON 34 badge core is derived from <code class="code-inline">baosec</code>, named <code class="code-inline">baosec-lite</code>. Out-of-tree app payload <code class="code-inline">baoregon.bin</code> maps cleanly to this target.
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Non-Blocking Fast Sector Reads (&lt; 5 Cycles)</div>
+                    <div class="decision-title">2. Out-of-Tree Tooling Not Blocking Us</div>
                     <div class="decision-desc">
-                        Instead of block copies, <code class="code-inline">duke_disk_read_trap(0xC0EC)</code> returns single bytes directly from the ReRAM disk pointer, taking under 5 RISC-V cycles!
+                        Standard RISC-V GCC toolchain (<code class="code-inline">riscv32-unknown-elf-gcc</code>), <code class="code-inline">linker.ld</code>, and <code class="code-inline">baochip/bio-sim</code> are 100% public today. We build payload now, ready for out-of-tree drop next week.
                     </div>
                 </div>
 
