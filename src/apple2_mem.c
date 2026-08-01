@@ -28,6 +28,21 @@ static int g_lc_read_ram = 0;   /* 0 = read ROM, 1 = read RAM */
 static int g_lc_write_enable = 0; /* 0 = write-protected, 1 = write-enabled */
 static int g_lc_bank1_selected = 0; /* 0 = bank 2, 1 = bank 1 */
 
+/* Optional real (or synthetic) $C000-$FFFF system ROM backing -- see
+ * apple2_mem_load_system_rom() doc comment in apple2_mem.h. NULL by
+ * default (RISC-V/ReRAM target behavior: unchanged, falls through to
+ * g_ram[]). SYSTEM_ROM_SIZE covers the full $C000-$FFFF span so a future
+ * caller could also back $C100-$CFFF (I/O firmware/expansion ROM) with
+ * the same image, even though only $D000-$FFFF is actually gated by the
+ * g_lc_read_ram softswitch today. */
+#define SYSTEM_ROM_SIZE 16384u
+#define SYSTEM_ROM_BASE 0xC000u
+static const uint8_t *g_system_rom = 0;
+
+void apple2_mem_load_system_rom(const uint8_t *image) {
+    g_system_rom = image;
+}
+
 /* Disk trap streaming cursor: tracks the next byte offset (0-255) that
  * $C0EC will return, auto-incrementing (wrapping mod 256) so software can
  * stream a whole 256-byte sector via repeated reads of one address. Reset
@@ -385,6 +400,12 @@ uint8_t read6502(uint16_t address) {
             return current_lc_bank()[address - LC_BANKED_REGION_START];
         }
         return g_ram[address];
+    }
+    if (address >= LC_BANKED_REGION_START && !g_lc_read_ram && g_system_rom) {
+        /* ROM-select state ($D000-$FFFF) with a real/loaded system ROM
+         * image present: serve real firmware bytes instead of the
+         * zeroed-RAM fallback below. See apple2_mem_load_system_rom(). */
+        return g_system_rom[address - SYSTEM_ROM_BASE];
     }
     return g_ram[address];
 }

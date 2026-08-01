@@ -69,6 +69,26 @@
  * tests for a clean, deterministic starting point. */
 void apple2_mem_reset(void);
 
+/* Loads a real (or synthetic) 16KB Apple IIe system firmware ROM image
+ * covering $C000-$FFFF, backing reads at that range when the Language
+ * Card softswitch state selects ROM (g_lc_read_ram == 0, the default
+ * post-reset state -- matches real hardware).
+ *
+ * HOST-BUILD-ONLY, opt-in feature: without calling this, $D000-$FFFF
+ * reads simply return zeroed g_ram[] (the RISC-V/ReRAM target's existing
+ * behavior is completely unaffected -- this function is never called
+ * from that build path). Added to let the host test/tools harnesses run
+ * real Apple IIe system software (DOS 3.3, Applesoft) end-to-end for
+ * integration testing, per BRAINSTORM.md section 8's external-sourcing
+ * follow-up -- the real ROM bytes now exist locally (see
+ * tools/README_ROMS.md) and this is what actually uses them.
+ *
+ * image must point to exactly 16384 bytes (the concatenation of
+ * 342-0134-a.64 + 342-0135-b.64 in that order -- Part A is $C000-$DFFF,
+ * Part B is $E000-$FFFF) and must outlive any subsequent read6502() calls.
+ * Pass NULL to unload (reverts to the zeroed-RAM fallback). */
+void apple2_mem_load_system_rom(const uint8_t *image);
+
 /* Register the ReRAM-resident disk image backing the $C0E0-$C0EF disk
  * trap. Thin pass-through to disk_trap_set_image() -- see disk_trap.h. */
 void apple2_mem_set_disk_image(const uint8_t *image);

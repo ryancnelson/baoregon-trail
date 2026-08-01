@@ -1451,3 +1451,4 @@ cf80cf2 Makefile: remove -g from host CFLAGS to prevent macOS dsymutil race cond
 2ac56e2 Update ralph-loop.log with latest pass 161 status
 cae98d8 apple2_mem: lock in out-of-range index guard clauses for buttons/annunciators/paddles
 [2026-08-01 10:13:33] sleeping 300s...
+[2026-08-01 10:18:33] --- checking Woz ---

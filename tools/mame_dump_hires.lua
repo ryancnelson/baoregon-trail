@@ -61,7 +61,12 @@ emu.register_frame(function()
         type_text("RUN COLOR DEMOSOFT\r")
         phase = 1
         frame_count = 0
-    elseif phase == 1 and frame_count >= DRAW_WAIT_FRAMES then
+    elseif phase == 1 and frame_count >= 600 then
+        print("MAME_HIRES: selecting menu option 1 at frame " .. frame_count)
+        type_text("1\r")
+        phase = 2
+        frame_count = 0
+    elseif phase == 2 and frame_count >= DRAW_WAIT_FRAMES then
         print("MAME_HIRES: dumping at frame " .. frame_count)
         dump_hires()
         phase = 2
