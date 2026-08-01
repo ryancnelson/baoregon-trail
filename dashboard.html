@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">8 Host + 1 RISC-V Target GREEN</span>
+                    <span class="pill pill-green">9 Host + 1 RISC-V Target GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -379,8 +379,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 2: <code class="code-inline">cpu6502.c</code> 56 Opcodes + Reset</span>
-                        <span class="pill pill-green">GREEN (56 PASS)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Indirect Addressing <code class="code-inline">(zp),Y</code> / <code class="code-inline">(zp,X)</code></span>
+                        <span class="pill pill-amber">In Progress</span>
                     </div>
                 </div>
 
@@ -409,8 +409,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 4: NTSC 6-Color Decoder &amp; $C030 PWM</span>
-                        <span class="pill pill-green">GREEN (8 PASS)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 4: Color Edge Artifacting &amp; BIO Display/Audio</span>
+                        <span class="pill pill-green">GREEN (12 PASS)</span>
                     </div>
                 </div>
 
@@ -488,7 +488,7 @@
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
                             <h4>Days 5 – 6: BIO Sim (<code class="code-inline">baochip/bio-sim</code>) &amp; Firmware Validation (IN PROGRESS)</h4>
-                            <p>Bunnie compiling BIO assembly for RV32E (<code class="code-inline">-march=rv32e</code>) and validating PicoRV32 execution &amp; DMA using Verilator <code class="code-inline">bio-sim</code> harness.</p>
+                            <p>Bunnie building BIO display DMA &amp; audio firmware templates (<code class="code-inline">-march=rv32e</code>) for PicoRV32 execution &amp; DMA using Verilator <code class="code-inline">bio-sim</code> harness.</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,16 +510,16 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. RISC-V Cross-Compilation Pipeline (<code class="code-inline">baoregon.bin</code>)</div>
+                    <div class="decision-title">1. Cross-Byte NTSC Color Artifacting Hardened</div>
                     <div class="decision-desc">
-                        <code class="code-inline">Makefile.riscv</code> produces <code class="code-inline">build-riscv/baoregon.bin</code> (3.3 KB raw ReRAM Flash image) using <code class="code-inline">riscv64-elf-gcc -march=rv32imac -mabi=ilp32 -ffreestanding</code>.
+                        Bunnie added cross-byte boundary and scanline-edge tests (<code class="code-inline">test_video_apple2_color_edges.c</code>), verifying adjacent 7-bit column decodes without out-of-bounds reads.
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Memory Section Placement Verified</div>
+                    <div class="decision-title">2. RISC-V Cross-Compilation Pipeline (<code class="code-inline">baoregon.bin</code>)</div>
                     <div class="decision-desc">
-                        <code class="code-inline">linker.ld</code> places <code class="code-inline">.text</code> in ReRAM XIP (<code class="code-inline">0x20000000</code>) and <code class="code-inline">.bss</code> (64KB RAM) in SRAM (<code class="code-inline">0x40000000</code>). Verified by <code class="code-inline">check_linker_placement.py</code>.
+                        <code class="code-inline">Makefile.riscv</code> produces <code class="code-inline">build-riscv/baoregon.bin</code> (3.3 KB raw ReRAM Flash image) using <code class="code-inline">riscv64-elf-gcc -march=rv32imac -mabi=ilp32 -ffreestanding</code>.
                     </div>
                 </div>
 
