@@ -302,7 +302,7 @@
 
         /* Hardware Specs Box */
         .spec-grid {
-            display: grid;
+            display grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 1rem;
         }
@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">12 Host + 1 RISC-V Target (168 Tests) GREEN</span>
+                    <span class="pill pill-green">13 Host + 1 RISC-V Target (187 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -379,8 +379,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 2: 128 Opcodes + Klaus Dormann Harness</span>
-                        <span class="pill pill-green">GREEN (128 PASS)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 2: 130 Opcodes + Klaus Dormann Harness</span>
+                        <span class="pill pill-green">GREEN (130 PASS)</span>
                     </div>
                 </div>
 
@@ -394,8 +394,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: ReRAM Cartridge Partition Integration Tests</span>
-                        <span class="pill pill-green">GREEN (8.2 KB Binary)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Retro Boot-Splash Selector (<code class="code-inline">boot_splash.c</code>) &amp; 3-Button Nav</span>
+                        <span class="pill pill-green">GREEN (9.4 KB Binary)</span>
                     </div>
                 </div>
 
@@ -474,21 +474,21 @@
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
                             <h4>Days 1 – 2: 6502 Core, Memory Router, Audio &amp; Disk Generator (COMPLETE)</h4>
-                            <p>Woz: 128 CPU Opcodes GREEN + Klaus Dormann harness. Duke: Memory router (<code class="code-inline">apple2_mem.c</code>), traps &amp; <code class="code-inline">embed_disk.py</code> GREEN. Bunnie: 192-line un-swizzler &amp; $C030 PWM GREEN.</p>
+                            <p>Woz: 130 CPU Opcodes GREEN + Klaus Dormann harness. Duke: Memory router (<code class="code-inline">apple2_mem.c</code>), traps &amp; <code class="code-inline">embed_disk.py</code> GREEN. Bunnie: 192-line un-swizzler &amp; $C030 PWM GREEN.</p>
                         </div>
                     </div>
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
                             <h4>Days 3 – 4: RISC-V Cross-Compilation &amp; Linker Script (COMPLETE)</h4>
-                            <p><code class="code-inline">linker.ld</code>, <code class="code-inline">crt0.S</code>, and <code class="code-inline">Makefile.riscv</code> complete! Built <code class="code-inline">baoregon.bin</code> (8.2 KB ReRAM Flash image) with verified section placement.</p>
+                            <p><code class="code-inline">linker.ld</code>, <code class="code-inline">crt0.S</code>, and <code class="code-inline">Makefile.riscv</code> complete! Built <code class="code-inline">baoregon.bin</code> (9.4 KB ReRAM Flash image) with verified section placement.</p>
                         </div>
                     </div>
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 5 – 6: BIO Sim (<code class="code-inline">baochip/bio-sim</code>) &amp; Firmware Validation (IN PROGRESS)</h4>
-                            <p>Duke landed <code class="code-inline">test_rram_cartridge_integration.c</code> bounds-checking; Bunnie landed Verilator <code class="code-inline">bio-sim</code> palette tests.</p>
+                            <h4>Days 5 – 6: BIO Sim (<code class="code-inline">baochip/bio-sim</code>) &amp; Boot Selector (IN PROGRESS)</h4>
+                            <p>Duke landed <code class="code-inline">boot_splash.c</code> 3-button game menu selector; Bunnie landed Verilator <code class="code-inline">bio-sim</code> palette tests.</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,9 +510,9 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. ReRAM Driver &amp; Cartridge Partition Integration (Landed)</div>
+                    <div class="decision-title">1. Boot-Splash Game Selector Landed (<code class="code-inline">boot_splash.c</code>)</div>
                     <div class="decision-desc">
-                        Duke landed <code class="code-inline">tests/test_rram_cartridge_integration.c</code> proving <code class="code-inline">rram_driver.c</code> writes are strictly bounds-checked against <code class="code-inline">CARTRIDGE_RERAM_BASE</code> (0x20280000).
+                        Duke landed <code class="code-inline">src/boot_splash.c</code> with 3-button navigation (PREV/NEXT/SELECT), cycling 6 game slots and pointing <code class="code-inline">disk_trap_set_image()</code> at selected ReRAM offset.
                     </div>
                 </div>
 
@@ -533,7 +533,7 @@
                 <div class="decision-item">
                     <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (168 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (187 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
