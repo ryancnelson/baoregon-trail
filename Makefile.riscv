@@ -1,0 +1,81 @@
+# Makefile.riscv -- RISC-V cross-compile build for the Baochip-1x target.
+#
+# Separate from the host-native Makefile (which builds and runs the C unit
+# test suite for local TDD). This produces the actual bare-metal ELF/BIN
+# that would run on Dabao evaluation hardware, per NEXT_STEPS.md Step 5:
+#   - Cross-compile with riscv32-unknown-elf-gcc (-march=rv32imac -mabi=ilp32)
+#   - linker.ld partitioning 4.0 MiB ReRAM / 2.0 MiB SRAM
+#
+# Toolchain note: Homebrew ships `riscv64-elf-gcc`, which despite the
+# package name fully supports rv32 targets via -march/-mabi (confirmed
+# 2026-07-31: `riscv64-elf-gcc -march=rv32imac -mabi=ilp32` produces a
+# 32-bit RISC-V ELF). If a project riscv32-unknown-elf-gcc/clang toolchain
+# is installed later, override CROSS_PREFIX to point at it instead.
+CROSS_PREFIX ?= riscv64-elf-
+CC      = $(CROSS_PREFIX)gcc
+OBJCOPY = $(CROSS_PREFIX)objcopy
+SIZE    = $(CROSS_PREFIX)size
+
+MARCH = rv32imac
+MABI  = ilp32
+
+CFLAGS  = -march=$(MARCH) -mabi=$(MABI) -std=c99 -Wall -Wextra -Os \
+          -ffreestanding -fno-builtin -nostartfiles -g
+ASFLAGS = -march=$(MARCH) -mabi=$(MABI)
+LDFLAGS = -march=$(MARCH) -mabi=$(MABI) -nostartfiles -nostdlib \
+          -T linker.ld -Wl,-Map=$(BUILD_DIR)/baoregon.map
+
+SRC_DIR   = src
+BUILD_DIR = build-riscv
+
+# Bring-up scaffold (main.c/crt0.S) plus every emulator module that's
+# landed so far. Deliberately mirrors what the host test suite already
+# covers -- this target's job is proving the cross-compile + link + memory
+# placement pipeline works, not re-testing logic already GREEN on host.
+SOURCES = \
+    $(SRC_DIR)/crt0.S \
+    $(SRC_DIR)/main.c \
+    $(SRC_DIR)/cpu6502.c \
+    $(SRC_DIR)/apple2_mem.c \
+    $(SRC_DIR)/disk_sector_layout.c \
+    $(SRC_DIR)/disk_trap.c \
+    $(SRC_DIR)/bunnie_audio.c \
+    $(SRC_DIR)/video_apple2.c
+
+OBJECTS = $(patsubst $(SRC_DIR)/%.S,$(BUILD_DIR)/%.o,\
+            $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SOURCES)))
+
+ELF = $(BUILD_DIR)/baoregon.elf
+BIN = $(BUILD_DIR)/baoregon.bin
+
+.PHONY: all riscv-check clean-riscv
+
+all: $(BIN)
+	@echo "--- Section sizes (linker.ld placement) ---"
+	@$(SIZE) $(ELF)
+
+$(BIN): $(ELF)
+	$(OBJCOPY) -O binary -j .text -j .rodata -j .dsk_images -j .data $< $@
+
+$(ELF): $(OBJECTS) linker.ld
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(LDFLAGS) -o $@ $(OBJECTS)
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.S
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(ASFLAGS) -c -o $@ $<
+
+# Sanity-check the linker script's memory placement: .text/.rodata/
+# .dsk_images must land in ReRAM (0x20000000-0x203FFFFF), .data/.bss/stack
+# must land in SRAM (0x40000000-0x401FFFFF). Fails loudly (non-zero exit)
+# if any section strays outside its assigned physical memory -- catches a
+# linker.ld regression before it reaches hardware.
+riscv-check: $(ELF)
+	@python3 tools/check_linker_placement.py $(ELF)
+
+clean-riscv:
+	rm -rf $(BUILD_DIR)
