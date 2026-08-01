@@ -2222,6 +2222,7 @@ int main(void) {
     test_adc_indirect_indexed_adds_value();
     test_sbc_indirect_indexed_subtracts_value();
     test_cmp_indirect_indexed_compares_value();
+    test_bit_absolute_sets_flags_from_memory();
 
     if (failures > 0) {
         printf("\n%d test(s) FAILED\n", failures);

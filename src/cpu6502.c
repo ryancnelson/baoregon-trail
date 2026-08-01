@@ -268,6 +268,26 @@ static uint8_t ror_value(uint8_t value) {
     return value;
 }
 
+/* --- BIT helper (shared by zeropage/absolute addressing modes) --- */
+
+static void bit_test(uint8_t operand) {
+    if ((a & operand) == 0) {
+        status |= FLAG_ZERO;
+    } else {
+        status &= (uint8_t)~FLAG_ZERO;
+    }
+    if (operand & 0x80) {
+        status |= FLAG_SIGN;
+    } else {
+        status &= (uint8_t)~FLAG_SIGN;
+    }
+    if (operand & 0x40) {
+        status |= FLAG_OVERFLOW;
+    } else {
+        status &= (uint8_t)~FLAG_OVERFLOW;
+    }
+}
+
 void step6502(void) {
     uint8_t opcode = read6502(pc++);
 
@@ -528,26 +548,10 @@ void step6502(void) {
             break;
         }
 
-        case 0x24: { /* BIT zeropage */
-            uint8_t operand = read6502(fetch_zeropage_addr());
-            if ((a & operand) == 0) {
-                status |= FLAG_ZERO;
-            } else {
-                status &= (uint8_t)~FLAG_ZERO;
-            }
-            if (operand & 0x80) {
-                status |= FLAG_SIGN;
-            } else {
-                status &= (uint8_t)~FLAG_SIGN;
-            }
-            if (operand & 0x40) {
-                status |= FLAG_OVERFLOW;
-            } else {
-                status &= (uint8_t)~FLAG_OVERFLOW;
-            }
+        case 0x24: /* BIT zeropage */
+            bit_test(read6502(fetch_zeropage_addr()));
             clockticks6502 += 3;
             break;
-        }
 
         case 0xE6: { /* INC zeropage */
             uint16_t addr = fetch_zeropage_addr();
@@ -1200,6 +1204,11 @@ void step6502(void) {
             clockticks6502 += page_crossed ? 6 : 5;
             break;
         }
+
+        case 0x2C: /* BIT absolute */
+            bit_test(read6502(fetch_absolute_addr()));
+            clockticks6502 += 4;
+            break;
 
         default:
             /* Unimplemented opcode: not yet driven by a failing test. */
