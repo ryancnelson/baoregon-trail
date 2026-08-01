@@ -299,3 +299,20 @@ b73a72a Update dashboard.html: 300 tests GREEN, 13.6 KB RISC-V binary, Disk Sect
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  
 [2026-08-01 01:47:19] --- checking baochip ---
+[2026-08-01 01:48:11] baochip reply (truncated): �────
+  ###    Repository Sync
+
+  All commits pushed to Gitea origin main at http://biggie:3000/ryan/baoregon-
+  trail.git.
+  Live Status Dashboard: **dashboard.html**.
+
+────────────────────────────────────────────────────────────────────────────────────────
+>
+────────────────────────────────────────────────────────────────────────────────────────
+? for shortcuts                                                  Gemini 3.6 Flash · high
+[2026-08-01 01:48:11] recent commits: 1004a1a Update dashboard.html: 303 tests GREEN, 13.8 KB RISC-V binary, Emulator Loop Framebuffer Copy Safety landed
+84b7253 emulator_loop: add baoregon_emulator_copy_framebuffer with null and bounds safety (303 tests GREEN)
+9b440ee embed_disk.py: catch missing/unreadable .dsk file cleanly, no raw traceback
+a423ad8 Update ralph-loop.log with latest pass 48 status
+1cef197 bio_display: add null pointer safety and out-of-range color fallback
+[2026-08-01 01:48:11] sleeping 300s...
