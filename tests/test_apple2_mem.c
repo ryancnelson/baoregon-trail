@@ -642,6 +642,63 @@ static void test_buttons_default_to_released(void) {
     CHECK(read6502(0xC063) == 0x00, "test_buttons_default_to_released: PB2");
 }
 
+static void test_button_state_api_ignores_out_of_range_indices(void) {
+    /* apple2_mem_set_button_state()/apple2_mem_get_button_state() both
+     * have an explicit 'index < 0 || index > 2' out-of-range guard
+     * clause in the source, but nothing ever called them with an
+     * out-of-range index -- every existing test only exercises indices
+     * 0/1/2. Confirms the guard clauses are genuinely exercised and
+     * behave as documented: set() on an invalid index is silently
+     * ignored (no crash, no corrupting adjacent valid indices), and
+     * get() on an invalid index returns 0 rather than reading
+     * out-of-bounds array memory. */
+    apple2_mem_reset();
+
+    apple2_mem_set_button_state(3, 1); /* one past the valid range */
+    apple2_mem_set_button_state(-1, 1); /* negative */
+
+    CHECK(apple2_mem_get_button_state(3) == 0,
+          "test_button_state_api_ignores_out_of_range_indices: get(3) returns 0");
+    CHECK(apple2_mem_get_button_state(-1) == 0,
+          "test_button_state_api_ignores_out_of_range_indices: get(-1) returns 0");
+    CHECK(apple2_mem_get_button_state(0) == 0 &&
+          apple2_mem_get_button_state(1) == 0 &&
+          apple2_mem_get_button_state(2) == 0,
+          "test_button_state_api_ignores_out_of_range_indices: valid indices unaffected/unset");
+}
+
+static void test_annunciator_state_api_ignores_out_of_range_indices(void) {
+    /* Mirror of the button-state test above for
+     * apple2_mem_get_annunciator_state()'s 'index < 0 || index > 3'
+     * guard clause -- also never exercised with an out-of-range
+     * index. */
+    apple2_mem_reset();
+
+    CHECK(apple2_mem_get_annunciator_state(4) == 0,
+          "test_annunciator_state_api_ignores_out_of_range_indices: get(4) returns 0");
+    CHECK(apple2_mem_get_annunciator_state(-1) == 0,
+          "test_annunciator_state_api_ignores_out_of_range_indices: get(-1) returns 0");
+}
+
+static void test_paddle_value_api_ignores_out_of_range_indices(void) {
+    /* Mirror once more for apple2_mem_set_paddle_value()'s
+     * 'paddle_index < 0 || paddle_index > 1' guard clause -- confirms
+     * an out-of-range set() doesn't corrupt PADDLE0/PADDLE1's actual
+     * countdown targets (i.e. doesn't silently write to index 0/1 via
+     * some off-by-one instead of being ignored outright). */
+    apple2_mem_reset();
+
+    apple2_mem_set_paddle_value(2, 99); /* one past the valid range */
+    apple2_mem_set_paddle_value(-1, 99); /* negative */
+
+    (void)read6502(0xC070); /* arm both paddles */
+    uint8_t paddle0 = read6502(0xC064);
+    uint8_t paddle1 = read6502(0xC065);
+
+    CHECK((paddle0 & 0x80) == 0 && (paddle1 & 0x80) == 0,
+          "test_paddle_value_api_ignores_out_of_range_indices: PADDLE0/PADDLE1 targets unaffected (both discharge immediately)");
+}
+
 static void test_pb0_reflects_button0_state(void) {
     apple2_mem_reset();
 
@@ -847,6 +904,9 @@ int main(void) {
     test_keyboard_new_key_resets_strobe_even_before_c010();
     test_apple2_mem_reset_clears_pending_keyboard_strobe();
     test_buttons_default_to_released();
+    test_button_state_api_ignores_out_of_range_indices();
+    test_annunciator_state_api_ignores_out_of_range_indices();
+    test_paddle_value_api_ignores_out_of_range_indices();
     test_pb0_reflects_button0_state();
     test_pb1_reflects_button1_state();
     test_pb2_reflects_button2_state();
