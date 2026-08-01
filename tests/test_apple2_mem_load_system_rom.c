@@ -87,6 +87,31 @@ int main(void) {
     apple2_mem_load_system_rom(NULL);
     assert(read6502(0xC100) == 0x00);
 
+    /* 10. Writes to $C100-$CFFF must still go to g_ram[] normally --
+     * write6502() was intentionally NOT touched by the $C100-$CFFF read
+     * fix above (that region isn't write-protected the way $D000-$FFFF
+     * is; real Apple IIe peripheral-card slot space has no such
+     * protection). Confirms the read fix didn't accidentally also
+     * block/redirect writes: with no ROM loaded, a write followed by a
+     * read round-trips normally through g_ram[]. */
+    write6502(0xC100, 0x42);
+    assert(read6502(0xC100) == 0x42);
+
+    /* 11. With a ROM loaded, a write to $C100-$CFFF still succeeds into
+     * g_ram[] (write6502() has no ROM-awareness at all for this range),
+     * but the SUBSEQUENT read is masked by ROM priority -- the write
+     * "landed" in RAM underneath, it's just not visible via read6502()
+     * while a ROM is loaded, exactly mirroring how $D000-$FFFF's
+     * ROM-vs-RAM priority already works. Confirms this masking is
+     * consistent between the two ROM-backed ranges, not accidentally
+     * different (e.g. one leaking the RAM write through, the other
+     * not). */
+    apple2_mem_load_system_rom(mock_rom2);
+    write6502(0xC100, 0x33); /* succeeds into g_ram[], but masked by ROM */
+    assert(read6502(0xC100) == 0x77); /* still ROM's value, not the write */
+    apple2_mem_load_system_rom(NULL);
+    assert(read6502(0xC100) == 0x33); /* the earlier write is visible once ROM unloads */
+
     printf("PASS: apple2_mem_load_system_rom verified\n");
     printf("All tests passed.\n");
     return 0;
