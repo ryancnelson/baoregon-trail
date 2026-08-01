@@ -613,3 +613,9 @@ eb6e113 Update ralph-loop.log with latest pass 77/78 status
 d28e598 Update ralph-loop.log with latest pass 82 status
 110ca43 Update dashboard.html: 318 tests GREEN, 14.1 KB RISC-V binary, Fable-5 items (1) composed boot & (2) terminal-play landed
 [2026-08-01 04:25:43] sleeping 300s...
+[2026-08-01 04:30:43] --- checking Woz ---
+[2026-08-01 04:32:13] Woz reply (truncated): ��───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 
+[2026-08-01 04:32:13] --- checking Bunnie ---

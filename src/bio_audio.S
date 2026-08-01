@@ -1,9 +1,20 @@
 /*
  * bio_audio.S -- BIO Core 1 firmware: $C030 speaker PWM toggle.
  *
- * Target: PicoRV32 BIO coprocessor, RV32E (16-register embedded RISC-V,
- * x0-x15 only) per MEMORY.md 2026-07-31's baochip-confirmed correction.
- * Build with -march=rv32e -mabi=ilp32e.
+ * Target: PicoRV32 BIO coprocessor, RV32IMC (32-register RISC-V with
+ * Integer/Multiply/Compressed extensions), x16-x31 reserved for
+ * peripheral MMIO via -ffixed-x16..-ffixed-x31 (see BRAINSTORM.md's
+ * 2026-08-01 baochip-confirmed correction, which supersedes the earlier
+ * RV32E assumption this file was originally written against).
+ * Build with -march=rv32imc -mabi=ilp32.
+ *
+ * This file was NOT rewritten for the ISA correction -- it never needed
+ * to be. It only ever used t0 (x5), t1 (x6), a0 (x10), all within the
+ * low register window that's valid and unreserved under BOTH the old
+ * (incorrect) RV32E model and the corrected RV32IMC model. Verified by
+ * rebuilding under -march=rv32imc -mabi=ilp32 and re-running the exact
+ * same QEMU RED/GREEN harness (tests/test_bio_audio_qemu.S) unchanged --
+ * passes identically. Only the build flags needed to change.
  *
  * Implements the BIO-Core-1 side of the contract already proven in C by
  * src/bunnie_audio.c's bunnie_audio_poll_and_apply() (host-tested,
@@ -18,8 +29,9 @@
  *
  * uint8_t bio_audio_poll_and_apply(bunnie_audio_state_t *state):
  *   a0 (x10) = pointer to state on entry, return value on exit (pin state).
- *   Uses only t0 (x5), t1 (x6) as scratch -- all within rv32e's x0-x15
- *   register window, no x16-x31 use anywhere in this file.
+ *   Uses only t0 (x5), t1 (x6) as scratch -- well within the low
+ *   registers, none of which are reserved MMIO registers under the
+ *   corrected RV32IMC model (only x16-x31 are reserved).
  *
  * NOTE ON SCOPE: this function does NOT touch a real PWM hardware pin --
  * no SPI/PWM peripheral register map exists yet (Baochip-1x silicon isn't
@@ -32,7 +44,8 @@
  *
  * Verified RED (against an intentionally-wrong "always return 0" stub,
  * QEMU virt exit code 1 = FAIL) before this GREEN implementation (QEMU
- * virt exit code 0 = PASS) -- see tests/test_bio_audio_qemu.S.
+ * virt exit code 0 = PASS) -- see tests/test_bio_audio_qemu.S. Re-verified
+ * RED/GREEN again after the -march=rv32imc migration (2026-08-01).
  */
 
     .section .text.bio_audio_poll_and_apply

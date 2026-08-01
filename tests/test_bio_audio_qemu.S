@@ -1,16 +1,19 @@
 /*
- * test_bio_audio_qemu.S -- bare-metal RV32E test harness for
+ * test_bio_audio_qemu.S -- bare-metal RV32IMC test harness for
  * bio_audio_poll_and_apply(), run under QEMU's virt machine (no OS, no
  * libc). Uses the SiFive test-finisher MMIO device at 0x100000 to report
  * PASS (0x5555, QEMU exits 0) or FAIL (0x3333, QEMU exits nonzero) --
  * see tools/run_bio_audio_qemu_test.sh for how this is invoked/checked.
  *
- * This is a REAL execution test of the actual rv32e machine code that
- * will run on the PicoRV32 BIO core -- not a host-native mock. Per
- * CLAUDE.md's TDD discipline extended to firmware: RED verified by first
- * running this harness against bio_audio.S's initial always-return-0 stub
- * (FAIL, wrong pin state after a triggered toggle) before the minimal
- * real implementation.
+ * This is a REAL execution test of the actual machine code that will run
+ * on the PicoRV32 BIO core -- not a host-native mock. Per CLAUDE.md's TDD
+ * discipline extended to firmware: RED verified by first running this
+ * harness against bio_audio.S's initial always-return-0 stub (FAIL, wrong
+ * pin state after a triggered toggle) before the minimal real
+ * implementation. Re-verified RED/GREEN again after migrating the build
+ * target from the (incorrect) RV32E assumption to the baochip-confirmed
+ * RV32IMC ISA (2026-08-01) -- this harness itself needed no code changes,
+ * only the build flags in tools/run_bio_audio_qemu_test.sh.
  *
  * Test plan (mirrors tests/test_bunnie_audio.c's already-host-verified
  * cases, ported to the actual target ISA):
@@ -22,7 +25,9 @@
  *   3. state = {1, 1} (pin already high, toggle pending); poll() -> must
  *      return 0 (flips high->low) and toggle_pending cleared.
  *
- * Register budget: only x0-x15 used anywhere in this file (rv32e limit).
+ * Register budget: only x0-x15 used anywhere in this file -- a subset of
+ * RV32IMC's 32 registers that happens to avoid the x16-x31 MMIO-reserved
+ * range entirely, so no -ffixed-x16..-ffixed-x31 conflicts are possible.
  */
 
     .section .text.entry

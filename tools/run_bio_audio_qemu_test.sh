@@ -1,12 +1,14 @@
 #!/bin/bash
 # tools/run_bio_audio_qemu_test.sh -- build and execute bio_audio.S's real
-# RV32E machine code under QEMU (bare-metal, no OS), verifying it via the
+# RV32IMC machine code under QEMU (bare-metal, no OS), verifying it via the
 # SiFive test-finisher MMIO device at 0x100000:
 #   write (0 << 16) | 0x5555  -> QEMU exits 0  (PASS)
 #   write (N << 16) | 0x3333  -> QEMU exits N  (FAIL)
 #
 # This is a REAL execution test of the actual BIO Core 1 firmware target
-# code (RV32E, -march=rv32e -mabi=ilp32e), not a host-native mock -- see
+# code (RV32IMC, -march=rv32imc -mabi=ilp32 -- the baochip-confirmed real
+# silicon ISA per BRAINSTORM.md's 2026-08-01 correction, superseding the
+# earlier RV32E assumption), not a host-native mock -- see
 # tests/test_bio_audio_qemu.S for the test cases (mirrors
 # tests/test_bunnie_audio.c's already host-verified cases, ported to the
 # real target ISA).
@@ -16,7 +18,9 @@
 # -- discovered during RED verification (2026-07-31) when the harness hung
 # forever instead of failing cleanly, traced via objdump to an
 # uninitialized-gp `addi a0,gp,-2044` load. -mno-relax forces absolute
-# (auipc-based) addressing instead, which needs no gp setup.
+# (auipc-based) addressing instead, which needs no gp setup. Still
+# required after the rv32imc migration (2026-08-01) -- same underlying
+# linker-relaxation behavior applies regardless of ISA variant.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -26,7 +30,7 @@ CC="${CROSS_PREFIX}gcc"
 
 mkdir -p "$BUILD_DIR"
 
-"$CC" -march=rv32e -mabi=ilp32e -mno-relax -nostdlib -nostartfiles \
+"$CC" -march=rv32imc -mabi=ilp32 -mno-relax -nostdlib -nostartfiles \
     -Ttext=0x80000000 \
     -o "$BUILD_DIR/test_bio_audio_qemu.elf" \
     "$REPO_ROOT/tests/test_bio_audio_qemu.S" \
@@ -39,7 +43,7 @@ QEMU_EXIT=$?
 set -e
 
 if [ "$QEMU_EXIT" -eq 0 ]; then
-    echo "PASS: bio_audio_poll_and_apply (RV32E, QEMU virt execution)"
+    echo "PASS: bio_audio_poll_and_apply (RV32IMC, QEMU virt execution)"
     exit 0
 elif [ "$QEMU_EXIT" -eq 124 ]; then
     echo "FAIL: bio_audio_poll_and_apply -- QEMU timed out (test harness never reached PASS or FAIL finisher write; likely stuck in a loop or crashed)"
