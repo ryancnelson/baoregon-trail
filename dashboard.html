@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">STEP 5 BIO AUDIO NULL SAFETY (298 Tests) GREEN</span>
+                    <span class="pill pill-green">STEP 2 BRANCH PAGE CROSSING FIX (298 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -379,8 +379,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 2: <code class="code-inline">reset6502()</code> Sets Interrupt-Disable Flag &amp; <code class="code-inline">exec6502()</code> Step Tests</span>
-                        <span class="pill pill-green">GREEN (60/60 PASS)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 2: Branch Page-Crossing Test Setup Fixed (<code class="code-inline">tests/test_opcodes.c</code>)</span>
+                        <span class="pill pill-green">GREEN (61/61 PASS)</span>
                     </div>
                 </div>
 
@@ -487,8 +487,8 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 5 – 6: BIO Audio Null Pointer Safety (<code class="code-inline">bunnie_audio.c</code>) (COMPLETE)</h4>
-                            <p>Bunnie added NULL pointer safety guards to <code class="code-inline">bunnie_audio_init()</code>, <code class="code-inline">bunnie_audio_trigger_toggle()</code>, and <code class="code-inline">bunnie_audio_poll_and_apply()</code> with regression tests in <code class="code-inline">tests/test_bunnie_audio_null_safety.c</code>!</p>
+                            <h4>Days 5 – 6: Branch Page-Crossing Test Setup Fixed (<code class="code-inline">tests/test_opcodes.c</code>) (COMPLETE)</h4>
+                            <p>Woz updated <code class="code-inline">test_beq_takes_extra_cycle_when_branch_crosses_page()</code> to use a genuine page-crossing offset ($04FD to $0504), bringing the full test suite back to 100% GREEN!</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,23 +510,23 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. BIO Audio Null Pointer Safety Landed (<code class="code-inline">bunnie_audio.c</code>)</div>
+                    <div class="decision-title">1. Branch Page-Crossing Test Setup Fixed (<code class="code-inline">tests/test_opcodes.c</code>)</div>
+                    <div class="decision-desc">
+                        Woz updated <code class="code-inline">test_beq_takes_extra_cycle_when_branch_crosses_page()</code> to use a genuine page-crossing offset ($04FD to $0504), bringing the full test suite back to 100% GREEN!
+                    </div>
+                </div>
+
+                <div class="decision-item">
+                    <div class="decision-title">2. BIO Audio Null Pointer Safety Landed (<code class="code-inline">bunnie_audio.c</code>)</div>
                     <div class="decision-desc">
                         Bunnie added NULL pointer safety guards to <code class="code-inline">bunnie_audio_init()</code>, <code class="code-inline">bunnie_audio_trigger_toggle()</code>, and <code class="code-inline">bunnie_audio_poll_and_apply()</code> with regression tests in <code class="code-inline">tests/test_bunnie_audio_null_safety.c</code>!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Disk Drive Trap Default Fallback Safety Landed (<code class="code-inline">disk_trap.h</code>)</div>
+                    <div class="decision-title">3. Disk Drive Trap Default Fallback Safety Landed (<code class="code-inline">disk_trap.h</code>)</div>
                     <div class="decision-desc">
                         Duke documented and locked in default fallback safety behavior (returning <code class="code-inline">0x00</code> when uninitialized) in <code class="code-inline">src/disk_trap.h</code> with regression tests in <code class="code-inline">tests/test_disk_trap_safe_defaults.c</code>!
-                    </div>
-                </div>
-
-                <div class="decision-item">
-                    <div class="decision-title">3. Lo-Res Mixed-Mode Split-Screen Rendering Landed (<code class="code-inline">bio_display.c</code>)</div>
-                    <div class="decision-desc">
-                        Bunnie implemented <code class="code-inline">bio_display_render_lores_frame_mixed()</code> in <code class="code-inline">src/bio_display.c</code> rendering top 160 scanlines of Lo-Res graphics and reserving bottom 32 scanlines for text in mixed mode!
                     </div>
                 </div>
 
