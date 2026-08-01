@@ -1,0 +1,62 @@
+MIT License
+
+Copyright (c) 2026 Ryan C. Nelson and contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+---
+
+## Exceptions -- third-party files NOT covered by the MIT license above
+
+The MIT license applies only to this project's own source code (C, Python,
+assembly, build scripts, docs). It does NOT apply to, and makes no claim
+of ownership over, the following third-party files, which retain their
+own original copyrights and are included here for development/testing
+purposes only:
+
+- **`roms/*.zip`** (`apple2e.zip`, `a2diskiing.zip`, `d2fdc.zip`,
+  `votrsc01a.zip`) -- Apple IIe and Disk II controller system firmware ROM
+  images. These are copyrighted Apple Computer, Inc. firmware. Files of
+  this kind are widely archived at [archive.org](https://archive.org)'s
+  software libraries; for convenience during this development session
+  they were actually fetched from the MAME-compatible ROM set collection
+  maintained at [Abdess/retrobios](https://github.com/Abdess/retrobios)
+  (GitHub) rather than archive.org directly. Not redistributable under
+  this project's license; included only to support local MAME-based
+  development/verification testing (see `tools/README_oregon_trail.md`
+  and `tools/mame_dump_memory.lua`).
+
+- **`tools/assets/oregon_trail_title.png`** -- a screenshot of the
+  original 1985 *The Oregon Trail* (MECC) Apple II title screen. Screenshots
+  of this game are widely archived at [archive.org](https://archive.org)'s
+  software library; for convenience this specific file was actually
+  fetched from [MobyGames](https://www.mobygames.com/)'s CDN
+  (`cdn.mobygames.com`) rather than archive.org directly. Used here for
+  development/testing purposes (Hi-Res bitmap conversion pipeline
+  verification) under fair-use/reference norms; not an original work of
+  this project and not covered by the MIT license above.
+
+If you're redistributing this repository, exclude or replace the files
+listed above -- they are not licensed for redistribution by this project.
+
+Everything else in this repository (all `.c`/`.h`/`.s`/`.py`/`.md`/`.dsk`
+files not listed above, including the synthetic disk images in `disks/`,
+which are generated entirely by this project's own tools, not copied from
+any external source) is covered by the MIT license above.
