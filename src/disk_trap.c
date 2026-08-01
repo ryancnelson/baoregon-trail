@@ -14,6 +14,11 @@ void disk_trap_set_image(const uint8_t *image) {
     g_disk_image = image;
 }
 
+void disk_trap_reset(void) {
+    g_selected_sector_offset = 0;
+    g_have_selection = 0;
+}
+
 int disk_trap_select_sector(uint8_t track, uint8_t sector) {
     uint32_t offset;
     if (dos33_sector_offset(track, sector, &offset) != 0) {

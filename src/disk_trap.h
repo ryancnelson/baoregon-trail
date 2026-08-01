@@ -39,6 +39,22 @@
  * disk_trap_select_sector()/disk_trap_read_byte(). */
 void disk_trap_set_image(const uint8_t *image);
 
+/* Reset the trap's (track, sector) SELECTION state only -- as if
+ * disk_trap_select_sector() had never been called (subsequent
+ * disk_trap_read_byte() calls safely return 0x00 until a new selection
+ * is made, matching tests/test_disk_trap_safe_defaults.c's documented
+ * contract). Does NOT clear the registered disk image
+ * (disk_trap_set_image()) -- a real Disk II's inserted disk stays
+ * physically in the drive across a CPU reset; only the drive's
+ * currently-latched track/sector registers reset, matching this
+ * module's existing $C0E0/$C0E1-select vs $C0EC-stream split. Call this
+ * from apple2_mem_reset() so a stale sector selection from before a
+ * reset (e.g. the 3-button soft-reset combo, or a failed boot retry)
+ * can never leak into a fresh boot attempt -- see
+ * tests/test_apple2_mem_reset_clears_disk_trap_selection.c for the
+ * real bug this fixes. */
+void disk_trap_reset(void);
+
 /* Select the (track, sector) that subsequent disk_trap_read_byte() calls
  * will serve from, mirroring how DOS 3.3 writes track/sector registers to
  * the $C0E0-$C0EF soft-switch range before reading sector data back.

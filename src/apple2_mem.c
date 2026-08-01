@@ -85,6 +85,7 @@ void apple2_mem_reset(void) {
     bunnie_audio_init(&g_audio_state);
     g_disk_stream_cursor = 0;
     g_pending_track = 0;
+    disk_trap_reset();
     g_display_text_mode = 1;
     g_display_mixed_mode = 0;
     g_display_page2_selected = 0;
