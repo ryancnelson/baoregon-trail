@@ -2163,6 +2163,30 @@ static void test_sbc_absolute_y_subtracts_value_with_index(void) {
           "test_sbc_absolute_y_subtracts_value_with_index");
 }
 
+static void test_illegal_opcode_consumes_one_byte_without_crashing(void) {
+    /* baochip confirmed illegal/undocumented NMOS opcodes are out of
+     * scope for DOS 3.3/ProDOS/Oregon Trail 1985 (documented opcodes
+     * only). But the default-case fallback itself must still be SAFE:
+     * it must not crash, hang, or corrupt registers -- just consume the
+     * opcode byte and continue, so a stray illegal byte in memory (from
+     * misaligned execution, a decode bug elsewhere, etc.) degrades
+     * gracefully instead of taking down the whole emulator. 0x02 is one
+     * of the unassigned/illegal NMOS opcode slots (real hardware treats
+     * it as a JAM/KIL instruction that hangs the bus -- deliberately NOT
+     * replicating that hang here, since a soft "safe no-op" is strictly
+     * better for an emulator than freezing the whole system). */
+    setup();
+    a = 0x55;
+    x = 0x66;
+    y = 0x77;
+    status = FLAG_CARRY | FLAG_ZERO;
+    test_ram[0x0400] = 0x02; /* illegal/unassigned opcode */
+    step6502();
+    CHECK(pc == 0x0401 && a == 0x55 && x == 0x66 && y == 0x77 &&
+          status == (FLAG_CARRY | FLAG_ZERO) && clockticks6502 == 2,
+          "test_illegal_opcode_consumes_one_byte_without_crashing");
+}
+
 int main(void) {
     test_nop_advances_pc_and_takes_2_cycles();
     test_lda_immediate_loads_value();
@@ -2342,6 +2366,7 @@ int main(void) {
     test_eor_absolute_y_toggles_bits_with_index();
     test_sbc_absolute_x_subtracts_value_with_index();
     test_sbc_absolute_y_subtracts_value_with_index();
+    test_illegal_opcode_consumes_one_byte_without_crashing();
 
     if (failures > 0) {
         printf("\n%d test(s) FAILED\n", failures);
