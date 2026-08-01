@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">STEP 5 LORES APPLE2 ROW OFFSETS TEST (348 Tests) GREEN</span>
+                    <span class="pill pill-green">STEP 5 CARTRIDGE LAYOUT FIND BY TITLE TEST (349 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -380,7 +380,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Boot Perf NULL Metrics &amp; 50ms Boundary Test (<code class="code-inline">test_boot_perf_null_metrics.c</code>)</span>
-                        <span class="pill pill-green">GREEN (348 PASS)</span>
+                        <span class="pill pill-green">GREEN (349 PASS)</span>
                     </div>
                 </div>
 
@@ -394,7 +394,7 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Disk Sector Layout Max Track &amp; Sector Boundary Test (<code class="code-inline">test_disk_sector_layout_max_track_sector.c</code>)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Cartridge Layout Find Slot By Title Test (<code class="code-inline">test_cartridge_layout_find_by_title.c</code>)</span>
                         <span class="pill pill-green">GREEN (14.2 KB Binary)</span>
                     </div>
                 </div>
@@ -410,7 +410,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Lo-Res Graphics Row Offsets &amp; Bounds Safety Test (<code class="code-inline">test_lores_apple2_row_offsets_bounds.c</code>)</span>
-                        <span class="pill pill-green">GREEN (348 PASS)</span>
+                        <span class="pill pill-green">GREEN (349 PASS)</span>
                     </div>
                 </div>
 
@@ -487,8 +487,8 @@
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <h4>Days 5 – 6: Lo-Res Graphics Row Offsets &amp; Bounds Safety Test (<code class="code-inline">lores_apple2.c</code>) (COMPLETE)</h4>
-                            <p>Bunnie added <code class="code-inline">test_lores_apple2_row_offsets_bounds.c</code> verifying all 24 byte-row offsets fit within 1KB Page 1/2 memory and NULL safety (348 tests GREEN)!</p>
+                            <h4>Days 5 – 6: Cartridge Layout Find Slot By Title Test (<code class="code-inline">cartridge_layout.c</code>) (COMPLETE)</h4>
+                            <p>Duke added <code class="code-inline">test_cartridge_layout_find_by_title.c</code> verifying title lookup API, exact address resolution, and NULL pointer safety (349 tests GREEN)!</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,30 +510,30 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. Lo-Res Graphics Row Offsets &amp; Bounds Safety Test Landed (<code class="code-inline">lores_apple2.c</code>)</div>
+                    <div class="decision-title">1. Cartridge Layout Find Slot By Title API Landed (<code class="code-inline">cartridge_layout.c</code>)</div>
                     <div class="decision-desc">
-                        Bunnie added <code class="code-inline">test_lores_apple2_row_offsets_bounds.c</code> proving <code class="code-inline">lores_byte_row_offsets[]</code> entries stay strictly inside the 1KB Page 1/2 range and NULL safety is enforced (348 tests GREEN)!
+                        Duke added <code class="code-inline">cartridge_layout_find_slot_by_title()</code> and <code class="code-inline">test_cartridge_layout_find_by_title.c</code> proving exact title lookup, address resolution, and NULL title safety (349 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Hi-Res Video Row Offsets &amp; Bounds Safety Test Landed (<code class="code-inline">video_apple2.c</code>)</div>
+                    <div class="decision-title">2. Lo-Res Graphics Row Offsets &amp; Bounds Safety Test Landed (<code class="code-inline">lores_apple2.c</code>)</div>
                     <div class="decision-desc">
-                        Bunnie added <code class="code-inline">test_video_apple2_row_offsets_bounds.c</code> proving <code class="code-inline">hires_line_offsets[]</code> entries stay strictly inside the 8KB Hi-Res page (348 tests GREEN)!
+                        Bunnie added <code class="code-inline">test_lores_apple2_row_offsets_bounds.c</code> proving <code class="code-inline">lores_byte_row_offsets[]</code> entries stay strictly inside the 1KB Page 1/2 range (349 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">3. Boot Perf NULL Metrics &amp; 50ms Boundary Test Landed (<code class="code-inline">boot_perf.c</code>)</div>
+                    <div class="decision-title">3. Hi-Res Video Row Offsets &amp; Bounds Safety Test Landed (<code class="code-inline">video_apple2.c</code>)</div>
                     <div class="decision-desc">
-                        Woz added <code class="code-inline">test_boot_perf_null_metrics.c</code> proving <code class="code-inline">boot_perf_init()</code>, <code class="code-inline">boot_perf_record_boot()</code>, and <code class="code-inline">boot_perf_is_sub_50ms()</code> safely handle NULL pointers and enforce strict &lt; 50ms semantics (348 tests GREEN)!
+                        Bunnie added <code class="code-inline">test_video_apple2_row_offsets_bounds.c</code> proving <code class="code-inline">hires_line_offsets[]</code> entries stay strictly inside the 8KB Hi-Res page (349 tests GREEN)!
                     </div>
                 </div>
 
                 <div class="decision-item">
                     <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (348 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (349 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), <code class="code-inline">make test-biosim</code> (RTL PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
