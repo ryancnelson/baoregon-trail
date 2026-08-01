@@ -85,9 +85,21 @@ typedef enum {
  * calls hires_decode_scanline_mono() for the raw on/off bits plus tracks the
  * per-byte high bit, then applies the artifacting rule above per pixel.
  *
- * row must be in [0, HIRES_ROWS).
+ * row must be in [0, HIRES_ROWS). Always targets Hi-Res PAGE 1 ($2000) --
+ * see hires_decode_scanline_color_page() for page-2-aware decoding.
  */
 void hires_decode_scanline_color(int row, read6502_fn read_mem,
                                   hires_color_t out_colors[HIRES_PIXELS_WIDE]);
+
+/*
+ * Page-aware variant of hires_decode_scanline_color(): page2 is 0 for
+ * Page 1 ($2000-$3FFF) or nonzero for Page 2 ($4000-$5FFF), matching
+ * apple2_mem_is_page2_selected()'s return convention. Both the on/off
+ * bits AND the palette (high) bit are read from the selected page.
+ * hires_decode_scanline_color(row, read_mem, out) is equivalent to
+ * hires_decode_scanline_color_page(row, 0, read_mem, out).
+ */
+void hires_decode_scanline_color_page(int row, int page2, read6502_fn read_mem,
+                                       hires_color_t out_colors[HIRES_PIXELS_WIDE]);
 
 #endif /* VIDEO_APPLE2_H */
