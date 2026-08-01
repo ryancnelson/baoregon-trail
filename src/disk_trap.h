@@ -39,6 +39,9 @@
  * disk_trap_select_sector()/disk_trap_read_byte(). */
 void disk_trap_set_image(const uint8_t *image);
 
+/* Unload the registered disk image pointer (sets to NULL) and reset selection state. */
+void disk_trap_clear_image(void);
+
 /* Reset the trap's (track, sector) SELECTION state only -- as if
  * disk_trap_select_sector() had never been called (subsequent
  * disk_trap_read_byte() calls safely return 0x00 until a new selection

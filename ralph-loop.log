@@ -746,3 +746,25 @@ f3b1e76 Update ralph-loop.log with latest pass 94 status
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  
 [2026-08-01 05:34:30] --- checking Bunnie ---
+[2026-08-01 05:35:50] Bunnie reply (truncated): ��───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 
+[2026-08-01 05:35:50] --- checking Duke ---
+[2026-08-01 05:39:17] Duke reply (truncated): ��───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 
+[2026-08-01 05:39:17] --- checking baochip ---
+[2026-08-01 05:40:06] baochip reply (truncated): ────────────────────────────
+>
+────────────────────────────────────────────────────────────────────────────────────────
+  ● [05:39:51] rtk make test && make test-firmware && make test-biosim && mak... running
+────────────────────────────────────────────────────────────────────────────────────────
+? for shortcuts                             Gemini 3.6 Flash · high · 1 task(s) · /tasks
+[2026-08-01 05:40:06] recent commits: 41c46a0 disk_trap: add missing end-to-end regression test for reset->selection wiring
+5607662 Update ralph-loop.log with latest pass 97 status
+bc9b496 apple2_mem: lock in reset() clearing pending keyboard strobe with regression test
+ea0edad Update ralph-loop.log with latest pass 96 status
+60ef229 Update dashboard.html: 323 tests GREEN, 14.1 KB RISC-V binary, Disk Trap Selected Offset Getter landed
+[2026-08-01 05:40:06] sleeping 300s...

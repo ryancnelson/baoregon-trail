@@ -14,6 +14,11 @@ void disk_trap_set_image(const uint8_t *image) {
     g_disk_image = image;
 }
 
+void disk_trap_clear_image(void) {
+    g_disk_image = (const uint8_t *)0;
+    disk_trap_reset();
+}
+
 void disk_trap_reset(void) {
     g_selected_sector_offset = 0;
     g_have_selection = 0;
