@@ -184,6 +184,47 @@ static void test_nmi_pushes_status_without_break_flag(void) {
           "test_nmi_pushes_status_without_break_flag");
 }
 
+static void test_nmi_then_rti_returns_to_interrupted_pc(void) {
+    /* Mirror of test_irq_then_rti_returns_to_interrupted_pc for NMI --
+     * never verified before that NMI's stack frame round-trips cleanly
+     * through RTI back to the exact interrupted PC/flags. */
+    setup();
+    test_ram[0xFFFA] = 0x00;
+    test_ram[0xFFFB] = 0x0A;
+    test_ram[0x0A00] = 0x40; /* RTI */
+    pc = 0x0500;
+    status = FLAG_OVERFLOW;
+
+    nmi6502();
+    step6502(); /* RTI */
+
+    CHECK(pc == 0x0500 && (status & FLAG_OVERFLOW) != 0,
+          "test_nmi_then_rti_returns_to_interrupted_pc");
+}
+
+static void test_nmi_fires_during_a_masked_irq_situation_unaffected(void) {
+    /* Combined scenario: IRQ is masked (FLAG_INTERRUPT set, e.g. because
+     * an earlier irq6502() call already ran), but NMI must still fire
+     * and jump through its OWN vector, completely independent of IRQ's
+     * masked state -- proves the two interrupt paths don't share any
+     * masking logic that could accidentally cross-contaminate. */
+    setup();
+    test_ram[0xFFFE] = 0x00;
+    test_ram[0xFFFF] = 0x09; /* IRQ/BRK vector -> $0900 */
+    test_ram[0xFFFA] = 0x00;
+    test_ram[0xFFFB] = 0x0A; /* NMI vector -> $0A00 */
+    pc = 0x0500;
+
+    irq6502(); /* sets FLAG_INTERRUPT, jumps to $0900 */
+    CHECK(pc == 0x0900, "test_nmi_fires_during_a_masked_irq_situation_unaffected: IRQ landed first");
+
+    pc = 0x0600; /* pretend some IRQ handler code ran and moved pc */
+    nmi6502();
+
+    CHECK(pc == 0x0A00,
+          "test_nmi_fires_during_a_masked_irq_situation_unaffected: NMI still fires despite I-flag set");
+}
+
 int main(void) {
     test_irq_jumps_through_irq_brk_vector();
     test_irq_pushes_unmodified_pc_not_pc_plus_1();
@@ -194,6 +235,8 @@ int main(void) {
     test_nmi_jumps_through_dedicated_nmi_vector();
     test_nmi_is_never_masked_by_interrupt_disable();
     test_nmi_pushes_status_without_break_flag();
+    test_nmi_then_rti_returns_to_interrupted_pc();
+    test_nmi_fires_during_a_masked_irq_situation_unaffected();
 
     if (failures == 0) {
         printf("All tests passed.\n");
