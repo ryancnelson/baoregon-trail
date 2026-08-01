@@ -662,3 +662,20 @@ ed94154 Update ralph-loop.log with latest pass 84 status
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  
 [2026-08-01 04:56:16] --- checking baochip ---
+[2026-08-01 04:57:12] baochip reply (truncated): �────
+  ###    Repository Sync
+
+  All commits pushed to Gitea origin main at http://biggie:3000/ryan/baoregon-
+  trail.git.
+  Live Status Dashboard: **dashboard.html**.
+
+────────────────────────────────────────────────────────────────────────────────────────
+>
+────────────────────────────────────────────────────────────────────────────────────────
+? for shortcuts                                                  Gemini 3.6 Flash · high
+[2026-08-01 04:57:12] recent commits: e271247 Update dashboard.html: 321 tests GREEN, 14.1 KB RISC-V binary, Game Running Predicate landed
+cb5c84c emulator_loop: add baoregon_emulator_is_game_running predicate with unit tests (321 tests GREEN)
+fd840e8 Update ralph-loop.log with latest pass 89 status
+d0270e3 emulator_loop: wire bio_display_dma_push into run_frame (real integration gap)
+d66473e Update ralph-loop.log with latest pass 88 status
+[2026-08-01 04:57:12] sleeping 300s...
