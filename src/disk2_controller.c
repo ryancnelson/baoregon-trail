@@ -48,8 +48,23 @@
  * this driver actually needs -- see tools/dsk_to_nib.py (to be written)
  * and NEXT_STEPS.md Step 7 for the current state of that gap.
  */
-#include <string.h>
+#include <stddef.h>
 #include "disk2_controller.h"
+
+static void local_memset(void *dest, int val, size_t n) {
+    uint8_t *p = (uint8_t *)dest;
+    for (size_t i = 0; i < n; i++) {
+        p[i] = (uint8_t)val;
+    }
+}
+
+static void local_memcpy(void *dest, const void *src, size_t n) {
+    uint8_t *d = (uint8_t *)dest;
+    const uint8_t *s = (const uint8_t *)src;
+    for (size_t i = 0; i < n; i++) {
+        d[i] = s[i];
+    }
+}
 
 /* Logic State Sequencer ROM (P6), DOS 3.3 / 16-sector variant only.
  * See Understanding the Apple IIe, Figure 9.11. Ported verbatim from
@@ -99,7 +114,7 @@ enum {
 };
 
 void disk2_controller_reset(disk2_controller_t *ctl) {
-    memset(ctl, 0, sizeof(*ctl));
+    local_memset(ctl, 0, sizeof(*ctl));
     ctl->drive[0].track = 0;
     ctl->drive[1].track = 0;
 }
@@ -108,7 +123,7 @@ void disk2_controller_load_nibble_disk(disk2_controller_t *ctl, int drive_no,
                                         const disk2_nibble_track_t tracks[DISK2_MAX_TRACKS],
                                         int read_only) {
     disk2_drive_state_t *d = &ctl->drive[drive_no];
-    memcpy(d->tracks, tracks, sizeof(d->tracks));
+    local_memcpy(d->tracks, tracks, sizeof(d->tracks));
     d->read_only = read_only;
     d->has_disk = 1;
 }
