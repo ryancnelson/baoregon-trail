@@ -366,7 +366,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">👥 Crew Status & Active Iterations</div>
-                    <span class="pill pill-green">10 Host + 1 RISC-V Target (132 Tests) GREEN</span>
+                    <span class="pill pill-green">10 Host + 1 RISC-V Target (155 Tests) GREEN</span>
                 </div>
 
                 <!-- Specialist 1: Woz -->
@@ -379,8 +379,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 2: 102 Opcodes + Klaus Dormann Test Suite Harness</span>
-                        <span class="pill pill-green">GREEN (102 PASS)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 2: 125 Opcodes + Klaus Dormann Test Suite</span>
+                        <span class="pill pill-green">GREEN (125 PASS)</span>
                     </div>
                 </div>
 
@@ -395,7 +395,7 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 5: Multi-Sector Traps &amp; Linker Placement</span>
-                        <span class="pill pill-green">GREEN (5.2 KB Binary)</span>
+                        <span class="pill pill-green">GREEN (7.8 KB Binary)</span>
                     </div>
                 </div>
 
@@ -409,8 +409,8 @@
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 1rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 4: <code class="code-inline">bio_display.c</code> DMA Driver &amp; Audio PWM</span>
-                        <span class="pill pill-green">GREEN (16 PASS)</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary)">Step 4: QEMU RV32E Bare-Metal Audio &amp; BIO Display</span>
+                        <span class="pill pill-green">GREEN (QEMU PASS)</span>
                     </div>
                 </div>
 
@@ -474,21 +474,21 @@
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
                             <h4>Days 1 – 2: 6502 Core, Memory Router, Audio &amp; Disk Generator (COMPLETE)</h4>
-                            <p>Woz: 102 CPU Opcodes GREEN + Klaus Dormann harness. Duke: Memory router (<code class="code-inline">apple2_mem.c</code>), traps &amp; <code class="code-inline">embed_disk.py</code> GREEN. Bunnie: 192-line un-swizzler &amp; $C030 PWM GREEN.</p>
+                            <p>Woz: 125 CPU Opcodes GREEN + Klaus Dormann harness. Duke: Memory router (<code class="code-inline">apple2_mem.c</code>), traps &amp; <code class="code-inline">embed_disk.py</code> GREEN. Bunnie: 192-line un-swizzler &amp; $C030 PWM GREEN.</p>
                         </div>
                     </div>
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
                             <h4>Days 3 – 4: RISC-V Cross-Compilation &amp; Linker Script (COMPLETE)</h4>
-                            <p><code class="code-inline">linker.ld</code>, <code class="code-inline">crt0.S</code>, and <code class="code-inline">Makefile.riscv</code> complete! Built <code class="code-inline">baoregon.bin</code> (5.2 KB ReRAM Flash image) with verified section placement.</p>
+                            <p><code class="code-inline">linker.ld</code>, <code class="code-inline">crt0.S</code>, and <code class="code-inline">Makefile.riscv</code> complete! Built <code class="code-inline">baoregon.bin</code> (7.8 KB ReRAM Flash image) with verified section placement.</p>
                         </div>
                     </div>
                     <div class="timeline-item active">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
                             <h4>Days 5 – 6: BIO Sim (<code class="code-inline">baochip/bio-sim</code>) &amp; Firmware Validation (IN PROGRESS)</h4>
-                            <p>Bunnie building BIO display DMA (<code class="code-inline">bio_display.c</code>) &amp; audio firmware templates (<code class="code-inline">-march=rv32e</code>) for PicoRV32 execution &amp; DMA using Verilator <code class="code-inline">bio-sim</code> harness.</p>
+                            <p>Bunnie landed QEMU bare-metal RV32E firmware testing for BIO Core 1 (<code class="code-inline">bio_audio.S</code>) and building BIO display DMA (<code class="code-inline">bio_display.c</code>).</p>
                         </div>
                     </div>
                     <div class="timeline-item">
@@ -510,30 +510,30 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. Klaus Dormann Functional Test Suite Harness</div>
+                    <div class="decision-title">1. 125 6502 Opcodes GREEN</div>
                     <div class="decision-desc">
-                        Woz landed <code class="code-inline">tests/test_functional_suite.c</code> to run Klaus Dormann's 6502 test vectors, ensuring 100% hardware-accurate opcode behavior.
+                        Woz added <code class="code-inline">AND</code>/<code class="code-inline">ORA</code>/<code class="code-inline">EOR</code>/<code class="code-inline">ADC</code>/<code class="code-inline">SBC</code>/<code class="code-inline">CMP</code> absolute, <code class="code-inline">STX</code>/<code class="code-inline">STY</code>/<code class="code-inline">STA</code>, <code class="code-inline">JMP indirect</code>, <code class="code-inline">BRK</code>, and <code class="code-inline">RTI</code>, bringing total test suite to 155 GREEN.
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">2. Physical Controls: 3 Buttons (Count CONFIRMED, Layout TBD)</div>
+                    <div class="decision-title">2. QEMU RV32E Bare-Metal Firmware Test Suite</div>
                     <div class="decision-desc">
-                        Confirmed via Ryan: badge has <b>3 physical buttons</b>. Exact geometry/layout is TBD pending clearer photo. Software uses layout-independent logical mapping (<code class="code-inline">Button 0</code> PREV, <code class="code-inline">Button 1</code> NEXT, <code class="code-inline">Button 2</code> SELECT).
+                        Bunnie added <code class="code-inline">make test-firmware</code> to execute bare-metal RV32E assembly under <code class="code-inline">qemu-system-riscv32</code> virt machine (diagnosing and fixing <code class="code-inline">-mno-relax</code> linker relaxation).
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">3. Display Panel Spec: ASSUMED (TBD)</div>
+                    <div class="decision-title">3. Physical Controls: 3 Buttons (Count CONFIRMED, Layout TBD)</div>
                     <div class="decision-desc">
-                        Display resolution/interface is ASSUMED in public docs (drops next week). Emulator outputs canonical 280x192 RGB565 buffer in SRAM; <code class="code-inline">bio_display.c</code> abstracts hardware panel DMA.
+                        Confirmed via Ryan: badge has <b>3 physical buttons</b>. Exact geometry/layout is TBD. Software uses layout-independent logical mapping (<code class="code-inline">Button 0</code> PREV, <code class="code-inline">Button 1</code> NEXT, <code class="code-inline">Button 2</code> SELECT).
                     </div>
                 </div>
 
                 <div class="decision-item">
                     <div class="decision-title">4. Ralph Loop Automated Driver Active</div>
                     <div class="decision-desc">
-                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (132 PASS) and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
+                        Continuous background loop (<code class="code-inline">task-195</code>) polls canvas specialists every 5 minutes, verifies <code class="code-inline">make test</code> (155 PASS), <code class="code-inline">make test-firmware</code> (QEMU PASS), and <code class="code-inline">make -f Makefile.riscv</code>, auto-pushing to Gitea (<code class="code-inline">origin main</code>).
                     </div>
                 </div>
 
