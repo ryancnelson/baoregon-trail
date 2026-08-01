@@ -1289,6 +1289,23 @@ static void test_rti_restores_status_and_pc_from_stack(void) {
           "test_rti_restores_status_and_pc_from_stack");
 }
 
+static void test_brk_pushed_status_has_break_flag_set(void) {
+    /* This is how RTI-side software distinguishes a BRK-triggered stack
+     * frame from an IRQ-triggered one (irq6502() deliberately pushes
+     * status with B CLEAR -- see tests/test_interrupts.c). Never
+     * directly asserted before despite being the whole reason BRK pushes
+     * status | FLAG_BREAK instead of just status. */
+    setup();
+    test_ram[0xFFFE] = 0x00;
+    test_ram[0xFFFF] = 0x09;
+    status = FLAG_CARRY; /* B and constant not set beforehand */
+    test_ram[0x0400] = 0x00; /* BRK */
+    step6502();
+    uint8_t pushed_status = test_ram[0x0100 + sp + 1];
+    CHECK((pushed_status & FLAG_BREAK) != 0,
+          "test_brk_pushed_status_has_break_flag_set");
+}
+
 static void test_sta_absolute_stores_accumulator(void) {
     setup();
     a = 0x42;
@@ -2343,6 +2360,7 @@ int main(void) {
     test_brk_pushes_pc_and_status_then_jumps_to_irq_vector();
     test_brk_pushed_return_address_is_pc_plus_2();
     test_rti_restores_status_and_pc_from_stack();
+    test_brk_pushed_status_has_break_flag_set();
     test_sta_absolute_stores_accumulator();
     test_stx_zeropage_stores_x_register();
     test_stx_zeropage_y_stores_x_register_with_index();
