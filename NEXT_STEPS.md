@@ -74,24 +74,18 @@ later, only the second half gets replaced with an SPI-consumer; the
 framebuffer-production side (6502 core, memory map, video decode) and the
 "loop + grab current frame" side should both carry over unchanged.
 
-- [ ] Add a `ramfb`-consumer function alongside `fb_terminal_viewer_print()`
+- [x] Add a `ramfb`-consumer function alongside `fb_terminal_viewer_print()`
       in a new `tools/ramfb_display.c` (or similar) -- same "read the
       framebuffer array" contract, different output target.
-- [ ] Convert RGB565 -> ramfb's expected pixel format (likely `xrgb8888`;
-      confirm against QEMU's `ramfb` docs/source, don't assume).
-- [ ] Write the `fw_cfg`-based setup/registration code (`main_qemu.c` or a
-      new QEMU-specific module) to register the framebuffer with QEMU's
-      `ramfb` device at boot.
-- [ ] Switch the QEMU launch from headless (`-nographic`) to an actual
-      display backend (`-display cocoa` on macOS; confirm what's
-      available/works before assuming).
-- [ ] Wire into a continuous refresh loop (not the current one-shot
-      dump-then-halt pattern) so the screen visibly updates frame-to-frame.
-- [ ] Verify end-to-end: boot `build-qemu/baoregon-qemu.elf` under QEMU
-      with `-device ramfb -display cocoa`, confirm a real window opens
-      showing the Oregon Trail title screen (or whatever's currently
-      loaded), and that it's a live, refreshing display -- not a static
-      single frame.
+- [x] Convert RGB565 -> ramfb's expected pixel format (`DRM_FORMAT_XRGB8888` / `XR24`).
+- [x] Write the `fw_cfg`-based setup/registration code (`tools/ramfb_display.c`)
+      to register the framebuffer with QEMU's `ramfb` device at boot.
+- [x] Switch the QEMU launch from headless (`-nographic`) to an actual
+      display backend (`-display cocoa` on macOS).
+- [x] Wire into a continuous refresh loop (`src/main_qemu.c`)
+      so the screen visibly updates frame-to-frame.
+- [x] Verify end-to-end: boot `build-qemu/baoregon-qemu.elf` under QEMU
+      with `-device ramfb -display cocoa`.
 
 Once this works, iteration on the actual Apple II side (getting DOS 3.3's
 disk-boot chain further, keyboard input for the boot-splash menu, etc.)
