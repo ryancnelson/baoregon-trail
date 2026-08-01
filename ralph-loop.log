@@ -398,3 +398,20 @@ b86dc58 bio_display.h: document BIO Core 3 memcopy-DMA handoff for real display 
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  
 [2026-08-01 02:39:05] --- checking baochip ---
+[2026-08-01 02:39:47] baochip reply (truncated): �────
+  ###    Repository Sync
+
+  All commits pushed to Gitea origin main at http://biggie:3000/ryan/baoregon-
+  trail.git.
+  Live Status Dashboard: **dashboard.html**.
+
+────────────────────────────────────────────────────────────────────────────────────────
+>
+────────────────────────────────────────────────────────────────────────────────────────
+? for shortcuts                                                  Gemini 3.6 Flash · high
+[2026-08-01 02:39:47] recent commits: 42ac6c2 Update dashboard.html: 309 tests GREEN, 13.9 KB RISC-V binary, Emulator Loop Reset to Splash landed
+faad10c emulator_loop: add baoregon_emulator_reset_to_splash function with unit tests (309 tests GREEN)
+441e4f8 emulator_loop: expose baoregon_emulator_get_current_slot() for "now playing" access
+546873c emulator_loop: include cartridge_layout.h header in emulator_loop.h (308 tests GREEN)
+d2df065 bio-sim-tests: extend real bio-sim RTL palette verification to Lo-Res (16 colors)
+[2026-08-01 02:39:47] sleeping 300s...
