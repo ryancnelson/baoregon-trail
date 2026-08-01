@@ -682,6 +682,20 @@ void step6502(void) {
             break;
         }
 
+        case 0xFD: { /* SBC absolute,X */
+            int page_crossed;
+            sbc_with_operand(read6502(fetch_absolute_indexed_addr(x, &page_crossed)));
+            clockticks6502 += page_crossed ? 5 : 4;
+            break;
+        }
+
+        case 0xF9: { /* SBC absolute,Y */
+            int page_crossed;
+            sbc_with_operand(read6502(fetch_absolute_indexed_addr(y, &page_crossed)));
+            clockticks6502 += page_crossed ? 5 : 4;
+            break;
+        }
+
         case 0xBE: { /* LDX absolute,Y */
             int page_crossed;
             x = read6502(fetch_absolute_indexed_addr(y, &page_crossed));

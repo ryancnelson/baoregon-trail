@@ -2132,6 +2132,37 @@ static void test_eor_absolute_y_toggles_bits_with_index(void) {
           "test_eor_absolute_y_toggles_bits_with_index");
 }
 
+static void test_sbc_absolute_x_subtracts_value_with_index(void) {
+    /* Found via Klaus Dormann's functional_test.bin integration run:
+     * SBC absolute,X and absolute,Y were missing (ADC had them, SBC
+     * did not -- an asymmetric gap between the two). */
+    setup();
+    status |= FLAG_CARRY;
+    a = 0x10;
+    x = 0x04;
+    test_ram[0x0400] = 0xFD; /* SBC $5000,X */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x50;
+    test_ram[0x5004] = 0x05;
+    step6502();
+    CHECK(a == 0x0B && pc == 0x0403 && clockticks6502 == 4,
+          "test_sbc_absolute_x_subtracts_value_with_index");
+}
+
+static void test_sbc_absolute_y_subtracts_value_with_index(void) {
+    setup();
+    status |= FLAG_CARRY;
+    a = 0x10;
+    y = 0x04;
+    test_ram[0x0400] = 0xF9; /* SBC $5000,Y */
+    test_ram[0x0401] = 0x00;
+    test_ram[0x0402] = 0x50;
+    test_ram[0x5004] = 0x05;
+    step6502();
+    CHECK(a == 0x0B && pc == 0x0403 && clockticks6502 == 4,
+          "test_sbc_absolute_y_subtracts_value_with_index");
+}
+
 int main(void) {
     test_nop_advances_pc_and_takes_2_cycles();
     test_lda_immediate_loads_value();
@@ -2309,6 +2340,10 @@ int main(void) {
     test_ora_absolute_y_sets_bits_with_index();
     test_eor_absolute_x_toggles_bits_with_index();
     test_eor_absolute_y_toggles_bits_with_index();
+    test_sbc_absolute_x_subtracts_value_with_index();
+    test_sbc_absolute_y_subtracts_value_with_index();
+    test_sbc_absolute_x_subtracts_value_with_index();
+    test_sbc_absolute_y_subtracts_value_with_index();
 
     if (failures > 0) {
         printf("\n%d test(s) FAILED\n", failures);
