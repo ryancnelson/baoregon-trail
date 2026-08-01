@@ -37,6 +37,7 @@ SOURCES = \
     $(SRC_DIR)/main.c \
     $(SRC_DIR)/cpu6502.c \
     $(SRC_DIR)/apple2_mem.c \
+    $(SRC_DIR)/disk2_controller.c \
     $(SRC_DIR)/disk_sector_layout.c \
     $(SRC_DIR)/disk_trap.c \
     $(SRC_DIR)/bunnie_audio.c \

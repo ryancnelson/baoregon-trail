@@ -51,6 +51,13 @@ void apple2_mem_load_system_rom(const uint8_t *image) {
 static uint8_t g_disk_stream_cursor = 0;
 static uint8_t g_pending_track = 0;
 
+/* Disk II controller mode switch state + the single disk2_controller_t
+ * instance this module owns -- see apple2_mem.h's doc comment for the
+ * full architecture rationale. Defaults to DISK_TRAP (0), preserving
+ * every prior behavior for callers that never touch this switch. */
+static apple2_mem_disk_controller_mode_t g_disk_controller_mode = APPLE2_MEM_DISK_CONTROLLER_DISK_TRAP;
+static disk2_controller_t g_disk2_controller;
+
 /* Display-mode softswitch state ($C050-$C057). Post-reset defaults match
  * real Apple II hardware: TEXT mode, PAGE1, LORES, full-screen (not
  * MIXED). */
@@ -102,6 +109,8 @@ void apple2_mem_reset(void) {
     g_disk_stream_cursor = 0;
     g_pending_track = 0;
     disk_trap_reset();
+    g_disk_controller_mode = APPLE2_MEM_DISK_CONTROLLER_DISK_TRAP;
+    disk2_controller_reset(&g_disk2_controller);
     g_display_text_mode = 1;
     g_display_mixed_mode = 0;
     g_display_page2_selected = 0;
@@ -127,6 +136,14 @@ void apple2_mem_reset(void) {
 
 void apple2_mem_set_disk_image(const uint8_t *image) {
     disk_trap_set_image(image);
+}
+
+void apple2_mem_set_disk_controller_mode(apple2_mem_disk_controller_mode_t mode) {
+    g_disk_controller_mode = mode;
+}
+
+disk2_controller_t *apple2_mem_get_disk2_controller(void) {
+    return &g_disk2_controller;
 }
 
 bunnie_audio_state_t *apple2_mem_get_audio_state(void) {
@@ -312,6 +329,13 @@ static uint8_t read_paddle(int paddle_index) {
 static void handle_soft_switch_write(uint16_t address, uint8_t value) {
     if (address == 0xC030) {
         bunnie_audio_trigger_toggle(&g_audio_state);
+    } else if (address >= 0xC0E0 && address <= 0xC0EF &&
+               g_disk_controller_mode == APPLE2_MEM_DISK_CONTROLLER_DISK2) {
+        /* Real Disk II controller mode: route the whole $C0E0-$C0EF
+         * range to disk2_controller.c instead of disk_trap.c -- see
+         * apple2_mem.h's doc comment for why these two can never both
+         * be wired up at once. */
+        disk2_controller_access(&g_disk2_controller, (uint8_t)(address - 0xC0E0), 1, value);
     } else if (address == 0xC0E0) {
         g_pending_track = value;
     } else if (address == 0xC0E1) {
@@ -335,6 +359,10 @@ static uint8_t handle_soft_switch_read(uint16_t address) {
     if (address == 0xC030) {
         bunnie_audio_trigger_toggle(&g_audio_state);
         return 0x00;
+    }
+    if (address >= 0xC0E0 && address <= 0xC0EF &&
+        g_disk_controller_mode == APPLE2_MEM_DISK_CONTROLLER_DISK2) {
+        return disk2_controller_access(&g_disk2_controller, (uint8_t)(address - 0xC0E0), 0, 0);
     }
     if (address == 0xC0EC) {
         uint8_t byte = disk_trap_read_byte(g_disk_stream_cursor);

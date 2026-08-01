@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "bunnie_audio.h"
+#include "disk2_controller.h"
 
 /*
  * apple2_mem.c -- 64KB Apple II memory map + $C000-$C0FF soft-switch
@@ -92,6 +93,54 @@ void apple2_mem_load_system_rom(const uint8_t *image);
 /* Register the ReRAM-resident disk image backing the $C0E0-$C0EF disk
  * trap. Thin pass-through to disk_trap_set_image() -- see disk_trap.h. */
 void apple2_mem_set_disk_image(const uint8_t *image);
+
+/*
+ * Disk II controller mode switch (NEXT_STEPS.md Step 7).
+ *
+ * $C0E0-$C0EF is a genuine address-space collision: disk_trap.c's
+ * fast-sector-read shortcut and disk2_controller.c's real Disk II
+ * softswitch/nibble emulation both need the exact same 16 addresses for
+ * slot 6. Architecture decision (2026-08-01, confirmed with Ryan): a
+ * runtime mode flag gates which one apple2_mem.c's read6502()/write6502()
+ * actually dispatch $C0E0-$C0EF to -- the two are NEVER both wired up at
+ * the same time.
+ *
+ *   APPLE2_MEM_DISK_CONTROLLER_DISK_TRAP (default, and restored by
+ *     apple2_mem_reset()): disk_trap.c's existing fast-sector-read
+ *     protocol -- used by the boot-splash menu's own synthetic
+ *     bootloaders (checkerboard/hires demos, dos33_sample.dsk) and any
+ *     existing test/tool that already depends on disk_trap.c's
+ *     $C0E0/$C0E1/$C0EC contract. This is the ONLY mode that existed
+ *     before this switch was added -- selecting it (or never calling
+ *     apple2_mem_set_disk_controller_mode() at all) preserves every
+ *     prior behavior exactly.
+ *
+ *   APPLE2_MEM_DISK_CONTROLLER_DISK2: disk2_controller.c's real Disk II
+ *     phase/motor/Q6/Q7 softswitch dispatch + nibble-level track
+ *     read/write -- needed to boot real, unmodified disk images (Zork
+ *     I, Apple DOS 3.3 System Master) whose boot code drives these
+ *     softswitches directly rather than calling disk_trap.c's
+ *     shortcut.
+ */
+typedef enum {
+    APPLE2_MEM_DISK_CONTROLLER_DISK_TRAP = 0,
+    APPLE2_MEM_DISK_CONTROLLER_DISK2 = 1,
+} apple2_mem_disk_controller_mode_t;
+
+/* Selects which controller $C0E0-$C0EF routes to. Takes effect
+ * immediately (does not itself reset either controller's internal
+ * state -- disk_trap.c's selection state and disk2_controller.c's
+ * drive/track state are independent and persist across a mode switch,
+ * matching real hardware where swapping which peripheral card occupies
+ * a slot doesn't affect the other card's own internal state). */
+void apple2_mem_set_disk_controller_mode(apple2_mem_disk_controller_mode_t mode);
+
+/* Exposes the single disk2_controller_t instance apple2_mem.c owns, so
+ * callers (test harnesses, and eventually a real disk-image loader) can
+ * call disk2_controller_load_nibble_disk() on it directly -- mirrors the
+ * existing apple2_mem_set_disk_image()/disk_trap_set_image() pattern for
+ * the disk_trap.c path. Never returns NULL. */
+disk2_controller_t *apple2_mem_get_disk2_controller(void);
 
 /* Expose Bunnie's audio state so BIO Core 1's polling loop (and tests) can
  * call bunnie_audio_poll_and_apply() on it. apple2_mem.c owns the single
