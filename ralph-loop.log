@@ -530,3 +530,20 @@ f022ff8 emulator_loop: add baoregon_emulator_get_cycles_per_frame getter with un
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  
 [2026-08-01 03:50:48] --- checking baochip ---
+[2026-08-01 03:51:41] baochip reply (truncated): �────
+  ###    Repository Sync
+
+  All commits pushed to Gitea origin main at http://biggie:3000/ryan/baoregon-
+  trail.git.
+  Live Status Dashboard: **dashboard.html**.
+
+────────────────────────────────────────────────────────────────────────────────────────
+>
+────────────────────────────────────────────────────────────────────────────────────────
+? for shortcuts                                                  Gemini 3.6 Flash · high
+[2026-08-01 03:51:41] recent commits: d87da7c Update dashboard.html: 316 tests GREEN, 14.0 KB RISC-V binary, Clear Button States Helper landed
+42c482c apple2_mem: add apple2_mem_clear_button_states helper with unit tests (316 tests GREEN)
+9781818 Update ralph-loop.log with latest pass 75 status
+db3d467 rram_driver.h: fix rram_read() docstring to match actual bounds-checked behavior
+03601a2 Update ralph-loop.log with latest pass 74 status
+[2026-08-01 03:51:41] sleeping 300s...
