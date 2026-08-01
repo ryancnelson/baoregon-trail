@@ -103,6 +103,7 @@ test: $(BUILD_DIR)/test_reset $(BUILD_DIR)/test_opcodes $(BUILD_DIR)/test_functi
 	@$(BUILD_DIR)/test_dos33_composed_boot
 	@python3 -m unittest tests.test_embed_disk -v
 	@python3 -m unittest tests.test_embed_disk_section_placement -v
+	@python3 -m unittest tests.test_embed_disk_output_write_error -v
 	@python3 -m unittest tests.test_embed_disk_missing_file -v
 	@python3 -m unittest tests.test_check_linker_placement_missing_file -v
 	@python3 -m unittest tests.test_build_cartridge_image -v

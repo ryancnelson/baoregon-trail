@@ -146,10 +146,14 @@ def main(argv: list[str] | None = None) -> int:
 
     header = embed_to_c_header(data, args.array_name)
 
-    if args.output:
-        args.output.write_text(header)
-    else:
-        sys.stdout.write(header)
+    try:
+        if args.output:
+            args.output.write_text(header)
+        else:
+            sys.stdout.write(header)
+    except OSError as exc:
+        print(f"error: could not write {args.output}: {exc.strerror}", file=sys.stderr)
+        return 1
     return 0
 
 
