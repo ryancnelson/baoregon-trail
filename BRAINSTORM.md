@@ -126,8 +126,26 @@ A custom retro boot splash screen allows using the 3 physical badge buttons (`PR
 
 #### C. ReRAM Driver Guidance:
 * **Unaligned Access & Readback**: ReRAM drivers require unaligned access handling and readback verification after sector writes.
-* **Safe Partition Boundary**: Keep usable ReRAM disk partition space around 2.5 MB (`0x20080000`) to guarantee ample headroom for `.text`/`.rodata` program code.
+* **Safe Partition Boundary**: Keep usable ReRAM disk partition space around 2.5 MB (`0x20280000`) to guarantee ample headroom for `.text`/`.rodata` program code. (Corrected 2026-07-31: an earlier draft of this note wrote `0x20080000`, which is only 512 KB past ReRAM's origin, not 2.5 MB. 2.5 MiB = 0x280000 bytes, so the correct address is `0x20000000 + 0x280000 = 0x20280000` -- see `src/cartridge_layout.h` / `tests/test_cartridge_layout.c` for the verified constant and regression test.)
 
 #### D. Silicon Peripheral Notes (ADC & SDIO):
 * **ADC**: Max input reference is 1.208V bandgap (requires 2.2k/1k voltage divider for 3.3V inputs; source impedance <= 3.2k). Enable ADC after analog block init + stabilization delay.
 * **SDIO**: 3 hardware silicon errata (hardcoded 38-cycle response timeout, clock stops in idle, `CMD2` fails). Workaround is SPI-mode SD access at 12.4 MHz.
+
+---
+
+### 7. Authoritative Power Architecture & Future Optimization Notes (bunnie huang)
+
+#### A. Hardware Power Measurements (Authoritative from bunnie huang):
+* **Full On** (700 MHz CPU + OLED display + External RAM + TRNG): `~40 mA`
+* **WFI Sleep** (Main CPU in `wfi`, SRAM state retained, interrupt wakeable): `~12–14 mA` (mostly SRAM leakage; undervolting the 0.7V core can reduce further).
+* **Deep Sleep** (RTC-only, SRAM powered down): `< 1 mA`
+
+#### B. Independent BIO Core Execution During Main CPU Sleep:
+* **Hardware Fact**: BIO coprocessor cores execute **100% independently** while the main VexRiscv CPU is suspended in `wfi` sleep (bunnie demonstrated driving WS2812 LED patterns entirely from BIO while the main CPU slept).
+* **Future Architectural Optimization**:
+  * Between 60Hz 6502 frame ticks, the main VexRiscv CPU can enter `wfi` sleep to save ~25 mA.
+  * BIO Core 0 continues display DMA refresh and BIO Core 1 handles audio PWM completely autonomously while the main CPU sleeps!
+
+#### C. PL230 MDMA Confirmation:
+* **bunnie huang confirmed**: The PL230 MDMA hardware block is a dead end (closed-source, difficult to configure, and bus-bandwidth limited). Using BIO Core 3 as a 700 MHz dedicated memcopy DMA engine offers equal-or-better throughput with 100% open-source C control.

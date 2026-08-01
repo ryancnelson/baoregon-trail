@@ -446,12 +446,12 @@
                     <div class="spec-box">
                         <div class="spec-label">BIO Cores</div>
                         <div class="spec-val">4x 700 MHz</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted)">PicoRV32 RV32IMC (x16-31 MMIO)</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted)">PicoRV32 (x16-31 MMIO)</div>
                     </div>
                     <div class="spec-box">
-                        <div class="spec-label">SRAM Memory</div>
-                        <div class="spec-val">2.0 MiB</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted)">64K Apple RAM = 3%</div>
+                        <div class="spec-label">Power Draw</div>
+                        <div class="spec-val">~40 mA</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted)">12mA WFI / &lt;1mA Deep</div>
                     </div>
                     <div class="spec-box">
                         <div class="spec-label">ReRAM Flash</div>
@@ -510,23 +510,23 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. ReRAM Driver Unaligned &amp; Readback Verification (Landed)</div>
+                    <div class="decision-title">1. Authoritative Power &amp; BIO Independent Execution (bunnie huang)</div>
                     <div class="decision-desc">
-                        Duke created <code class="code-inline">src/rram_driver.c</code> with unaligned byte-level access, sector readback verification, and partition boundaries at 2.5 MB (<code class="code-inline">0x20080000</code>).
+                        Full on ~40 mA; WFI sleep ~12–14 mA; Deep sleep &lt;1 mA. BIO cores execute 100% independently while main CPU is in WFI sleep (future optimization: main CPU sleeps between frames while BIO refreshes display/audio).
                     </div>
                 </div>
 
                 <div class="decision-item">
                     <div class="decision-title">2. PL230 MDMA Erratum &amp; BIO3 DMA Engine (CONFIRMED)</div>
                     <div class="decision-desc">
-                        Discord #c-side log confirmed PL230 MDMA config writes silently fail on real silicon. Workaround: BIO Core 3 dedicated as a 700 MHz memory-copy DMA engine.
+                        bunnie huang confirmed PL230 MDMA config writes silently fail on silicon. Workaround: BIO Core 3 dedicated as a 700 MHz memory-copy DMA engine.
                     </div>
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">3. Bare-Metal C SDK References (<code class="code-inline">dabao-sdk</code> &amp; <code class="code-inline">daric-sdk</code>)</div>
+                    <div class="decision-title">3. ReRAM Driver Unaligned &amp; Readback Verification (Landed)</div>
                     <div class="decision-desc">
-                        Absorbed <code class="code-inline">armstrongsubero/dabao-sdk</code> (17 hardware drivers, 26 examples) and <code class="code-inline">Cramiumlabs/daric-sdk</code> (ThreadX) for peripheral register definitions.
+                        Duke created <code class="code-inline">src/rram_driver.c</code> with unaligned byte-level access, sector readback verification, and partition boundaries at 2.5 MB (<code class="code-inline">0x20280000</code>).
                     </div>
                 </div>
 
