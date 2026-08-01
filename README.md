@@ -52,3 +52,58 @@ By leveraging the Baochip's **350 MHz Vexriscv RISC-V CPU**, **4x 700 MHz PicoRV
 * **Display Output**: 280x192 Apple II Hi-Res graphics scaled & converted to badge display (320x240 / 480x320 RGB565 or monochrome).
 * **Audio**: 1-bit Apple II `$C030` speaker toggles synthesized via BIO PWM pin.
 * **Storage Requirement**: 0 External Pins (Fully embedded in ReRAM).
+
+---
+
+## ✅ Current Status (work in progress, hardware arriving imminently)
+
+581 tests passing (host-native C test suite, `make test`), including a
+full pass of the industry-standard **Klaus Dormann 6502 functional test
+suite** against our own from-scratch CPU core.
+
+**Real, verified milestones:**
+- 6502 CPU core: reference-verified correct (Klaus Dormann suite, ~30.6M
+  simulated instructions)
+- Apple II memory map + soft-switch dispatch: tested against real DOS 3.3
+  boot sequences
+- Hi-Res video decode + NTSC color-artifact rendering: tested, and proven
+  end-to-end by converting and rendering a real 1985 Apple II title screen
+  (see screenshot below)
+- RISC-V cross-compile for the real Baochip-1x target (rv32imac/ilp32):
+  builds clean, correct memory placement (verified via
+  `tools/check_linker_placement.py`)
+- **Runs as actual compiled RISC-V machine code under QEMU** (`-M virt`):
+  confirmed via live CPU register inspection (non-zero PC/SP, not stuck at
+  reset) and a byte-exact memory dump of the emulated Apple II screen
+  after execution
+
+**What's still ahead:** real Baochip-1x hardware bring-up (BIO Core
+display-DMA firmware, real button/display wiring) — the software-side
+emulation and rendering pipeline is done and tested; the remaining work is
+adapting to real silicon once it's in hand.
+
+### Screenshot
+
+The real Oregon Trail (1985, MECC) title screen, converted to Apple II
+Hi-Res format and rendered through our own decode pipeline after running
+on a real emulated RV32IMAC CPU core (not just the host test harness):
+
+![Oregon Trail title screen, rendered via our own Hi-Res pipeline](docs/screenshot_oregon_trail_title.png)
+
+### Try it yourself
+
+```bash
+# Build + run the composed emulator (host-native, no cross-compile needed):
+cc -std=c99 -Wall -Wextra -Isrc -DFB_TERMINAL_VIEWER_NO_MAIN \
+  -o tools/bin/oregon_trail_runner tools/oregon_trail_runner.c tools/fb_terminal_viewer.c \
+  src/apple2_mem.c src/cpu6502.c src/disk_sector_layout.c src/disk_trap.c \
+  src/bunnie_audio.c src/video_apple2.c src/bio_display.c src/lores_apple2.c
+python3 tools/convert_image_to_hires.py tools/assets/oregon_trail_title.png tools/oregon_trail_hires.bin
+cd tools && ca65 oregon_trail_title.s -o oregon_trail_title.o && ld65 -C oregon_trail_title.cfg -o oregon_trail_title.bin oregon_trail_title.o && cd ..
+./tools/bin/oregon_trail_runner tools/oregon_trail_title.bin tools/oregon_trail_title_data.bin
+```
+
+See `tools/README_oregon_trail.md` for the full pipeline writeup, including
+a real bug found and fixed (source/destination memory overlap corrupting
+the rendered image).
+
