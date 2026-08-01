@@ -1407,6 +1407,30 @@ static void test_rti_restores_status_and_pc_from_stack(void) {
           "test_rti_restores_status_and_pc_from_stack");
 }
 
+static void test_rti_forces_constant_bit_even_if_stack_value_has_it_clear(void) {
+    /* Same test-quality gap as
+     * test_plp_forces_constant_bit_even_if_stack_value_has_it_clear:
+     * the test above only pulls a status byte that was pushed via BRK,
+     * which itself always sets FLAG_CONSTANT before pushing -- so it
+     * never actually exercises RTI's own '| FLAG_CONSTANT' forcing
+     * logic. Directly crafts a 3-byte interrupt-frame stack layout
+     * (status, pc-lo, pc-hi from sp+1 upward) with bit 5 explicitly
+     * CLEAR in the status byte to prove RTI's forcing is genuinely
+     * exercised, not just coincidentally passing. */
+    setup();
+    sp = 0xFC;
+    test_ram[0x0100 + sp + 1] = (uint8_t)(FLAG_ZERO & (uint8_t)~FLAG_CONSTANT); /* bit 5 explicitly 0 */
+    test_ram[0x0100 + sp + 2] = 0x34; /* pc lo */
+    test_ram[0x0100 + sp + 3] = 0x12; /* pc hi -- return address $1234 */
+    test_ram[0x0400] = 0x40; /* RTI */
+
+    step6502();
+
+    CHECK((status & FLAG_CONSTANT) != 0 && (status & FLAG_ZERO) != 0 &&
+          pc == 0x1234,
+          "test_rti_forces_constant_bit_even_if_stack_value_has_it_clear");
+}
+
 static void test_brk_pushed_status_has_break_flag_set(void) {
     /* This is how RTI-side software distinguishes a BRK-triggered stack
      * frame from an IRQ-triggered one (irq6502() deliberately pushes
@@ -2534,6 +2558,7 @@ int main(void) {
     test_brk_pushes_pc_and_status_then_jumps_to_irq_vector();
     test_brk_pushed_return_address_is_pc_plus_2();
     test_rti_restores_status_and_pc_from_stack();
+    test_rti_forces_constant_bit_even_if_stack_value_has_it_clear();
     test_brk_pushed_status_has_break_flag_set();
     test_sta_absolute_stores_accumulator();
     test_stx_zeropage_stores_x_register();
