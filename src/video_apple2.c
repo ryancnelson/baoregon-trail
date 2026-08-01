@@ -33,7 +33,13 @@ const uint16_t hires_line_offsets[HIRES_ROWS] = {
 
 void hires_decode_scanline_mono(int row, read6502_fn read_mem,
                                  uint8_t out_pixels[HIRES_PIXELS_WIDE]) {
-    uint16_t row_base = HIRES_BASE_ADDR + hires_line_offsets[row];
+    hires_decode_scanline_mono_page(row, 0, read_mem, out_pixels);
+}
+
+void hires_decode_scanline_mono_page(int row, int page2, read6502_fn read_mem,
+                                      uint8_t out_pixels[HIRES_PIXELS_WIDE]) {
+    uint16_t base_addr = page2 ? HIRES_PAGE2_BASE_ADDR : HIRES_BASE_ADDR;
+    uint16_t row_base = base_addr + hires_line_offsets[row];
 
     for (int byte_idx = 0; byte_idx < HIRES_COLS_BYTES; byte_idx++) {
         uint8_t byte = read_mem(row_base + byte_idx);

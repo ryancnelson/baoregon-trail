@@ -55,6 +55,22 @@ static int g_keyboard_strobe_pending = 0;
 /* Pushbutton/paddle inputs ($C061-$C063). Index 0/1/2 maps to PB0/PB1/PB2. */
 static int g_button_pressed[3] = {0, 0, 0};
 
+/* Annunciator outputs AN0-AN3 ($C058-$C05F). Defaults to off, matching
+ * real Apple II post-reset state. */
+static int g_annunciator_on[4] = {0, 0, 0, 0};
+
+/* Paddle analog timer state ($C064/$C065 PADDLE0/PADDLE1, $C070 PDRIVE).
+ * g_paddle_countdown_target[n] is the read-count set via
+ * apple2_mem_set_paddle_value() -- how many PADDLEn reads the RC
+ * countdown takes to expire after $C070 arms it. g_paddle_reads_remaining[n]
+ * is the live countdown, decremented on each PADDLEn read while armed;
+ * g_paddle_armed[n] tracks whether that paddle's countdown is currently
+ * running (both paddles are armed together by one $C070 access, matching
+ * real hardware where PDRIVE triggers both RC circuits at once). */
+static uint8_t g_paddle_countdown_target[2] = {0, 0};
+static int g_paddle_reads_remaining[2] = {0, 0};
+static int g_paddle_armed[2] = {0, 0};
+
 void apple2_mem_reset(void) {
     for (uint32_t i = 0; i < APPLE2_RAM_SIZE; i++) {
         g_ram[i] = 0;
@@ -78,6 +94,16 @@ void apple2_mem_reset(void) {
     g_button_pressed[0] = 0;
     g_button_pressed[1] = 0;
     g_button_pressed[2] = 0;
+    g_annunciator_on[0] = 0;
+    g_annunciator_on[1] = 0;
+    g_annunciator_on[2] = 0;
+    g_annunciator_on[3] = 0;
+    g_paddle_countdown_target[0] = 0;
+    g_paddle_countdown_target[1] = 0;
+    g_paddle_reads_remaining[0] = 0;
+    g_paddle_reads_remaining[1] = 0;
+    g_paddle_armed[0] = 0;
+    g_paddle_armed[1] = 0;
 }
 
 void apple2_mem_set_disk_image(const uint8_t *image) {
@@ -114,6 +140,20 @@ void apple2_mem_set_button_state(int button_index, int pressed) {
         return; /* out of range: not one of PB0/PB1/PB2, silently ignored */
     }
     g_button_pressed[button_index] = pressed ? 1 : 0;
+}
+
+int apple2_mem_get_annunciator_state(int annunciator_index) {
+    if (annunciator_index < 0 || annunciator_index > 3) {
+        return 0; /* out of range: not one of AN0-AN3 */
+    }
+    return g_annunciator_on[annunciator_index];
+}
+
+void apple2_mem_set_paddle_value(int paddle_index, uint8_t value) {
+    if (paddle_index < 0 || paddle_index > 1) {
+        return; /* out of range: not PADDLE0/PADDLE1, silently ignored */
+    }
+    g_paddle_countdown_target[paddle_index] = value;
 }
 
 /* Apply the Language Card softswitch selected by a $C080-$C08F access.
@@ -189,6 +229,43 @@ static void apply_display_mode_switch(uint16_t address) {
     }
 }
 
+/* Apply the annunciator softswitch selected by a $C058-$C05F access.
+ * Same independent on/off pair pattern as the display-mode switches:
+ *   $C058/$C059 = AN0 off/on   $C05A/$C05B = AN1 off/on
+ *   $C05C/$C05D = AN2 off/on   $C05E/$C05F = AN3 off/on */
+static void apply_annunciator_switch(uint16_t address) {
+    int annunciator_index = (int)((address - 0xC058) / 2);
+    int turn_on = (address & 0x01) != 0;
+    if (annunciator_index >= 0 && annunciator_index <= 3) {
+        g_annunciator_on[annunciator_index] = turn_on;
+    }
+}
+
+/* Arm the paddle RC countdown for both PADDLE0 and PADDLE1 -- real
+ * hardware's PDRIVE trigger charges both RC circuits with one access. */
+static void trigger_paddle_drive(void) {
+    g_paddle_armed[0] = 1;
+    g_paddle_reads_remaining[0] = g_paddle_countdown_target[0];
+    g_paddle_armed[1] = 1;
+    g_paddle_reads_remaining[1] = g_paddle_countdown_target[1];
+}
+
+/* Read PADDLEn: report the strobe bit (0x80) while armed and the
+ * countdown hasn't yet reached zero, decrementing on each read. Once
+ * reads_remaining hits zero the countdown has "discharged" and stays
+ * disarmed until the next $C070 trigger. */
+static uint8_t read_paddle(int paddle_index) {
+    if (!g_paddle_armed[paddle_index]) {
+        return 0x00;
+    }
+    if (g_paddle_reads_remaining[paddle_index] <= 0) {
+        g_paddle_armed[paddle_index] = 0;
+        return 0x00;
+    }
+    g_paddle_reads_remaining[paddle_index]--;
+    return 0x80;
+}
+
 /* Shared soft-switch handling for both read and write -- the Apple II
  * toggles $C030 on ANY access, and the disk trap's data port ($C0EC) is
  * meant to be read, but write6502() still needs to recognize $C0E0/$C0E1
@@ -207,6 +284,10 @@ static void handle_soft_switch_write(uint16_t address, uint8_t value) {
         g_keyboard_strobe_pending = 0;
     } else if (address >= 0xC050 && address <= 0xC057) {
         apply_display_mode_switch(address);
+    } else if (address >= 0xC058 && address <= 0xC05F) {
+        apply_annunciator_switch(address);
+    } else if (address == 0xC070) {
+        trigger_paddle_drive();
     }
     /* Any other $C0xx write: not yet implemented, silently ignored. */
 }
@@ -240,6 +321,10 @@ static uint8_t handle_soft_switch_read(uint16_t address) {
         apply_display_mode_switch(address);
         return 0x00;
     }
+    if (address >= 0xC058 && address <= 0xC05F) {
+        apply_annunciator_switch(address);
+        return 0x00;
+    }
     if (address == 0xC061) {
         return g_button_pressed[0] ? 0x80 : 0x00;
     }
@@ -248,6 +333,16 @@ static uint8_t handle_soft_switch_read(uint16_t address) {
     }
     if (address == 0xC063) {
         return g_button_pressed[2] ? 0x80 : 0x00;
+    }
+    if (address == 0xC064) {
+        return read_paddle(0);
+    }
+    if (address == 0xC065) {
+        return read_paddle(1);
+    }
+    if (address == 0xC070) {
+        trigger_paddle_drive();
+        return 0x00;
     }
     /* Any other $C0xx read (including $C0E0/$C0E1, write-only): inert 0. */
     return 0x00;

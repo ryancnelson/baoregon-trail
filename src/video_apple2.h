@@ -20,6 +20,7 @@
 typedef uint8_t (*read6502_fn)(uint16_t address);
 
 #define HIRES_BASE_ADDR   0x2000u
+#define HIRES_PAGE2_BASE_ADDR 0x4000u /* real Apple II Hi-Res Page 2, $4000-$5FFF */
 #define HIRES_COLS_BYTES  40      /* 40 bytes per scanline = 280 pixels / 7 */
 #define HIRES_ROWS        192
 #define HIRES_PIXELS_WIDE 280
@@ -37,10 +38,23 @@ extern const uint16_t hires_line_offsets[HIRES_ROWS];
  * hires_decode_scanline_color() below. This first pass only proves the
  * row-offset table and the 7-bit-group -> pixel expansion are correct.
  *
- * row must be in [0, HIRES_ROWS).
+ * row must be in [0, HIRES_ROWS). Always targets Hi-Res PAGE 1 ($2000) --
+ * see hires_decode_scanline_mono_page() for page-2-aware decoding, driven
+ * by apple2_mem_is_page2_selected() ($C054/$C055 soft-switch).
  */
 void hires_decode_scanline_mono(int row, read6502_fn read_mem,
                                  uint8_t out_pixels[HIRES_PIXELS_WIDE]);
+
+/*
+ * Page-aware variant of hires_decode_scanline_mono(): page2 is 0 for
+ * Page 1 ($2000-$3FFF) or nonzero for Page 2 ($4000-$5FFF), matching
+ * apple2_mem_is_page2_selected()'s return convention exactly so callers
+ * can pass that value straight through. hires_decode_scanline_mono(row,
+ * read_mem, out) is equivalent to
+ * hires_decode_scanline_mono_page(row, 0, read_mem, out).
+ */
+void hires_decode_scanline_mono_page(int row, int page2, read6502_fn read_mem,
+                                      uint8_t out_pixels[HIRES_PIXELS_WIDE]);
 
 /*
  * Apple II Hi-Res NTSC artifact colors (BRAINSTORM.md section 2 step 4).

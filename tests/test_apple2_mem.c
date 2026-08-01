@@ -466,6 +466,122 @@ static void test_button_reads_do_not_have_side_effects(void) {
           "test_button_reads_do_not_have_side_effects");
 }
 
+/*
+ * Annunciator (AN0-AN3, $C058-$C05F) tests -- same independent on/off
+ * switch pattern as the display-mode softswitches, any access triggers.
+ */
+
+static void test_annunciators_default_to_off(void) {
+    apple2_mem_reset();
+
+    CHECK(apple2_mem_get_annunciator_state(0) == 0, "test_annunciators_default_to_off: AN0");
+    CHECK(apple2_mem_get_annunciator_state(1) == 0, "test_annunciators_default_to_off: AN1");
+    CHECK(apple2_mem_get_annunciator_state(2) == 0, "test_annunciators_default_to_off: AN2");
+    CHECK(apple2_mem_get_annunciator_state(3) == 0, "test_annunciators_default_to_off: AN3");
+}
+
+static void test_an0_c058_off_c059_on(void) {
+    apple2_mem_reset();
+    (void)read6502(0xC059);
+    CHECK(apple2_mem_get_annunciator_state(0) == 1,
+          "test_an0_c058_off_c059_on: C059 turns AN0 on");
+    write6502(0xC058, 0); /* write access must also trigger */
+    CHECK(apple2_mem_get_annunciator_state(0) == 0,
+          "test_an0_c058_off_c059_on: C058 turns AN0 off");
+}
+
+static void test_an1_c05a_off_c05b_on(void) {
+    apple2_mem_reset();
+    (void)read6502(0xC05B);
+    CHECK(apple2_mem_get_annunciator_state(1) == 1,
+          "test_an1_c05a_off_c05b_on");
+}
+
+static void test_an2_c05c_off_c05d_on(void) {
+    apple2_mem_reset();
+    (void)read6502(0xC05D);
+    CHECK(apple2_mem_get_annunciator_state(2) == 1,
+          "test_an2_c05c_off_c05d_on");
+}
+
+static void test_an3_c05e_off_c05f_on(void) {
+    apple2_mem_reset();
+    (void)read6502(0xC05F);
+    CHECK(apple2_mem_get_annunciator_state(3) == 1,
+          "test_an3_c05e_off_c05f_on");
+}
+
+static void test_annunciators_are_independent(void) {
+    apple2_mem_reset();
+    (void)read6502(0xC05B); /* only AN1 on */
+
+    CHECK(apple2_mem_get_annunciator_state(0) == 0 &&
+          apple2_mem_get_annunciator_state(1) == 1 &&
+          apple2_mem_get_annunciator_state(2) == 0 &&
+          apple2_mem_get_annunciator_state(3) == 0,
+          "test_annunciators_are_independent");
+}
+
+/*
+ * Paddle analog timer tests ($C064/$C065 PADDLE0/PADDLE1, $C070 PDRIVE).
+ * Per apple2_mem.h: $C070 arms an RC countdown; apple2_mem_set_paddle_value()
+ * sets how many PADDLEn reads it takes to expire -- 0 = discharges
+ * immediately (bit clear on the very first read after arming), higher
+ * values take longer, modeling a paddle turned further.
+ */
+
+static void test_paddle_with_zero_value_discharges_immediately(void) {
+    apple2_mem_reset();
+    apple2_mem_set_paddle_value(0, 0);
+
+    (void)read6502(0xC070); /* arm the countdown */
+    uint8_t got = read6502(0xC064);
+
+    CHECK((got & 0x80) == 0,
+          "test_paddle_with_zero_value_discharges_immediately");
+}
+
+static void test_paddle_with_nonzero_value_stays_armed_then_expires(void) {
+    apple2_mem_reset();
+    apple2_mem_set_paddle_value(0, 2); /* takes 2 reads to expire */
+
+    (void)read6502(0xC070); /* arm */
+    uint8_t first_read = read6502(0xC064);
+    uint8_t second_read = read6502(0xC064);
+    uint8_t third_read = read6502(0xC064);
+
+    CHECK((first_read & 0x80) != 0,
+          "test_paddle_with_nonzero_value_stays_armed_then_expires: still armed after 1st read");
+    CHECK((second_read & 0x80) != 0,
+          "test_paddle_with_nonzero_value_stays_armed_then_expires: still armed after 2nd read");
+    CHECK((third_read & 0x80) == 0,
+          "test_paddle_with_nonzero_value_stays_armed_then_expires: expired by 3rd read");
+}
+
+static void test_paddle0_and_paddle1_are_independent(void) {
+    apple2_mem_reset();
+    apple2_mem_set_paddle_value(0, 0);   /* PADDLE0 discharges immediately */
+    apple2_mem_set_paddle_value(1, 5);   /* PADDLE1 takes a while */
+
+    (void)read6502(0xC070); /* arms BOTH paddles -- one PDRIVE trigger */
+    uint8_t paddle0 = read6502(0xC064);
+    uint8_t paddle1 = read6502(0xC065);
+
+    CHECK((paddle0 & 0x80) == 0 && (paddle1 & 0x80) != 0,
+          "test_paddle0_and_paddle1_are_independent");
+}
+
+static void test_paddle_not_armed_reads_zero(void) {
+    /* Before any $C070 access, PADDLEn must not report the strobe bit
+     * set -- there's no countdown running yet. */
+    apple2_mem_reset();
+    apple2_mem_set_paddle_value(0, 10);
+
+    uint8_t got = read6502(0xC064);
+    CHECK((got & 0x80) == 0,
+          "test_paddle_not_armed_reads_zero");
+}
+
 int main(void) {
     fill_mock_disk_image();
 
@@ -499,6 +615,16 @@ int main(void) {
     test_pb2_reflects_button2_state();
     test_buttons_are_independent();
     test_button_reads_do_not_have_side_effects();
+    test_annunciators_default_to_off();
+    test_an0_c058_off_c059_on();
+    test_an1_c05a_off_c05b_on();
+    test_an2_c05c_off_c05d_on();
+    test_an3_c05e_off_c05f_on();
+    test_annunciators_are_independent();
+    test_paddle_with_zero_value_discharges_immediately();
+    test_paddle_with_nonzero_value_stays_armed_then_expires();
+    test_paddle0_and_paddle1_are_independent();
+    test_paddle_not_armed_reads_zero();
 
     if (failures == 0) {
         printf("All tests passed.\n");

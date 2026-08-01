@@ -39,8 +39,13 @@
  *   $C052/$C053    : FULL-screen / MIXED mode select (any access).
  *   $C054/$C055    : PAGE1 / PAGE2 select (any access).
  *   $C056/$C057    : LORES / HIRES mode select (any access).
+ *   $C058-$C05F    : AN0-AN3 annunciator outputs, off/on pairs (any access).
  *   $C061/$C062/$C063 : PB0/PB1/PB2 pushbutton state (read) -- bit 7
  *                     (0x80) reflects the button's held/released state.
+ *   $C064/$C065    : PADDLE0/PADDLE1 analog timer state (read) -- bit 7
+ *                     (0x80) set while the RC countdown armed by $C070 is
+ *                     still running.
+ *   $C070          : PDRIVE -- arms the paddle RC countdown (any access).
  *   $C080-$C08F    : Language Card bank-switching -- see
  *                     apply_language_card_switch() in apple2_mem.c for
  *                     the full read/write/bank truth table.
@@ -104,5 +109,32 @@ void apple2_mem_inject_key(uint8_t ascii_value);
  * for a real physical button press -- button_index is 0/1/2 matching
  * PB0/PB1/PB2, pressed is nonzero for "held down". */
 void apple2_mem_set_button_state(int button_index, int pressed);
+
+/* Paddle analog timer inputs ($C064/$C065 PADDLE0/PADDLE1 reads,
+ * $C070 PDRIVE trigger). Real Apple II hardware charges an RC circuit
+ * proportional to the paddle's position when $C070 is accessed (any
+ * access, read or write); PADDLE0/PADDLE1 report bit 7 (0x80) set while
+ * that countdown is still running, clearing once it expires -- software
+ * measures elapsed time between the $C070 trigger and the bit clearing
+ * to derive the paddle's analog position.
+ *
+ * Simplification (documented, matches this file's precedent for other
+ * un-timed simplifications like Disk II's stepper motor): since there is
+ * no real-time clock to race against here, the "RC countdown" is modeled
+ * as a simple counter that decrements by one on each PADDLEn read after
+ * $C070 has armed it -- apple2_mem_set_paddle_value() sets how many
+ * reads a countdown takes to expire (0-255, an analog stand-in for a
+ * physical paddle position: 0 = wired straight through, higher = "turned
+ * further", takes longer to discharge). */
+void apple2_mem_set_paddle_value(int paddle_index, uint8_t value);
+
+/* Annunciator outputs AN0-AN3 ($C058-$C05F). Each is an independent
+ * on/off softswitch that any access (read or write) sets, matching this
+ * file's other soft-switch semantics:
+ *   $C058/$C059 = AN0 off/on   $C05A/$C05B = AN1 off/on
+ *   $C05C/$C05D = AN2 off/on   $C05E/$C05F = AN3 off/on
+ * annunciator_index is 0-3 matching AN0-AN3; returns 1 = on, 0 = off.
+ * Defaults to off (0) after apple2_mem_reset(), matching real hardware. */
+int apple2_mem_get_annunciator_state(int annunciator_index);
 
 #endif /* APPLE2_MEM_H */
