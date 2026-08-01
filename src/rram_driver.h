@@ -77,13 +77,18 @@ void rram_driver_attach_backing_store(uint8_t *store, uint32_t base_addr, uint32
 void rram_driver_attach_cartridge_partition(uint8_t *store);
 
 /*
- * Read len bytes starting at absolute address addr into buf. Always
- * succeeds if the whole range [addr, addr+len) is within the attached
- * backing store's bounds; out-of-bounds reads are NOT range-checked here
- * (matching the real driver, which treats rram_read() as a plain memcpy
- * with no bounds enforcement -- only writes are bounds-checked, per
- * dabao-sdk's design to prevent bricking the boot sequence on write, not
- * read).
+ * Read len bytes starting at absolute address addr into buf. Bounds-
+ * checked: if [addr, addr+len) is not entirely within the attached
+ * backing store's [base_addr, base_addr+size) region, this is a safe
+ * no-op (buf is left untouched) rather than reading out-of-bounds
+ * memory. This differs from the real hardware driver, which treats
+ * rram_read() as a plain memcpy with no bounds enforcement (only
+ * writes are bounds-checked there, per dabao-sdk's design to prevent
+ * bricking the boot sequence on write, not read) -- this port adds the
+ * read-side check as well since a host-side out-of-bounds memcpy is a
+ * real crash risk that the real hardware's flat address space doesn't
+ * have in the same way. See tests/test_rram_driver_read_bounds.c and
+ * tests/test_rram_driver_docstring_accuracy.c for the regression proof.
  */
 void rram_read(uint32_t addr, uint8_t *buf, uint32_t len);
 

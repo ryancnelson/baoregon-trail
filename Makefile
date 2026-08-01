@@ -8,7 +8,7 @@ BUILD_DIR = build
 
 .PHONY: test clean
 
-test: $(BUILD_DIR)/test_reset $(BUILD_DIR)/test_opcodes $(BUILD_DIR)/test_functional_suite $(BUILD_DIR)/test_interrupts $(BUILD_DIR)/test_stack_wraparound $(BUILD_DIR)/test_exec6502 $(BUILD_DIR)/test_disk_sector_layout $(BUILD_DIR)/test_disk_sector_layout_null_safety $(BUILD_DIR)/test_disk_trap $(BUILD_DIR)/test_disk_trap_safe_defaults $(BUILD_DIR)/test_disk_trap_unload_image $(BUILD_DIR)/test_video_apple2 $(BUILD_DIR)/test_video_apple2_safety $(BUILD_DIR)/test_video_apple2_color $(BUILD_DIR)/test_video_apple2_color_edges $(BUILD_DIR)/test_video_apple2_fullframe $(BUILD_DIR)/test_video_apple2_realbus $(BUILD_DIR)/test_video_apple2_page2 $(BUILD_DIR)/test_video_apple2_color_page2 $(BUILD_DIR)/test_lores_apple2 $(BUILD_DIR)/test_lores_apple2_palette $(BUILD_DIR)/test_lores_apple2_safety $(BUILD_DIR)/test_bunnie_audio $(BUILD_DIR)/test_bunnie_audio_null_safety $(BUILD_DIR)/test_apple2_mem $(BUILD_DIR)/test_apple2_mem_button_getter $(BUILD_DIR)/test_bio_display $(BUILD_DIR)/test_bio_display_page2 $(BUILD_DIR)/test_bio_display_mixed $(BUILD_DIR)/test_bio_display_auto $(BUILD_DIR)/test_bio_display_lores_mixed $(BUILD_DIR)/test_bio_display_safety $(BUILD_DIR)/test_bio_display_text_mode $(BUILD_DIR)/test_fb_terminal_viewer $(BUILD_DIR)/test_rram_driver $(BUILD_DIR)/test_rram_driver_read_bounds $(BUILD_DIR)/test_cartridge_layout $(BUILD_DIR)/test_rram_cartridge_integration $(BUILD_DIR)/test_rram_disk_trap_pipeline $(BUILD_DIR)/test_boot_splash $(BUILD_DIR)/test_boot_splash_apple2_mem_poll $(BUILD_DIR)/test_boot_splash_multibutton_tiebreak $(BUILD_DIR)/test_boot_splash_null_safety $(BUILD_DIR)/test_emulator_loop $(BUILD_DIR)/test_emulator_loop_reset_combo $(BUILD_DIR)/test_emulator_loop_video_mode $(BUILD_DIR)/test_emulator_loop_copy_framebuffer $(BUILD_DIR)/test_emulator_loop_framebuffer_bounds $(BUILD_DIR)/test_emulator_loop_current_slot $(BUILD_DIR)/test_emulator_loop_reset_to_splash $(BUILD_DIR)/test_emulator_loop_reset_to_splash_cycles $(BUILD_DIR)/test_emulator_loop_no_stale_framebuffer $(BUILD_DIR)/test_emulator_loop_no_stale_framebuffer_combo_reset $(BUILD_DIR)/test_emulator_loop_total_cycles $(BUILD_DIR)/test_emulator_loop_audio_active $(BUILD_DIR)/test_emulator_loop_cycles_per_frame $(BUILD_DIR)/test_boot_perf $(BUILD_DIR)/test_boot_perf_safety $(BUILD_DIR)/test_main_boot_perf $(BUILD_DIR)/test_main_boot_metrics_getter
+test: $(BUILD_DIR)/test_reset $(BUILD_DIR)/test_opcodes $(BUILD_DIR)/test_functional_suite $(BUILD_DIR)/test_interrupts $(BUILD_DIR)/test_stack_wraparound $(BUILD_DIR)/test_exec6502 $(BUILD_DIR)/test_disk_sector_layout $(BUILD_DIR)/test_disk_sector_layout_null_safety $(BUILD_DIR)/test_disk_trap $(BUILD_DIR)/test_disk_trap_safe_defaults $(BUILD_DIR)/test_disk_trap_unload_image $(BUILD_DIR)/test_video_apple2 $(BUILD_DIR)/test_video_apple2_safety $(BUILD_DIR)/test_video_apple2_color $(BUILD_DIR)/test_video_apple2_color_edges $(BUILD_DIR)/test_video_apple2_fullframe $(BUILD_DIR)/test_video_apple2_realbus $(BUILD_DIR)/test_video_apple2_page2 $(BUILD_DIR)/test_video_apple2_color_page2 $(BUILD_DIR)/test_lores_apple2 $(BUILD_DIR)/test_lores_apple2_palette $(BUILD_DIR)/test_lores_apple2_safety $(BUILD_DIR)/test_bunnie_audio $(BUILD_DIR)/test_bunnie_audio_null_safety $(BUILD_DIR)/test_apple2_mem $(BUILD_DIR)/test_apple2_mem_button_getter $(BUILD_DIR)/test_bio_display $(BUILD_DIR)/test_bio_display_page2 $(BUILD_DIR)/test_bio_display_mixed $(BUILD_DIR)/test_bio_display_auto $(BUILD_DIR)/test_bio_display_lores_mixed $(BUILD_DIR)/test_bio_display_safety $(BUILD_DIR)/test_bio_display_text_mode $(BUILD_DIR)/test_fb_terminal_viewer $(BUILD_DIR)/test_rram_driver $(BUILD_DIR)/test_rram_driver_read_bounds $(BUILD_DIR)/test_rram_driver_docstring_accuracy $(BUILD_DIR)/test_cartridge_layout $(BUILD_DIR)/test_rram_cartridge_integration $(BUILD_DIR)/test_rram_disk_trap_pipeline $(BUILD_DIR)/test_boot_splash $(BUILD_DIR)/test_boot_splash_apple2_mem_poll $(BUILD_DIR)/test_boot_splash_multibutton_tiebreak $(BUILD_DIR)/test_boot_splash_null_safety $(BUILD_DIR)/test_emulator_loop $(BUILD_DIR)/test_emulator_loop_reset_combo $(BUILD_DIR)/test_emulator_loop_video_mode $(BUILD_DIR)/test_emulator_loop_copy_framebuffer $(BUILD_DIR)/test_emulator_loop_framebuffer_bounds $(BUILD_DIR)/test_emulator_loop_current_slot $(BUILD_DIR)/test_emulator_loop_reset_to_splash $(BUILD_DIR)/test_emulator_loop_reset_to_splash_cycles $(BUILD_DIR)/test_emulator_loop_init_reset_parity $(BUILD_DIR)/test_emulator_loop_no_stale_framebuffer $(BUILD_DIR)/test_emulator_loop_no_stale_framebuffer_combo_reset $(BUILD_DIR)/test_emulator_loop_total_cycles $(BUILD_DIR)/test_emulator_loop_audio_active $(BUILD_DIR)/test_emulator_loop_cycles_per_frame $(BUILD_DIR)/test_boot_perf $(BUILD_DIR)/test_boot_perf_safety $(BUILD_DIR)/test_main_boot_perf $(BUILD_DIR)/test_main_boot_metrics_getter
 	@$(BUILD_DIR)/test_reset
 	@$(BUILD_DIR)/test_opcodes
 	@./tests/fetch_functional_test.sh
@@ -46,6 +46,7 @@ test: $(BUILD_DIR)/test_reset $(BUILD_DIR)/test_opcodes $(BUILD_DIR)/test_functi
 	@$(BUILD_DIR)/test_fb_terminal_viewer
 	@$(BUILD_DIR)/test_rram_driver
 	@$(BUILD_DIR)/test_rram_driver_read_bounds
+	@$(BUILD_DIR)/test_rram_driver_docstring_accuracy
 	@$(BUILD_DIR)/test_cartridge_layout
 	@$(BUILD_DIR)/test_rram_cartridge_integration
 	@$(BUILD_DIR)/test_rram_disk_trap_pipeline
@@ -61,6 +62,7 @@ test: $(BUILD_DIR)/test_reset $(BUILD_DIR)/test_opcodes $(BUILD_DIR)/test_functi
 	@$(BUILD_DIR)/test_emulator_loop_current_slot
 	@$(BUILD_DIR)/test_emulator_loop_reset_to_splash
 	@$(BUILD_DIR)/test_emulator_loop_reset_to_splash_cycles
+	@$(BUILD_DIR)/test_emulator_loop_init_reset_parity
 	@$(BUILD_DIR)/test_emulator_loop_no_stale_framebuffer
 	@$(BUILD_DIR)/test_emulator_loop_no_stale_framebuffer_combo_reset
 	@$(BUILD_DIR)/test_emulator_loop_total_cycles
@@ -233,6 +235,10 @@ $(BUILD_DIR)/test_rram_driver: $(TEST_DIR)/test_rram_driver.c $(SRC_DIR)/rram_dr
 $(BUILD_DIR)/test_rram_driver_read_bounds: $(TEST_DIR)/test_rram_driver_read_bounds.c $(SRC_DIR)/rram_driver.c $(SRC_DIR)/rram_driver.h $(SRC_DIR)/cartridge_layout.c $(SRC_DIR)/cartridge_layout.h
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_rram_driver_read_bounds.c $(SRC_DIR)/rram_driver.c $(SRC_DIR)/cartridge_layout.c
+
+$(BUILD_DIR)/test_rram_driver_docstring_accuracy: $(TEST_DIR)/test_rram_driver_docstring_accuracy.c $(SRC_DIR)/rram_driver.c $(SRC_DIR)/rram_driver.h $(SRC_DIR)/cartridge_layout.c $(SRC_DIR)/cartridge_layout.h
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_rram_driver_docstring_accuracy.c $(SRC_DIR)/rram_driver.c $(SRC_DIR)/cartridge_layout.c
 
 $(BUILD_DIR)/test_cartridge_layout: $(TEST_DIR)/test_cartridge_layout.c $(SRC_DIR)/cartridge_layout.c $(SRC_DIR)/cartridge_layout.h $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_sector_layout.h
 	@mkdir -p $(BUILD_DIR)
