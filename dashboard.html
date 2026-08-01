@@ -510,7 +510,14 @@
                 </div>
 
                 <div class="decision-item">
-                    <div class="decision-title">1. Cumulative Cycle Counter Landed (<code class="code-inline">emulator_loop.c</code>)</div>
+                    <div class="decision-title">1. 6502 Cycle Overflow Freeze Fix (<code class="code-inline">cpu6502.c</code>)</div>
+                    <div class="decision-desc">
+                        Woz fixed silent CPU freeze where <code class="code-inline">clockticks6502</code> wrapping near 4.29B cycles (~70 mins runtime) permanently stalled <code class="code-inline">exec6502()</code>. Fixed via modulo tick tracking with regression tests (<code class="code-inline">test_exec6502.c</code>)!
+                    </div>
+                </div>
+
+                <div class="decision-item">
+                    <div class="decision-title">2. Cumulative Cycle Counter Landed (<code class="code-inline">emulator_loop.c</code>)</div>
                     <div class="decision-desc">
                         Duke added <code class="code-inline">baoregon_emulator_get_total_cycles()</code> with unit tests in <code class="code-inline">tests/test_emulator_loop_total_cycles.c</code> (311 tests GREEN)!
                     </div>
