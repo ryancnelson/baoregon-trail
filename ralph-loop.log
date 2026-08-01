@@ -1556,3 +1556,20 @@ b1947ba Update dashboard.html: 352 tests GREEN, 14.4 KB RISC-V binary, Emulator 
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  
 [2026-08-01 11:09:20] --- checking Duke ---
+[2026-08-01 11:13:54] Duke reply (truncated): ��───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 
+[2026-08-01 11:13:54] --- checking baochip ---
+[2026-08-01 11:14:32] baochip reply (truncated): ────────────────────────────
+>
+────────────────────────────────────────────────────────────────────────────────────────
+  ● [11:14:14] source tools/build_lock.sh && acquire_build_lock && rtk make t... running
+────────────────────────────────────────────────────────────────────────────────────────
+? for shortcuts                             Gemini 3.6 Flash · high · 1 task(s) · /tasks
+[2026-08-01 11:14:32] recent commits: b06d5c2 Add ca65-assembled Hi-Res checkerboard demo (real 2D pattern, not stripes)
+d512b74 Update ralph-loop.log with latest pass 176 status
+1822ed7 Update ralph-loop.log with latest pass 174/175 status
+36a4156 Update ralph-loop.log: system ROM - resolution verified clean
+465f505 apple2_mem: serve $C100-$CFFF (I/O firmware/expansion ROM) from loaded system ROM
+[2026-08-01 11:14:32] sleeping 300s...

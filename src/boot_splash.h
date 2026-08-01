@@ -118,4 +118,8 @@ int boot_splash_poll_apple2_mem_buttons(boot_splash_state_t *state,
 int boot_splash_select_slot_by_index(boot_splash_state_t *state, int slot_index,
                                        boot_splash_disk_image_setter_fn on_select);
 
+/* Return the currently highlighted slot index (0 to CARTRIDGE_SLOT_COUNT - 1).
+ * Safely clamps out-of-bounds indices or NULL state to 0. */
+int boot_splash_get_selected_slot_index(const boot_splash_state_t *state);
+
 #endif /* BOOT_SPLASH_H */

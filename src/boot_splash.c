@@ -118,3 +118,12 @@ int boot_splash_select_slot_by_index(boot_splash_state_t *state, int slot_index,
 
     return 0;
 }
+
+int boot_splash_get_selected_slot_index(const boot_splash_state_t *state) {
+    if (!state) return 0;
+    int idx = state->selected_index;
+    if (idx < 0 || idx >= CARTRIDGE_SLOT_COUNT) {
+        return 0;
+    }
+    return idx;
+}
