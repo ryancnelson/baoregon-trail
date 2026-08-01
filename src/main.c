@@ -12,6 +12,10 @@ void baoregon_main_init(uint64_t boot_cycles) {
     baoregon_emulator_init();
 }
 
+const boot_perf_metrics_t *baoregon_get_boot_metrics(void) {
+    return &g_boot_metrics;
+}
+
 #ifndef TEST_BUILD
 int main(void) {
     baoregon_main_init(0ULL);
