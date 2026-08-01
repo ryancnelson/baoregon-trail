@@ -293,6 +293,10 @@ $(BUILD_DIR)/test_emulator_loop_reset_to_splash_cycles: $(TEST_DIR)/test_emulato
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_emulator_loop_reset_to_splash_cycles.c $(SRC_DIR)/emulator_loop.c $(SRC_DIR)/boot_splash.c $(SRC_DIR)/cartridge_layout.c $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_trap.c $(SRC_DIR)/apple2_mem.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/bunnie_audio.c $(SRC_DIR)/video_apple2.c $(SRC_DIR)/bio_display.c $(SRC_DIR)/lores_apple2.c
 
+$(BUILD_DIR)/test_emulator_loop_init_reset_parity: $(TEST_DIR)/test_emulator_loop_init_reset_parity.c $(SRC_DIR)/emulator_loop.c $(SRC_DIR)/emulator_loop.h $(SRC_DIR)/boot_splash.c $(SRC_DIR)/cartridge_layout.c $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_trap.c $(SRC_DIR)/apple2_mem.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/bunnie_audio.c $(SRC_DIR)/video_apple2.c $(SRC_DIR)/bio_display.c $(SRC_DIR)/lores_apple2.c
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_emulator_loop_init_reset_parity.c $(SRC_DIR)/emulator_loop.c $(SRC_DIR)/boot_splash.c $(SRC_DIR)/cartridge_layout.c $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_trap.c $(SRC_DIR)/apple2_mem.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/bunnie_audio.c $(SRC_DIR)/video_apple2.c $(SRC_DIR)/bio_display.c $(SRC_DIR)/lores_apple2.c
+
 $(BUILD_DIR)/test_emulator_loop_no_stale_framebuffer: $(TEST_DIR)/test_emulator_loop_no_stale_framebuffer.c $(SRC_DIR)/emulator_loop.c $(SRC_DIR)/emulator_loop.h $(SRC_DIR)/boot_splash.c $(SRC_DIR)/cartridge_layout.c $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_trap.c $(SRC_DIR)/apple2_mem.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/bunnie_audio.c $(SRC_DIR)/video_apple2.c $(SRC_DIR)/bio_display.c $(SRC_DIR)/lores_apple2.c
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ $(TEST_DIR)/test_emulator_loop_no_stale_framebuffer.c $(SRC_DIR)/emulator_loop.c $(SRC_DIR)/boot_splash.c $(SRC_DIR)/cartridge_layout.c $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_trap.c $(SRC_DIR)/apple2_mem.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/bunnie_audio.c $(SRC_DIR)/video_apple2.c $(SRC_DIR)/bio_display.c $(SRC_DIR)/lores_apple2.c

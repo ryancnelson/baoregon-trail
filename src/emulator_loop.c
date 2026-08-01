@@ -16,13 +16,26 @@ static int g_in_splash_menu = 1;
 static uint16_t g_framebuffer[320 * 240];
 static uint64_t g_total_cycles = 0ULL;
 
-void baoregon_emulator_init(void) {
+/* Shared implementation for both public "return to splash menu with
+ * fresh state" entry points (baoregon_emulator_init(), called by the
+ * 3-button-combo hardware trigger, and baoregon_emulator_reset_to_splash(),
+ * used by other callers/tests) -- kept as ONE body so the two can never
+ * drift out of sync again. They have already diverged twice in practice
+ * (g_total_cycles not zeroed in reset_to_splash() until commit 0f538ac;
+ * this refactor closes that class of bug at the source instead of
+ * requiring every future new piece of reset state to be manually kept
+ * in sync between two separate copy-pasted functions). */
+static void reset_to_splash_menu(void) {
     apple2_mem_reset();
     reset6502();
     boot_splash_init(&g_splash_state);
     boot_splash_button_edge_state_init(&g_edge_state);
     g_in_splash_menu = 1;
     g_total_cycles = 0ULL;
+}
+
+void baoregon_emulator_init(void) {
+    reset_to_splash_menu();
 }
 
 uint64_t baoregon_emulator_get_total_cycles(void) {
@@ -34,12 +47,7 @@ int baoregon_emulator_is_in_splash_menu(void) {
 }
 
 void baoregon_emulator_reset_to_splash(void) {
-    apple2_mem_reset();
-    reset6502();
-    boot_splash_init(&g_splash_state);
-    boot_splash_button_edge_state_init(&g_edge_state);
-    g_in_splash_menu = 1;
-    g_total_cycles = 0ULL;
+    reset_to_splash_menu();
 }
 
 void baoregon_emulator_poll_input(void) {
