@@ -74,13 +74,23 @@ SECTIONS
 
     /* .data's load address (LMA) stays in ReRAM; crt0 copies
      * [__data_load_start, __data_load_end) to __data_start in SRAM at
-     * boot, matching the standard XIP-with-separate-RAM startup pattern. */
-    .data : AT (LOADADDR(.dsk_images) + SIZEOF(.dsk_images))
+     * boot, matching the standard XIP-with-separate-RAM startup pattern.
+     *
+     * Includes .sdata/.sdata2 (RISC-V gp-relative "small data" sections --
+     * the compiler places small globals there instead of .data as a size/
+     * perf optimization, e.g. under -Os). Discovered 2026-07-31: without
+     * explicitly capturing these here, they get orphan-placed by the
+     * linker and silently excluded from crt0.S's copy loop -- their
+     * initial values would never actually reach SRAM on real XIP
+     * hardware (caught by a real cross-compiled build + readelf/nm
+     * inspection, not just eyeballing the script). */
+    .data :
     {
         __data_start = .;
         *(.data .data.*)
+        *(.sdata .sdata.* .sdata2 .sdata2.*)
         __data_end = .;
-    } > SRAM
+    } > SRAM AT > RERAM
 
     __data_load_start = LOADADDR(.data);
     __data_load_end = __data_load_start + SIZEOF(.data);
@@ -89,6 +99,7 @@ SECTIONS
     {
         __bss_start = .;
         *(.bss .bss.*)
+        *(.sbss .sbss.* .sbss2 .sbss2.*)
         *(COMMON)
         __bss_end = .;
     } > SRAM

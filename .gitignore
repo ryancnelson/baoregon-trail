@@ -1,5 +1,6 @@
 # Build artifacts
 build/
+build-riscv/
 bin/
 *.elf
 *.bin
@@ -7,6 +8,7 @@ bin/
 *.o
 *.a
 *.d
+*.map
 
 # IDE / Editor files
 .vscode/
