@@ -60,10 +60,10 @@ int main(int argc, char **argv) {
         fprintf(stderr, "error: cannot open %s (run: python3 tools/create_hires_demo_dsk.py)\n", disk_path);
         return 1;
     }
-    static uint8_t boot_sector[256];
+    static uint8_t boot_sector[1024];
     size_t got = fread(boot_sector, 1, sizeof(boot_sector), f);
     fclose(f);
-    if (got != sizeof(boot_sector)) {
+    if (got < 256) {
         fprintf(stderr, "error: %s too short to contain a boot sector\n", disk_path);
         return 1;
     }
@@ -71,10 +71,13 @@ int main(int argc, char **argv) {
     apple2_mem_reset();
     reset6502();
 
-    /* Load the boot sector's code directly into $0800, same technique as
+    /* Load the boot program directly into $0800, same technique as
      * tests/test_dos33_composed_boot.c -- skips the disk_trap soft-switch
-     * protocol since we already have the raw bytes in hand. */
-    for (int i = 0; i < 256; i++) {
+     * protocol since we already have the raw bytes in hand. `got` bytes
+     * (not a hardcoded 256) so multi-sector-sized programs (e.g. the
+     * checkerboard demo's 460-byte offset-table-driven fill routine)
+     * load in full instead of being silently truncated mid-instruction. */
+    for (size_t i = 0; i < got; i++) {
         write6502(0x0800 + i, boot_sector[i]);
     }
     pc = 0x0800;
