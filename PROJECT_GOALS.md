@@ -14,6 +14,7 @@ Build a bare-metal, high-performance Apple II emulator for the **Baochip-1x** si
    * Cold boot to Oregon Trail title screen in `< 50ms` from power-on.
 3. **Flawless Display Rendering**
    * Hardware-accelerated Apple II Hi-Res (280x192) memory un-swizzling and color rendering handled by a 700 MHz PicoRV32 BIO coprocessor.
+   * **TEXT mode with real character-ROM glyph rendering** (added 2026-08-02, Ryan's wishlist): currently TEXT mode renders as solid black -- no character-generator ROM decoder exists yet. Target: decode the real `342-0133-a.chr` (4096-byte) character-generator ROM and render Apple II text-mode screen memory ($0400-$07FF, real row-interleaved layout) into readable on-screen text. First validation target: DOS 3.3's boot banner ("DOS VERSION 3.3"), already proven correct at the memory level (Step 7) but currently invisible. This also directly unlocks Zork I (primarily text-based) as a second real title.
 4. **Authentic Apple II Audio**
    * Low-latency reproduction of the 1-bit `$C030` speaker toggles (click sounds, wagon wheel creaks, river crossing effects) via BIO hardware PWM.
 5. **Badge Input Support**
