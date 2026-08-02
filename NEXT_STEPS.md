@@ -169,6 +169,33 @@ are actually sitting there, not just that the write didn't error), (3)
 double check `stride`/`fourcc` values against the disassembled function's
 exact validation branches from point 3, not just the general format spec.
 
+**FABLE FINAL CONFIRMATION -- STEP 6 GENUINELY WORKS (2026-08-02 09:25):**
+baochip's `FW_CFG_DMA_CTL_WRITE` fix (commit `f0dcf30`, distinct from the
+earlier `FW_CFG_WRITE_CHANNEL` fix which was conclusively ruled out) is
+the real fix. Verified independently, fresh build from `f0dcf30`, using
+`hs.window:snapshot()` (isolated per-window capture, the same reliable
+method used to falsify the two prior "complete" claims): **the QEMU
+window genuinely shows the real Oregon Trail title screen** -- "The
+Oregon Trail" text, the MECC logo, "minnesota educational computing
+corporation" copyright text -- matching the same image content verified
+earlier via the host-native pipeline. Window size also changed to
+280x220 this time (vs. the earlier 640x508 placeholder-only window),
+consistent with the display actually resizing to the real Apple II
+280x192 content. **Step 6 is genuinely, visually complete as of this
+commit.** Third time was the charm after two real, correctly-identified
+false-completion claims -- worth remembering for next time: LLDB/
+disassembly verification of a code path executing is NOT the same claim
+as "the pixel actually renders on screen," and every prior "100%
+resolved"/"conclusively verified" claim in this section turned out to
+need an actual isolated screenshot to settle.
+
+**Housekeeping note:** found 4 leaked headless
+`qemu-system-riscv32 -display none` processes running 9+ hours each
+(PIDs from ~12:17-12:18AM), likely from repeated ralph-loop test runs
+that never got cleaned up. Not blocking anything, but worth someone
+`kill`-ing them and checking whether the test/ralph-loop scripts should
+`pkill` any stray qemu processes before each run to prevent buildup.
+
 ## 💾 Step 7: Real Disk II Controller Emulation (port from apple2js, MIT-licensed)
 
 **Context:** tonight's session confirmed a real, hard blocker for booting
