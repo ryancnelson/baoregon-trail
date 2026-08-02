@@ -221,7 +221,7 @@ static uint8_t nibble_shift(disk2_controller_t *ctl, int write_mode, uint8_t wri
     }
 
     uint32_t now = clockticks6502;
-    uint32_t elapsed = now - d->last_cycles;
+    uint32_t elapsed = (now >= d->last_cycles) ? (now - d->last_cycles) : 0;
     uint32_t nibbles = elapsed / NIBBLE_CYCLES;
 
     if (nibbles > 0 || d->last_cycles == 0) {
