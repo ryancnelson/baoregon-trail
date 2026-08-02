@@ -260,23 +260,10 @@ its MIT license text.
 ---
 
 ## 🚀 Step 9: Post-Stretch Goal Feature Pipeline
-- [ ] **PRIORITY (added 2026-08-02, Ryan's direct wishlist): TEXT-mode character-ROM glyph renderer.**
-      Currently NO character-ROM text renderer exists anywhere in this codebase
-      (documented in `bio_display.h`'s own comment) -- TEXT mode renders as solid
-      BLACK, which is why the Step 8 DOS 3.3 boot demo writes the correct
-      "DOS VERSION 3.3" string into `$0400-$07FF` but shows nothing visible on
-      screen. Decode the real `342-0133-a.chr` (4096-byte) character-generator
-      ROM (already sourced) and render Apple II text-mode screen memory
-      (`$0400-$07FF`, real row-interleaved layout -- verify, don't assume linear)
-      into the existing RGB565 framebuffer `bio_display_render_frame_auto_text_aware()`
-      already produces. First validation target: DOS 3.3's boot banner, already
-      proven correct at the memory level (Step 7). Directly unlocks Zork I
-      (primarily text-based, already sourced) as a second real playable title.
-      Use TDD (known char code -> known expected glyph pixel pattern from the
-      ROM is a natural deterministic test). Ryan wants a real screenshot of
-      readable "DOS VERSION 3.3" text once this lands -- not a black screen.
-- [ ] **Interactive UART Keyboard Softswitches (`$C000` / `$C010`)**: Map QEMU UART RX input bytes into Apple II hardware keyboard latches (`$C000` with strobe bit 7, `$C010` clear strobe) for real-time interactive typing.
+- [x] **TEXT-mode character-ROM glyph renderer** (Ryan's direct wishlist, 2026-08-02): DONE. Real `342-0133-a.chr` ROM decoded, `src/text_apple2.c` renders real glyphs into `$0400-$07FF` text-mode content (commit `7d38e8f`). Framebuffer stride mismatch this surfaced (280x192 vs 320x240) also found and fixed (commits `06cdb4e`, `7320313`, `fdba47e`).
+- [x] **Interactive UART Keyboard Softswitches (`$C000` / `$C010`)**: DONE. `src/uart_keyboard_bridge.c` maps QEMU UART RX bytes into Apple II keyboard latches (commits `2fce43f`, `32c50d0`).
 - [ ] **Speaker Clicker Audio Softswitch (`$C030`)**: Wire 6502 reads/writes at `$C030` into `src/bunnie_audio.c` for 1-bit audio toggle pulse generation.
+- [x] **CRT Monochrome Display Modes**: DONE. P31 Green Phosphor & Amber CRT palette rendering (commit `65ea066`), plus a real gap fixed where Lo-Res graphics bypassed the CRT tint entirely (commit `fd7d132`).
 
 <!-- fable-ralph-loop check-in 2026-08-01 15:50:44 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 582 PASS / 0 FAIL (exit 0). Commits in last ~25min: 5.
