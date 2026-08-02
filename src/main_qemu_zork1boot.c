@@ -27,8 +27,14 @@ static void init_system_rom(void) {
     for (int i = 0; i < SYSTEM_ROM_SIZE; i++) {
         g_system_rom[i] = g_apple2e_system_rom[i];
     }
-    /* Patch Monitor ROM and BASIC entry points for freestanding boot */
-    g_system_rom[0x2000] = 0x4C; g_system_rom[0x2001] = 0x00; g_system_rom[0x2002] = 0xE0; /* JMP $E000 (Applesoft BASIC spin loop) */
+    /* Patch Monitor ROM and BASIC entry points for freestanding boot.
+     * Note: 342-0134-a + 342-0135-b is System Monitor ROM only ($F800-$FFFF) with
+     * $E000-$E0FF unpopulated (zeros). Vector $FFFE/$FFFF points to $E007.
+     * We populate $E000 (cold start), $E003 (warm start), and $E007 (RTI for BRK)
+     * so execution lands cleanly at $E000 without a BRK stack-smashing loop. */
+    g_system_rom[0x2000] = 0x4C; g_system_rom[0x2001] = 0x00; g_system_rom[0x2002] = 0xE0; /* $E000: JMP $E000 */
+    g_system_rom[0x2003] = 0x4C; g_system_rom[0x2004] = 0x00; g_system_rom[0x2005] = 0xE0; /* $E003: JMP $E000 */
+    g_system_rom[0x2007] = 0x40;                                                           /* $E007: RTI */
     g_system_rom[0x3F58] = 0x60; /* IORST ($FF58) */
     g_system_rom[0x3E89] = 0x60; /* SETKBD ($FE89) */
     g_system_rom[0x3E93] = 0x60; /* SETVID ($FE93) */
