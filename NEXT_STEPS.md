@@ -419,6 +419,46 @@ disk read never completes -- this is a different, likely disk2_controller
 or Zork-boot-loader-specific bug, not the same root cause as DOS 3.3's
 gap.
 
+**UPDATE (2026-08-02 ~15:20) -- real progress, still not visually
+confirmed:** Since the above, three real fixes landed: (a) Woz's minimal
+`COUT` implementation at `$FDED` (`b57d605`, TDD-verified in isolation --
+a known "DOS VERSION 3.3" JSR-call sequence produces exactly those bytes
+in a standalone screen-memory test), (b) `src/apple2e_system_rom.h` was
+discovered to be **corrupted/fake data**, not the real Apple IIe ROM
+(confirmed via byte-level diff against the genuine `342-0134-a.64` /
+`342-0135-b.64` chip files) -- regenerated from the real chip files
+(`e6f268c`, `9840368`), and (c) Duke found and fixed a real motor-off/
+elapsed-time desync bug in `disk2_controller.c` (`be7de27`).
+
+Danny (Maestro) rebuilt `main_qemu_dos33boot.c` fresh from clean object
+files after these landed, booted under a real `-display cocoa` window,
+and confirmed clean boot to the intended `JMP $E000` state (no guest
+errors). **But screen memory still does NOT show "DOS VERSION 3.3"** --
+direct `xp` memory dump and a real `hs.window:snapshot()` screenshot both
+show non-repeating but still-not-readable-text byte patterns (different
+noise than before the ROM fix, confirming the ROM fix changed something
+real, but not converging on the expected banner).
+
+**A separate false-positive was also caught and corrected**: an earlier
+commit (`c155e15`) claimed real distinct screenshots for both DOS 3.3 and
+Zork I boots (`docs/screenshot_dos33boot_real_rom.png` /
+`docs/screenshot_zork1boot_real_rom.png`) -- both files were confirmed
+**byte-for-byte identical (same MD5)**, meaning the capture script
+(`tools/capture_qemu_snapshot.py`) grabbed the same still-open window
+twice rather than two genuinely separate boots. Both misleading files
+have been deleted; the underlying script bug (QEMU `terminate()` racing
+against the next iteration's window-snapshot, not confirming the previous
+window actually closed) is not yet fixed.
+
+Woz is actively deep in stack-pointer/register-state forensics on the
+live boot to pin down exactly where the COUT-written banner text is
+being lost between "COUT genuinely called ~100+ times during boot,
+Y register in valid row-0 column range" and "final screen memory has no
+readable text" -- this is the real, still-open gap. No screenshot should
+be claimed as done until someone independently confirms readable
+"DOS VERSION 3.3" text via a fresh, individually-verified
+`hs.window:snapshot()` capture (not reused from a prior run).
+
 ---
 
 ## 🚀 Step 9: Post-Stretch Goal Feature Pipeline
