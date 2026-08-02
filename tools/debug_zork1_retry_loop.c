@@ -23,17 +23,47 @@
 #define SYSTEM_ROM_SIZE 16384
 static uint8_t g_system_rom[SYSTEM_ROM_SIZE];
 
+/* Kept byte-for-byte in sync with main_qemu_zork1boot.c's
+ * init_system_rom() -- see that file for the full rationale comments
+ * (E000/E003/E007 landing pads for the monitor-only ROM set, real
+ * minimal COUT wired to $FDED). Duplicated here (not shared via a
+ * common helper) because this is a standalone host debug tool, not
+ * part of the production QEMU boot path -- keep both in sync manually
+ * whenever either changes. */
 static void init_system_rom(void) {
     for (int i = 0; i < SYSTEM_ROM_SIZE; i++) {
         g_system_rom[i] = g_apple2e_system_rom[i];
     }
-    g_system_rom[0x2000] = 0x4C; g_system_rom[0x2001] = 0x00; g_system_rom[0x2002] = 0xE0;
-    g_system_rom[0x3F58] = 0x60;
-    g_system_rom[0x3E89] = 0x60;
-    g_system_rom[0x3E93] = 0x60;
-    g_system_rom[0x3B2F] = 0x60;
-    g_system_rom[0x388E] = 0x60;
-    g_system_rom[0x3CA8] = 0xA9; g_system_rom[0x3CA9] = 0x00; g_system_rom[0x3CAA] = 0x60;
+    g_system_rom[0x2000] = 0x4C; g_system_rom[0x2001] = 0x00; g_system_rom[0x2002] = 0xE0; /* $E000: JMP $E000 */
+    g_system_rom[0x2003] = 0x4C; g_system_rom[0x2004] = 0x00; g_system_rom[0x2005] = 0xE0; /* $E003: JMP $E000 */
+    g_system_rom[0x2007] = 0x40;                                                           /* $E007: RTI */
+    g_system_rom[0x3F58] = 0x60; /* IORST ($FF58) */
+    g_system_rom[0x3E89] = 0x60; /* SETKBD ($FE89) */
+    g_system_rom[0x3E93] = 0x60; /* SETVID ($FE93) */
+    g_system_rom[0x3B2F] = 0x60; /* INIT ($FB2F) */
+    g_system_rom[0x3CA8] = 0xA9; g_system_rom[0x3CA9] = 0x00; g_system_rom[0x3CAA] = 0x60; /* WAIT ($FCA8) */
+
+    {
+        static const uint8_t cout_code[] = {
+            0x85, 0xFF,             /* STA $FF */
+            0x98,                   /* TYA */
+            0x48,                   /* PHA */
+            0xA4, 0x24,             /* LDY $24 */
+            0xA5, 0xFF,             /* LDA $FF */
+            0x99, 0x00, 0x04,       /* STA $0400,Y */
+            0xE6, 0x24,             /* INC $24 */
+            0x68,                   /* PLA */
+            0xA8,                   /* TAY */
+            0xA5, 0xFF,             /* LDA $FF */
+            0x60                    /* RTS */
+        };
+        for (size_t i = 0; i < sizeof(cout_code); i++) {
+            g_system_rom[0x3DED + i] = cout_code[i];
+        }
+        g_system_rom[0x388E] = 0x4C; /* JMP $FDED */
+        g_system_rom[0x388F] = 0xED;
+        g_system_rom[0x3890] = 0xFD;
+    }
 }
 
 static disk2_nibble_track_t g_tracks[DISK2_MAX_TRACKS];
@@ -272,6 +302,19 @@ int main(int argc, char **argv) {
     fprintf(stderr, "Final PC=$%04X A=$%02X X=$%02X Y=$%02X\n", pc, a, x, y);
     fprintf(stderr, "Final disk2 state: track=%d head=%d skip=%d motor_on=%d latch=0x%02X\n",
             ctl->drive[0].track, ctl->drive[0].head, ctl->drive[0].skip, ctl->motor_on, ctl->latch);
+
+    char screen_text[2048];
+    size_t so = 0;
+    for (uint16_t addr = 0x0400; addr <= 0x07FF && so + 1 < sizeof(screen_text); addr++) {
+        uint8_t b = (uint8_t)(read6502(addr) & 0x7F);
+        if (b >= 0x20 && b < 0x7F) {
+            screen_text[so++] = (char)b;
+        } else if (b == 0x00 || b == 0x0D) {
+            screen_text[so++] = ' ';
+        }
+    }
+    screen_text[so] = '\0';
+    fprintf(stderr, "Screen text (raw): %s\n", screen_text);
 
     fprintf(stderr, "\nPC histogram $2400-$2700 (addresses with >1000 hits):\n");
     for (int i = 0; i < 0x300; i++) {
