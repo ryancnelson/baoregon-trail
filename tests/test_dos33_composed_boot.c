@@ -32,25 +32,30 @@ static void test_dos33_composed_system_boot(void) {
     }
 
     /* Verify sector 0 opcode bytes were loaded into $0800 */
-    assert(read6502(0x0800) == 0xA2); /* LDX #$00 */
-    assert(read6502(0x0801) == 0x00);
+    assert(read6502(0x0800) == 0x01); /* sector load count = 1 */
+    assert(read6502(0x0801) == 0xA2); /* LDX #$00 */
+    assert(read6502(0x0802) == 0x00);
 
-    /* 3. Execute 6502 bootloader at $0800 */
-    pc = 0x0800;
-    exec6502(300); /* execute 300 cycles for 11 chars + softswitches */
+    /* 3. Execute 6502 bootloader at $0801 (boot PROM entry point) */
+    pc = 0x0801;
+    exec6502(300); /* execute 300 cycles for 15 chars + softswitches */
 
-    /* 4. Verify text RAM $0400 contains "HELLO WORLD" in high ASCII */
-    assert(read6502(0x0400) == ('H' | 0x80));
-    assert(read6502(0x0401) == ('E' | 0x80));
-    assert(read6502(0x0402) == ('L' | 0x80));
-    assert(read6502(0x0403) == ('L' | 0x80));
-    assert(read6502(0x0404) == ('O' | 0x80));
-    assert(read6502(0x0405) == (' ' | 0x80));
-    assert(read6502(0x0406) == ('W' | 0x80));
-    assert(read6502(0x0407) == ('O' | 0x80));
-    assert(read6502(0x0408) == ('R' | 0x80));
-    assert(read6502(0x0409) == ('L' | 0x80));
-    assert(read6502(0x040A) == ('D' | 0x80));
+    /* 4. Verify text RAM $0400 contains "DOS VERSION 3.3" in high ASCII */
+    assert(read6502(0x0400) == ('D' | 0x80));
+    assert(read6502(0x0401) == ('O' | 0x80));
+    assert(read6502(0x0402) == ('S' | 0x80));
+    assert(read6502(0x0403) == (' ' | 0x80));
+    assert(read6502(0x0404) == ('V' | 0x80));
+    assert(read6502(0x0405) == ('E' | 0x80));
+    assert(read6502(0x0406) == ('R' | 0x80));
+    assert(read6502(0x0407) == ('S' | 0x80));
+    assert(read6502(0x0408) == ('I' | 0x80));
+    assert(read6502(0x0409) == ('O' | 0x80));
+    assert(read6502(0x040A) == ('N' | 0x80));
+    assert(read6502(0x040B) == (' ' | 0x80));
+    assert(read6502(0x040C) == ('3' | 0x80));
+    assert(read6502(0x040D) == ('.' | 0x80));
+    assert(read6502(0x040E) == ('3' | 0x80));
 
     /* Verify softswitches switched to TEXT mode ($C051) & PAGE1 ($C054) */
     assert(apple2_mem_is_text_mode() == 1);

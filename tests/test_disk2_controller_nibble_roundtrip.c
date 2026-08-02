@@ -57,14 +57,16 @@ static void init_detrans62(void) {
  * per-nibble skip-flag timing (see disk2_controller.c's nibble_shift()
  * comment) -- this mirrors exactly how real 6502 RWTS code polls $C0EC
  * in a tight loop waiting for a byte. */
+#include "../src/cpu6502.h"
+
 static uint8_t read_one_nibble(disk2_controller_t *ctl) {
     uint8_t b;
     do {
         b = disk2_controller_access(ctl, LOC_DRIVEREAD, 0, 0);
-    } while (b == 0); /* real RWTS waits for the high bit; since our
-                          synthetic sync/GCR bytes are always >= 0x80,
-                          any nonzero read here is a genuine byte, not
-                          the "not ready yet" skip-flag gap. */
+        if ((b & 0x80) == 0) {
+            clockticks6502 += 32;
+        }
+    } while ((b & 0x80) == 0);
     return b;
 }
 

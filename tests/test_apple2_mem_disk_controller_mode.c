@@ -66,9 +66,13 @@ static void test_disk2_mode_routes_to_disk2_controller(void) {
     write6502(0xC0EE, 0x00); /* DRIVEREADMODE = loc 0xE -> $C0EE (Q7 low) */
 
     uint8_t first = read6502(0xC0EC); /* DRIVEREAD = loc 0xC -> $C0EC */
-    assert(first == 0); /* skip flag: first pulse never yields a byte */
+    assert(first == 0x55); /* First access loads byte 0 (0x55) */
+    uint8_t sub = read6502(0xC0EC);
+    assert((sub & 0x80) == 0); /* Sub-32-cycle access yields bit 7 = 0 */
+
+    clockticks6502 += 32;
     uint8_t second = read6502(0xC0EC);
-    assert(second == 0x55);
+    assert(second == 0x66); /* Next access after 32 cycles loads byte 1 (0x66) */
 
     printf("PASS: test_disk2_mode_routes_to_disk2_controller\n");
 }
