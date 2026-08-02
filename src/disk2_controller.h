@@ -55,6 +55,16 @@ typedef struct {
  * is needed. */
 void disk2_controller_reset(disk2_controller_t *ctl);
 
+/* Reads one byte of the embedded 256-byte Disk II boot PROM
+ * (341-0027-a.p5, 16-sector/DOS 3.3 variant) at the given offset
+ * (0x00-0xFF -- caller is responsible for real slot-address decoding,
+ * e.g. slot 6 is $C600-$C6FF, offset = address - 0xC600, same
+ * convention as disk2_controller_access()'s $C0E0-$C0EF offset). This
+ * is the code real Apple II hardware JSRs into at $Cn00 during cold
+ * boot to drive the Disk II softswitches and load a disk's first
+ * sector. */
+uint8_t disk2_controller_read_boot_rom(uint8_t offset);
+
 /* Loads nibble-encoded track data into the given drive (0 or 1). The
  * caller is responsible for producing real nibble-encoded data (see
  * NEXT_STEPS.md Step 7 -- a .dsk-to-nibble converter is not yet written;

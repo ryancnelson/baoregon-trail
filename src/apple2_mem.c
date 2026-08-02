@@ -419,6 +419,15 @@ uint8_t read6502(uint16_t address) {
     if (address >= 0xC000 && address <= 0xC0FF) {
         return handle_soft_switch_read(address);
     }
+    if (address >= 0xC600 && address <= 0xC6FF &&
+        g_disk_controller_mode == APPLE2_MEM_DISK_CONTROLLER_DISK2) {
+        /* Slot 6 boot PROM (341-0027-a.p5): only meaningful in DISK2
+         * mode -- real Apple II boot code JSRs here to drive
+         * disk2_controller.c's $C0E0-$C0EF softswitches and load the
+         * first sector. In DISK_TRAP mode (default), this falls
+         * through to the plain g_ram[] behavior below unchanged. */
+        return disk2_controller_read_boot_rom((uint8_t)(address - 0xC600));
+    }
     if (address >= 0xC100 && address <= 0xCFFF && g_system_rom) {
         /* $C100-$CFFF: I/O firmware + expansion ROM region. NOT gated by
          * the LC softswitch on real Apple IIe hardware (that only
@@ -453,6 +462,12 @@ uint8_t read6502(uint16_t address) {
 void write6502(uint16_t address, uint8_t value) {
     if (address >= 0xC000 && address <= 0xC0FF) {
         handle_soft_switch_write(address, value);
+        return;
+    }
+    if (address >= 0xC600 && address <= 0xC6FF &&
+        g_disk_controller_mode == APPLE2_MEM_DISK_CONTROLLER_DISK2) {
+        /* Boot PROM is real ROM -- writes silently ignored, matching
+         * this file's other ROM write-protection conventions. */
         return;
     }
     if (address >= LC_BANKED_REGION_START) {
