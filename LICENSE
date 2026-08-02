@@ -43,6 +43,15 @@ purposes only:
   development/verification testing (see `tools/README_oregon_trail.md`
   and `tools/mame_dump_memory.lua`).
 
+- **`src/charrom_342_0133_a.h`** -- a C byte-array embedding of the real
+  Apple IIe character generator ROM (`342-0133-a.chr`, 4096 bytes,
+  extracted from `roms/apple2e.zip` by `tools/gen_charrom_header.py`).
+  Same copyright status as `roms/*.zip` above (Apple Computer, Inc.
+  firmware) -- included here, alongside the ROM zip it's derived from,
+  only for development/testing purposes (real Apple II TEXT-mode
+  character glyph rendering, see `src/text_apple2.c`). Not covered by
+  the MIT license above.
+
 - **`tools/assets/oregon_trail_title.png`** -- a screenshot of the
   original 1985 *The Oregon Trail* (MECC) Apple II title screen. Screenshots
   of this game are widely archived at [archive.org](https://archive.org)'s

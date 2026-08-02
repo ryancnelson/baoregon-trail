@@ -289,17 +289,17 @@ int ramfb_display_init(void) {
  * rounding) so ramfb's colors match the terminal viewer's colors
  * pixel-for-pixel, not just "close enough". */
 static uint32_t rgb565_to_xrgb8888(uint16_t rgb565) {
-    uint8_t r5 = (uint8_t)((rgb565 >> 11) & 0x1F);
-    uint8_t g6 = (uint8_t)((rgb565 >> 5) & 0x3F);
-    uint8_t b5 = (uint8_t)(rgb565 & 0x1F);
-    uint8_t r8 = (uint8_t)((r5 * 255 + 15) / 31);
-    uint8_t g8 = (uint8_t)((g6 * 255 + 31) / 63);
-    uint8_t b8 = (uint8_t)((b5 * 255 + 15) / 31);
-    /* xrgb8888, x byte unused/ignored by QEMU -- pack as a little-endian
-     * u32 word 0x00RRGGBB (matches this RISC-V target's little-endian
-     * byte order, so the in-memory byte sequence QEMU reads is
-     * B,G,R,X -- exactly DRM_FORMAT_XRGB8888's documented byte layout). */
-    return ((uint32_t)r8 << 16) | ((uint32_t)g8 << 8) | (uint32_t)b8;
+    uint32_t r5 = (uint32_t)((rgb565 >> 11) & 0x1F);
+    uint32_t g6 = (uint32_t)((rgb565 >> 5) & 0x3F);
+    uint32_t b5 = (uint32_t)(rgb565 & 0x1F);
+
+    /* Fast bitwise bit-replication (exact 5->8 and 6->8 bit expansion,
+     * zero hardware division/multiplication overhead on RISC-V). */
+    uint32_t r8 = (r5 << 3) | (r5 >> 2);
+    uint32_t g8 = (g6 << 2) | (g6 >> 4);
+    uint32_t b8 = (b5 << 3) | (b5 >> 2);
+
+    return (r8 << 16) | (g8 << 8) | b8;
 }
 
 /* Call once per frame, after bio_display_render_frame*() has filled
