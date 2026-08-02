@@ -10,6 +10,7 @@
 #include "zork1_nib_disk_data.h"
 #include "uart_keyboard_bridge.h"
 #include "emu_trace.h"
+#include <stddef.h>
 
 #define UART0_BASE 0x10000000u
 static volatile uint8_t *const uart_thr = (volatile uint8_t *)UART0_BASE;
@@ -32,8 +33,31 @@ static void init_system_rom(void) {
     g_system_rom[0x3E89] = 0x60; /* SETKBD ($FE89) */
     g_system_rom[0x3E93] = 0x60; /* SETVID ($FE93) */
     g_system_rom[0x3B2F] = 0x60; /* INIT ($FB2F) */
-    g_system_rom[0x388E] = 0x60; /* COUT ($F88E) */
     g_system_rom[0x3CA8] = 0xA9; g_system_rom[0x3CA9] = 0x00; g_system_rom[0x3CAA] = 0x60; /* WAIT ($FCA8) */
+
+    /* Real minimal COUT ($FDED, offset $3DED) -- wire character output
+     * into screen memory row 0 ($0400), tracking cursor column at zero-page $24. */
+    {
+        static const uint8_t cout_code[] = {
+            0x85, 0xFF,             /* STA $FF */
+            0x98,                   /* TYA */
+            0x48,                   /* PHA */
+            0xA4, 0x24,             /* LDY $24 */
+            0xA5, 0xFF,             /* LDA $FF */
+            0x99, 0x00, 0x04,       /* STA $0400,Y */
+            0xE6, 0x24,             /* INC $24 */
+            0x68,                   /* PLA */
+            0xA8,                   /* TAY */
+            0xA5, 0xFF,             /* LDA $FF */
+            0x60                    /* RTS */
+        };
+        for (size_t i = 0; i < sizeof(cout_code); i++) {
+            g_system_rom[0x3DED + i] = cout_code[i];
+        }
+        g_system_rom[0x388E] = 0x4C; /* JMP $FDED */
+        g_system_rom[0x388F] = 0xED;
+        g_system_rom[0x3890] = 0xFD;
+    }
 }
 
 int ramfb_display_init(void);
