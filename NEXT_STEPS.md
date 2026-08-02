@@ -459,6 +459,48 @@ be claimed as done until someone independently confirms readable
 "DOS VERSION 3.3" text via a fresh, individually-verified
 `hs.window:snapshot()` capture (not reused from a prior run).
 
+**UPDATE (2026-08-02 ~15:35) -- Woz found the real root cause, and it
+changes the picture significantly:**
+
+The COUT machine-code patch itself is confirmed correct and genuinely
+reached during real boot (reproduced the exact register state from a
+live trace -- A=0x3E, Y=0xEE at PC=$FDFA -- in an isolated harness,
+confirming clean execution and RTS). **The actual bug: after COUT
+returns, execution eventually hits a BRK (0x00) instruction, whose
+IRQ/BRK vector (`$FFFE`/`$FFFF`) points to `$E007` -- which sits inside
+the `$E000-$E0FF` range that is genuinely all-zero bytes in the real ROM
+dump.** All-zero bytes decode as repeated BRK opcodes, creating an
+infinite BRK-retrigger loop that burns 3 stack bytes per iteration.
+Eventually PC coincidentally lands on `$E000` itself -- which
+`main_qemu_dos33boot.c` patches to `JMP $E000` as the presumed
+"Applesoft spin loop". **The "clean landing" everyone (including Danny)
+observed the whole session was actually the accidental byproduct of a
+BRK-storm crash loop, not a real, intentional handoff.**
+
+**Deeper root cause**: `roms/apple2e.zip`'s `342-0134-a.64`/
+`342-0135-b.64` pair is the Apple IIe **Monitor/Autostart ROM only**
+(confirmed via real diagnostic text found at `$DC53`) -- it does **not**
+include Applesoft BASIC firmware, which lives on a separate chip not
+present in that zip at all. `$E000` was never going to work as a real
+Applesoft landing pad with this ROM set, regardless of what gets patched
+there.
+
+Commit `753cfe9` (adding explicit `$E000`/`$E003`/`$E007` landing pads +
+an RTI BRK handler) genuinely does stop the BRK-storm cleanly -- Danny
+confirmed this by rebuilding fresh and observing the same stable
+`pc=E000` landing state, now via an intentional jump rather than crash
+luck. **But screen memory content after this fix is byte-for-byte
+IDENTICAL to a pre-fix capture** -- an unexplained, suspicious data point
+Danny flagged back to Woz for a controlled A/B re-test, since it's
+unclear whether (a) the BRK-storm and the missing-banner-text issue are
+genuinely separate bugs (the storm happening AFTER COUT already wrote
+whatever it was going to write), or (b) a testing mistake (no clean
+rebuild between the two checks). **Real open question worth checking
+directly: DOS 3.3's boot banner print may happen from Applesoft's own
+cold-start code, not DOS 3.3's own RWTS loader** -- if so, no
+landing-pad patch will ever produce the banner without at least a
+minimal/stub Applesoft implementation actually present in the ROM.
+
 ---
 
 ## 🚀 Step 9: Post-Stretch Goal Feature Pipeline
