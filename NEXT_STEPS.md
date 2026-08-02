@@ -250,6 +250,20 @@ its MIT license text.
       decodes GCR sector 0, loads to `$0800`, jumps to `$0801`, writes
       `"DOS VERSION 3.3"` into screen memory `$0400`, and passes cleanly (`exit 0`).
 
+---
+
+## 🎯 Step 8: Stretch-Goal Integration Demo (Real DOS 3.3 Boot on Live QEMU RAMFB)
+- [x] **STRETCH-GOAL DEMO LANDED (2026-08-02)**: Created `src/main_qemu_disk2boot.c`, embedding real GCR nibble track data for `disks/dos33_sample.dsk` via `tools/gen_nib_disk_header.py` (`src/dos33_nib_disk_data.h`).
+- [x] Boots real DOS 3.3 directly through `disk2_controller.c` at `$C600` while continuously rendering and pushing frames to QEMU's `ramfb` display device.
+- [x] Verified under `qemu-system-riscv32 -M virt -bios none -device ramfb -kernel build-qemu/baoregon-disk2boot-qemu.elf`.
+
+---
+
+## 🚀 Step 9: Post-Stretch Goal Feature Pipeline
+- [ ] **Interactive UART Keyboard Softswitches (`$C000` / `$C010`)**: Map QEMU UART RX input bytes into Apple II hardware keyboard latches (`$C000` with strobe bit 7, `$C010` clear strobe) for real-time interactive typing.
+- [ ] **CRT Monochrome Display Modes**: Add P31 Green Phosphor & Amber CRT palette rendering in `src/bio_display.c`.
+- [ ] **Speaker Clicker Audio Softswitch (`$C030`)**: Wire 6502 reads/writes at `$C030` into `src/bunnie_audio.c` for 1-bit audio toggle pulse generation.
+
 <!-- fable-ralph-loop check-in 2026-08-01 15:50:44 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 582 PASS / 0 FAIL (exit 0). Commits in last ~25min: 5.
 
