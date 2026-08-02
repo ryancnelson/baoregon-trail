@@ -35,6 +35,21 @@ uint16_t bio_display_color_to_rgb565(hires_color_t color) {
         return 0x0000; /* out-of-range: black fallback, matches lores_color_to_rgb565() */
     }
     uint16_t rgb = g_color_to_rgb565[color];
+    return bio_display_apply_crt_tint(rgb);
+}
+
+/* Applies the currently-selected CRT mode's monochrome tint to an
+ * arbitrary already-computed RGB565 value. Factored out of
+ * bio_display_color_to_rgb565() so any RGB565 source -- not just the
+ * Hi-Res hires_color_t palette -- can respect CRT mode. Real gap this
+ * closes: bio_display_render_lores_frame()/_mixed() previously called
+ * lores_color_to_rgb565() directly, bypassing CRT tinting entirely --
+ * switching to Green Phosphor/Amber mode correctly re-tinted Hi-Res and
+ * TEXT-mode output (both already routed through
+ * bio_display_color_to_rgb565()) but silently left Lo-Res graphics in
+ * full color, a real visible inconsistency. See
+ * tests/test_bio_display_lores_crt_mode.c for the regression test. */
+uint16_t bio_display_apply_crt_tint(uint16_t rgb) {
     if (g_crt_mode == BIO_CRT_MODE_COLOR) {
         return rgb;
     }
@@ -116,7 +131,7 @@ void bio_display_render_lores_frame(int page2, read6502_fn read_mem,
     for (int block_row = 0; block_row < LORES_BLOCK_ROWS; block_row++) {
         for (int block_col = 0; block_col < LORES_BLOCK_COLS; block_col++) {
             uint8_t color_index = blocks[block_row * LORES_BLOCK_COLS + block_col];
-            uint16_t rgb565 = lores_color_to_rgb565(color_index);
+            uint16_t rgb565 = bio_display_apply_crt_tint(lores_color_to_rgb565(color_index));
 
             int px_row_base = block_row * 4; /* each block is 4px tall */
             int px_col_base = block_col * 7; /* each block is 7px wide */
@@ -144,7 +159,7 @@ void bio_display_render_lores_frame_mixed(int page2, int mixed_mode, read6502_fn
     for (int block_row = 0; block_row < max_block_rows; block_row++) {
         for (int block_col = 0; block_col < LORES_BLOCK_COLS; block_col++) {
             uint8_t color_index = blocks[block_row * LORES_BLOCK_COLS + block_col];
-            uint16_t rgb565 = lores_color_to_rgb565(color_index);
+            uint16_t rgb565 = bio_display_apply_crt_tint(lores_color_to_rgb565(color_index));
 
             int px_row_base = block_row * 4; /* each block is 4px tall */
             int px_col_base = block_col * 7; /* each block is 7px wide */

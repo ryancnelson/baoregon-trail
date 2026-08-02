@@ -54,6 +54,13 @@ bio_crt_mode_t bio_display_get_crt_mode(void);
  * lores_color_to_rgb565()'s convention. */
 uint16_t bio_display_color_to_rgb565(hires_color_t color);
 
+/* Applies the currently-selected CRT mode's (Color/Green Phosphor/Amber)
+ * monochrome tint to an arbitrary already-computed RGB565 value --
+ * lets any renderer's own RGB565 palette (e.g. lores_color_to_rgb565())
+ * respect CRT mode without duplicating the tinting math. In
+ * BIO_CRT_MODE_COLOR, returns rgb unchanged. */
+uint16_t bio_display_apply_crt_tint(uint16_t rgb);
+
 /*
  * Decode all HIRES_ROWS scanlines via hires_decode_scanline_color() and
  * write RGB565 pixels into framebuffer (row-major, BIO_DISPLAY_WIDTH *
