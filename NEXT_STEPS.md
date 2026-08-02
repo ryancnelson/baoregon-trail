@@ -689,6 +689,50 @@ target pivoted to Zork I instead, since it's real 6502 machine code
 with no Applesoft/BASIC dependency and should print its opening text
 directly via COUT once its own disk-read issue (this bug) is fixed.
 
+**UPDATE (2026-08-02, Woz): the "~53% miss rate" is NOT a bug -- reference-model
+diff + direct disk-data inspection both independently confirm this** (per Ryan's
+direction to pair with Duke and use whscullin/apple2js as a ground-truth oracle,
+Duke has since stood down from this thread per Ryan's redirect -- recording
+findings here for whoever picks it up next, not continuing to dig further myself):
+
+1. **Ported apple2js's real `NibbleDiskDriver.onQ6Low()` timing model verbatim**
+   (cloned fresh from GitHub, read the actual TypeScript source directly -- a
+   simple call-parity `skip` toggle, NO elapsed-cycle/wall-clock gating at all,
+   architecturally distinct from our `nibble_shift()`'s `NIBBLE_CYCLES=32`
+   elapsed-time model) into an isolated copy of `disk2_controller.c` (not the
+   real file -- a `/tmp` copy, to avoid touching the locked file). Re-ran the
+   exact same Zork I boot against this reference model: **same ~52% miss rate**
+   (893/1711 at 20M cycles, 257/493 at 5M cycles -- nearly identical counts to
+   the original elapsed-cycle model's 257/483), **with the same specific wrong
+   byte (0xAD)** in both cases. Two architecturally different timing models
+   produce the same result -- strong evidence the desync is NOT caused by
+   `nibble_shift()`'s timing/head-advance math at all.
+
+2. **Directly parsed `src/zork1_nib_disk_data.h`'s track 0 array** (Python,
+   completely outside the emulator) for every `D5 AA` byte pair and what
+   follows: found **exactly 32 occurrences, split EXACTLY 16/16** between
+   `D5 AA 96` (address-field prologue) and `D5 AA AD` (**data-field
+   prologue** -- standard real Apple II GCR convention, both are legitimate
+   sync marks that appear on every real formatted track). The "53% miss rate"
+   is the boot code's address-field search loop **correctly retrying every
+   time it legitimately encounters a data-field prologue instead of an
+   address-field one** -- completely expected behavior scanning a real disk
+   track that (correctly) has both field types present, not a controller bug.
+
+**This closes out `nibble_shift()`'s timing model as a lead entirely** (confirmed
+dead twice over: two different models, plus direct disk-data ground truth).
+**Next step for whoever picks this up**: the ACTUAL stuck-loop symptom
+($2602/$2605/etc, 20M+ cycles no progress) needs to be re-traced starting from
+what happens AFTER a genuine `D5 AA 96` match succeeds -- i.e. track/sector/
+volume checksum validation, or the seek-to-next-track logic that runs once the
+address field is actually found -- since the address-field search itself is now
+confirmed working as designed. Reproduction harnesses (not wired into any
+build, standalone scratch files):
+`/tmp/test_refmodel_boot.c` (reference-model A/B harness) and
+`/tmp/dump_track_near_sync.c` (direct disk-data D5-AA-next-byte dump) -- both
+depend only on committed project headers/sources, safe to recreate from this
+description if `/tmp` has been cleared.
+
 
 <!-- fable-ralph-loop check-in 2026-08-02 16:16:09 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 631 PASS / 0 FAIL (exit 0). Commits in last ~25min: 4.
