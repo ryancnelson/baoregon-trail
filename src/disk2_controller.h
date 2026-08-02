@@ -37,6 +37,7 @@ typedef struct {
      * DOS 3.3 RWTS polls $C0EC in a tight loop expecting this exact
      * cadence; omitting it desyncs real boot code. */
     int skip;
+    uint32_t last_cycles; /* 6502 CPU cycle timestamp of last nibble shift (32 cycles/nibble) */
 } disk2_drive_state_t;
 
 typedef struct {

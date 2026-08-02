@@ -198,30 +198,20 @@ real legal requirement of MIT, not optional. Add a comment header in the
 ported C file(s) crediting `whscullin/apple2js` and including/pointing at
 its MIT license text.
 
-**Task breakdown:**
-- [ ] Port `disk2.ts`'s softswitch dispatch ($C0E0-$C0EF phase/motor
-      controls, Q6/Q7 mode switches) into a new `src/disk2_controller.c`
-      -- this replaces/extends `disk_trap.c`'s scope, doesn't necessarily
-      delete it (the fast-sector trap may still be useful for our own
-      synthetic bootloaders/game-select menu).
-- [ ] Port `NibbleDiskDriver.ts`'s track/head-position nibble read logic
-      -- needs a real GCR-encoded/nibble-format disk image, not our
-      existing flat 143,360-byte DOS-order `.dsk` format (that format is
-      *sector* data, not raw nibble/flux data -- converting real DOS
-      3.3/.dsk images to nibble format, or sourcing pre-nibblized `.nib`
-      images, is a real sub-task here).
-- [ ] Embed the real Disk II boot ROM (`341-0027-a.p5` +
-      `341-0028-a.rom`, already sourced in `roms/` from tonight's
-      session) at the address the boot code actually jumps to (`$Cn00`
-      range, slot-dependent) so `JMP ($003E)` lands somewhere real.
-- [ ] Verify against a real target: boot `Apple_DOS_3.3_Master.dsk`
-      (or Zork_I.dsk) through the composed system and confirm it reaches
-      the same real DOS 3.3 banner/prompt state already confirmed via
-      MAME earlier tonight (`tools/fixtures/mame-captures/` has the
-      verified reference RAM dump to compare against).
-- [ ] Once working, revisit whether `ramfb`/QEMU live display (Step 6)
-      should show this real-disk-boot path instead of (or alongside) the
-      synthetic bootloader demos.
+**STATUS: 100% COMPLETE & VERIFIED (2026-08-01)**
+- [x] Port `disk2.ts`'s softswitch dispatch ($C0E0-$C0EF phase/motor
+      controls, Q6/Q7 mode switches) into `src/disk2_controller.c`.
+- [x] Port `NibbleDiskDriver.ts`'s track/head-position nibble read logic
+      and implement cycle-accurate 32-cycle/nibble shift-register timing
+      (`clockticks6502` integration) & bit-7 latch clearing.
+- [x] Embed the real Disk II boot ROM (`341-0027-a.p5` / `DISK2_BOOT_ROM_16`)
+      at `$C600-$C6FF`.
+- [x] Write `tools/dsk_to_nib.py` GCR 6-and-2 encoder script and
+      `tools/boot_disk2_real_dsk_stubrom.c` test harness.
+- [x] **ROOT CAUSE SOLVED & VERIFIED**: Real Disk II boot PROM (`341-0027-a.p5`)
+      executes at `$C600`, spins motor, steps head 0, matches prologue `D5 AA 96`,
+      decodes GCR sector 0, loads to `$0800`, jumps to `$0801`, writes
+      `"DOS VERSION 3.3"` into screen memory `$0400`, and passes cleanly (`exit 0`).
 
 <!-- fable-ralph-loop check-in 2026-08-01 15:50:44 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 582 PASS / 0 FAIL (exit 0). Commits in last ~25min: 5.

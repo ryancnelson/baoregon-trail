@@ -85,6 +85,10 @@ int main(int argc, char **argv) {
      * instead of crashing into zeroed-RAM garbage. Not a real monitor
      * ROM -- just enough to let boot flow continue. */
     memset(g_stub_rom, 0x60, sizeof(g_stub_rom));
+    /* Real Apple II Monitor ROM $FCA8 (WAIT subroutine) leaves A = 0 on return */
+    g_stub_rom[0x3CA8] = 0xA9; /* LDA #$00 */
+    g_stub_rom[0x3CA9] = 0x00;
+    g_stub_rom[0x3CAA] = 0x60; /* RTS */
 
     apple2_mem_reset();
     reset6502();

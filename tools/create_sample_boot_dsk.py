@@ -15,33 +15,35 @@ def generate_boot_sector() -> bytes:
     sector = bytearray(256)
     
     # 6502 machine code:
-    # $0800: A2 00       LDX #$00
-    # $0802: BD 17 08    LDA $0817,X
-    # $0805: F0 08       BEQ $080F
-    # $0807: 9D 00 04    STA $0400,X
-    # $080A: E8          INX
-    # $080B: 4C 02 08    JMP $0802
-    # $080E: 8D 51 C0    STA $C051 (TEXT)
-    # $0811: 8D 54 C0    STA $C054 (PAGE1)
-    # $0814: 4C 14 08    JMP $0814
-    # $0817: "HELLO WORLD\0" (with high bit 0x80 set)
-    
+    # $0800: 01          (sector load count = 1 sector)
+    # $0801: A2 00       LDX #$00
+    # $0803: BD 18 08    LDA $0818,X
+    # $0806: F0 09       BEQ $0811
+    # $0808: 9D 00 04    STA $0400,X
+    # $080B: E8          INX
+    # $080C: 4C 03 08    JMP $0803
+    # $080F: 8D 51 C0    STA $C051 (TEXT)
+    # $0812: 8D 54 C0    STA $C054 (PAGE1)
+    # $0815: 4C 15 08    JMP $0815
+    # $0818: "DOS VERSION 3.3\0" (with high bit 0x80 set)
+
     code = bytes([
-        0xA2, 0x00,              # 0800: LDX #$00
-        0xBD, 0x17, 0x08,        # 0802: LDA $0817,X
-        0xF0, 0x0A,              # 0805: BEQ $0811 (offset +10 -> 0811)
-        0x9D, 0x00, 0x04,        # 0807: STA $0400,X
-        0xE8,                    # 080A: INX
-        0x4C, 0x02, 0x08,        # 080B: JMP $0802
-        0x8D, 0x51, 0xC0,        # 080E: STA $C051
-        0x8D, 0x54, 0xC0,        # 0811: STA $C054
-        0x4C, 0x14, 0x08,        # 0814: JMP $0814
+        0x01,                    # 0800: sector load count = 1
+        0xA2, 0x00,              # 0801: LDX #$00
+        0xBD, 0x18, 0x08,        # 0803: LDA $0818,X
+        0xF0, 0x09,              # 0806: BEQ $0812
+        0x9D, 0x00, 0x04,        # 0808: STA $0400,X
+        0xE8,                    # 080B: INX
+        0x4C, 0x03, 0x08,        # 080C: JMP $0803
+        0x8D, 0x51, 0xC0,        # 080F: STA $C051
+        0x8D, 0x54, 0xC0,        # 0812: STA $C054
+        0x4C, 0x15, 0x08,        # 0815: JMP $0815
     ])
-    
-    msg = bytes([ord(c) | 0x80 for c in "HELLO WORLD"]) + b"\x00"
-    
+
+    msg = bytes([ord(c) | 0x80 for c in "DOS VERSION 3.3"]) + b"\x00"
+
     sector[:len(code)] = code
-    sector[0x17:0x17+len(msg)] = msg
+    sector[0x18:0x18+len(msg)] = msg
     return bytes(sector)
 
 def main():

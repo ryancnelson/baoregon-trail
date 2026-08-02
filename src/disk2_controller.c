@@ -194,31 +194,46 @@ static void set_phase(disk2_controller_t *ctl, int phase, int on) {
     }
 }
 
+#include "cpu6502.h"
+
+__attribute__((weak)) uint32_t clockticks6502 = 0;
+
+#define NIBBLE_CYCLES 32u
+
 /* Reads/writes the next raw nibble at the current drive's head position,
  * on the current track (Q6 LOW / "shift" case). Ported from
  * NibbleDiskDriver.onQ6Low().
  *
- * REAL BUG FIXED (found via TDD, tests/test_disk2_controller.c): the
- * original version of this function read/wrote a nibble on EVERY
- * DRIVEREAD access. Real Disk II hardware's shift register (and the
- * reference NibbleDiskDriver.onQ6Low()) only actually shifts in/out a
- * byte on every OTHER "shift" pulse while in read mode (tracked via a
- * per-drive `skip` flag toggling 0/1/0/1); the intervening pulse is a
- * hardware artifact of the shift-register's own timing that real DOS
- * 3.3 RWTS code depends on when polling $C0EC for the latch's high bit.
- * Also added the isOn() (motor_on) gate onQ6Low() has -- reads/writes
- * while the drive is off must produce latch=0, not real track data. */
+ * Cycle-accurate timing fix (2026-08-01): Real Apple II Disk II hardware
+ * rotates at 300 RPM (5 rps), shifting 1 nibble byte every 32 6502 CPU
+ * cycles (~30.05 microseconds). When a nibble is shifted in, bit 7 of the
+ * latch register is set (0x80..0xFF). Reading $C0EC latches the byte and
+ * clears bit 7. Subsequent reads of $C0EC returning before 32 cycles pass
+ * yield bit 7 = 0, causing the boot PROM's BPL spin loop (LDA $C0EC / BPL)
+ * to wait exactly 32 cycles between nibbles.
+ */
 static uint8_t nibble_shift(disk2_controller_t *ctl, int write_mode, uint8_t write_value) {
     disk2_drive_state_t *d = &ctl->drive[ctl->selected_drive];
-    uint8_t result = 0;
 
-    if (ctl->motor_on && (d->skip || ctl->q7)) {
+    if (!ctl->motor_on) {
+        ctl->latch = 0;
+        return 0;
+    }
+
+    uint32_t now = clockticks6502;
+    uint32_t elapsed = now - d->last_cycles;
+    uint32_t nibbles = elapsed / NIBBLE_CYCLES;
+
+    if (nibbles > 0 || d->last_cycles == 0) {
         int track_index = d->track >> 2;
         if (track_index >= 0 && track_index < DISK2_MAX_TRACKS && d->has_disk) {
             disk2_nibble_track_t *track = &d->tracks[track_index];
             if (track->length > 0) {
-                if (d->head >= track->length) {
-                    d->head = 0;
+                if (nibbles > 0 && d->last_cycles > 0) {
+                    d->head = (d->head + (int)nibbles) % track->length;
+                    d->last_cycles += nibbles * NIBBLE_CYCLES;
+                } else {
+                    d->last_cycles = now;
                 }
 
                 if (write_mode) {
@@ -226,17 +241,17 @@ static uint8_t nibble_shift(disk2_controller_t *ctl, int write_mode, uint8_t wri
                         track->data[d->head] = write_value;
                     }
                 } else {
-                    result = track->data[d->head];
+                    ctl->latch = track->data[d->head];
                 }
-                d->head++;
             }
         }
-    } else {
-        result = 0;
     }
 
-    d->skip = (d->skip + 1) % 2;
-    return result;
+    uint8_t res = ctl->latch;
+    if (!write_mode) {
+        ctl->latch &= 0x7Fu; /* Clear bit 7 after read */
+    }
+    return res;
 }
 
 uint8_t disk2_controller_access(disk2_controller_t *ctl, uint8_t offset, int is_write, uint8_t write_val) {
@@ -272,7 +287,7 @@ uint8_t disk2_controller_access(disk2_controller_t *ctl, uint8_t offset, int is_
                  * support pending; read path is the priority for
                  * booting). */
             } else {
-                ctl->latch = nibble_shift(ctl, 0, 0);
+                result = nibble_shift(ctl, 0, 0);
             }
             break;
         case LOC_DRIVEWRITE:
@@ -287,7 +302,7 @@ uint8_t disk2_controller_access(disk2_controller_t *ctl, uint8_t offset, int is_
     }
 
     if (read_mode) {
-        if ((offset & 0x01) == 0) {
+        if ((offset & 0x01) == 0 && (offset & 0x0E) != LOC_DRIVEREAD) {
             result = ctl->latch;
         }
     } else {
