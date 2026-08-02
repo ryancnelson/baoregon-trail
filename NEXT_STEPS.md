@@ -304,3 +304,6 @@ its MIT license text.
 
 <!-- fable-ralph-loop check-in 2026-08-02 09:48:06 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 247 PASS / 0 FAIL (exit 137). Commits in last ~25min: 4.
+
+<!-- fable-ralph-loop check-in 2026-08-02 10:08:17 -->
+**Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 0 PASS / 0 FAIL (exit 2). Commits in last ~25min: 7.
