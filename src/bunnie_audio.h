@@ -29,6 +29,7 @@
 typedef struct {
     volatile uint8_t pwm_pin_state; /* current PWM pin level: 0 or 1 */
     volatile uint8_t toggle_pending; /* set by main CPU, cleared by BIO Core 1 */
+    volatile uint32_t toggle_count;  /* total speaker toggle pulses processed */
 } bunnie_audio_state_t;
 
 /* Initialize to a known state: pin low, no toggle pending. */

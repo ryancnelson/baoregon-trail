@@ -98,12 +98,30 @@ static int test_poll_is_a_noop_when_no_toggle_pending(void) {
     return 0;
 }
 
+static int test_toggle_count_increments(void) {
+    bunnie_audio_state_t state;
+    bunnie_audio_init(&state);
+    if (state.toggle_count != 0) return 1;
+
+    bunnie_audio_trigger_toggle(&state);
+    bunnie_audio_poll_and_apply(&state);
+    if (state.toggle_count != 1) return 1;
+
+    bunnie_audio_trigger_toggle(&state);
+    bunnie_audio_poll_and_apply(&state);
+    if (state.toggle_count != 2) return 1;
+
+    printf("PASS: test_toggle_count_increments\n");
+    return 0;
+}
+
 int main(void) {
     int failures = 0;
     failures += test_init_sets_pin_low_and_no_pending_toggle();
     failures += test_trigger_toggle_sets_pending_flag_without_flipping_pin();
     failures += test_poll_flips_pin_and_clears_pending_when_toggle_was_triggered();
     failures += test_poll_is_a_noop_when_no_toggle_pending();
+    failures += test_toggle_count_increments();
 
     if (failures == 0) {
         printf("All tests passed.\n");
