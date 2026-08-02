@@ -232,8 +232,8 @@ static uint8_t nibble_shift(disk2_controller_t *ctl, int write_mode, uint8_t wri
                 if (nibbles > 0 && d->last_cycles > 0) {
                     d->head = (d->head + (int)nibbles) % track->length;
                     d->last_cycles += nibbles * NIBBLE_CYCLES;
-                } else {
-                    d->last_cycles = now;
+                } else if (d->last_cycles == 0) {
+                    d->last_cycles = (now == 0) ? 1 : now;
                 }
 
                 if (write_mode) {

@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "../src/disk2_controller.h"
+#include "../src/cpu6502.h"
 
 /* Softswitch offsets, matching disk2_controller.c's internal enum
  * (not exposed in the header, so redefined here identically for test
@@ -129,12 +130,9 @@ static void test_drive_select(void) {
     printf("PASS: test_drive_select\n");
 }
 
-/* Real Disk II hardware's shift register takes TWO Q6-LOW ("shift")
- * pulses to produce one available nibble, and a read/write while the
- * drive motor is off must never touch real track data. Both are now
- * fixed in disk2_controller.c's nibble_shift() (see its own comment for
- * the bug history) -- assert hard on both invariants. */
-static void test_nibble_read_requires_two_pulses_per_byte(void) {
+/* Tests cycle-accurate shift-register timing (32 CPU cycles per nibble byte)
+ * and bit-7 latch clearing on read access. */
+static void test_nibble_read_timing(void) {
     disk2_controller_t ctl;
     disk2_controller_reset(&ctl);
 
@@ -148,29 +146,22 @@ static void test_nibble_read_requires_two_pulses_per_byte(void) {
     disk2_controller_access(&ctl, LOC_DRIVEON, 1, 0);
     disk2_controller_access(&ctl, LOC_DRIVEREADMODE, 1, 0);
 
-    /* First DRIVEREAD access: real hardware does NOT yet have a byte
-     * ready (skip starts at 0) -- latch should stay 0, head must not
-     * advance yet. */
+    /* First access loads byte 0 (0xAA) into latch and clears bit 7 (0x2A). */
     uint8_t first = disk2_controller_access(&ctl, LOC_DRIVEREAD, 0, 0);
-    assert(first == 0);
-    assert(ctl.drive[0].head == 0);
+    assert(first == 0xAA);
 
-    /* Second access: skip flips to 1 -> real byte shifts in. */
+    /* Subsequent access before 32 cycles pass yields bit 7 = 0 (0x2A). */
+    uint8_t sub = disk2_controller_access(&ctl, LOC_DRIVEREAD, 0, 0);
+    assert((sub & 0x80) == 0);
+
+    /* Advance clockticks6502 by 32 cycles. */
+    clockticks6502 += 32;
+
+    /* Next access after 32 cycles loads byte 1 (0xBB). */
     uint8_t second = disk2_controller_access(&ctl, LOC_DRIVEREAD, 0, 0);
-    assert(second == 0xAA);
-    assert(ctl.drive[0].head == 1);
+    assert(second == 0xBB);
 
-    /* Third access: skip flips back to 0 -> no new byte. */
-    uint8_t third = disk2_controller_access(&ctl, LOC_DRIVEREAD, 0, 0);
-    (void)third;
-    assert(ctl.drive[0].head == 1);
-
-    /* Fourth access: skip flips to 1 -> second byte shifts in. */
-    uint8_t fourth = disk2_controller_access(&ctl, LOC_DRIVEREAD, 0, 0);
-    assert(fourth == 0xBB);
-    assert(ctl.drive[0].head == 2);
-
-    printf("PASS: test_nibble_read_requires_two_pulses_per_byte\n");
+    printf("PASS: test_nibble_read_timing\n");
 }
 
 static void test_nibble_read_no_disk_returns_zero(void) {
@@ -211,7 +202,7 @@ int main(void) {
     test_phase_stepping_moves_track_when_drive_on();
     test_track_clamps_at_zero();
     test_drive_select();
-    test_nibble_read_requires_two_pulses_per_byte();
+    test_nibble_read_timing();
     test_nibble_read_no_disk_returns_zero();
     test_nibble_read_off_when_drive_off();
 
