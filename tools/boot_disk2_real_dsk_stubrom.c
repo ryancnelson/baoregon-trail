@@ -80,15 +80,23 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    /* Minimal stub ROM: every byte is 0x60 (RTS), so any JSR into ROM
-     * territory (like the boot PROM's JSR $FCA8) returns immediately
-     * instead of crashing into zeroed-RAM garbage. Not a real monitor
-     * ROM -- just enough to let boot flow continue. */
-    memset(g_stub_rom, 0x60, sizeof(g_stub_rom));
-    /* Real Apple II Monitor ROM $FCA8 (WAIT subroutine) leaves A = 0 on return */
-    g_stub_rom[0x3CA8] = 0xA9; /* LDA #$00 */
-    g_stub_rom[0x3CA9] = 0x00;
-    g_stub_rom[0x3CAA] = 0x60; /* RTS */
+    FILE *rf = fopen("tools/fixtures/mame-captures/rom_c000_ffff_attempt2_mame_live_dump.bin", "rb");
+    if (rf) {
+        fread(g_stub_rom, 1, sizeof(g_stub_rom), rf);
+        fclose(rf);
+        g_stub_rom[0x2000] = 0x4C; g_stub_rom[0x2001] = 0x00; g_stub_rom[0x2002] = 0xE0; /* JMP $E000 */
+        g_stub_rom[0x3F58] = 0x60; /* IORST ($FF58) */
+        g_stub_rom[0x3E89] = 0x60; /* SETKBD ($FE89) */
+        g_stub_rom[0x3E93] = 0x60; /* SETVID ($FE93) */
+        g_stub_rom[0x3B2F] = 0x60; /* INIT ($FB2F) */
+        g_stub_rom[0x388E] = 0x60; /* COUT ($F88E) */
+        g_stub_rom[0x3CA8] = 0xA9; g_stub_rom[0x3CA9] = 0x00; g_stub_rom[0x3CAA] = 0x60; /* WAIT ($FCA8) */
+    } else {
+        memset(g_stub_rom, 0x60, sizeof(g_stub_rom));
+        g_stub_rom[0x3CA8] = 0xA9; /* LDA #$00 */
+        g_stub_rom[0x3CA9] = 0x00;
+        g_stub_rom[0x3CAA] = 0x60; /* RTS */
+    }
 
     apple2_mem_reset();
     reset6502();
@@ -125,7 +133,7 @@ int main(int argc, char **argv) {
     uint32_t chunk = 1;
     uint16_t last_pc = pc;
     int stuck_count = 0;
-    uint16_t trace_pcs[20];
+    uint16_t trace_pcs[100];
     int trace_idx = 0;
     while (total_executed < cycles) {
         uint16_t pc_before = pc;
@@ -136,19 +144,23 @@ int main(int argc, char **argv) {
         } else {
             stuck_count = 0;
         }
-        if (total_executed > cycles - 200) {
-            trace_pcs[trace_idx % 20] = pc;
+        if (pc_before != last_pc) {
+            trace_pcs[trace_idx % 100] = pc_before;
             trace_idx++;
         }
-        last_pc = pc;
-        if (stuck_count > 2000) {
+        last_pc = pc_before;
+        if (stuck_count > 5000000) {
             fprintf(stderr, "PC stuck at $%04X after %u cycles -- stopping early\n", last_pc, total_executed);
             break;
         }
     }
-    fprintf(stderr, "Last %d PCs before stopping: ", trace_idx < 20 ? trace_idx : 20);
-    for (int i = 0; i < (trace_idx < 20 ? trace_idx : 20); i++) {
-        fprintf(stderr, "$%04X ", trace_pcs[i]);
+    fprintf(stderr, "Last 100 PCs before stopping:\n");
+    int count = trace_idx < 100 ? trace_idx : 100;
+    int start_idx = trace_idx < 100 ? 0 : (trace_idx % 100);
+    for (int i = 0; i < count; i++) {
+        int idx = (start_idx + i) % 100;
+        fprintf(stderr, "$%04X ", trace_pcs[idx]);
+        if ((i + 1) % 10 == 0) fprintf(stderr, "\n");
     }
     fprintf(stderr, "\n");
     fprintf(stderr, "disk2 controller state: motor_on=%d q6=%d q7=%d selected_drive=%d latch=0x%02X\n",
