@@ -40,6 +40,7 @@
 #include "bio_display.h"
 #include "disk2_controller.h"
 #include "dos33_nib_disk_data.h"
+#include "uart_keyboard_bridge.h"
 
 #define UART0_BASE 0x10000000u
 static volatile uint8_t *const uart_thr = (volatile uint8_t *)UART0_BASE;
@@ -78,14 +79,20 @@ static void load_embedded_nib_disk(void) {
 #define UART0_LSR 0x10000005u
 #define UART0_RBR 0x10000000u
 
-static void poll_uart_input(void) {
+/* Thin wrappers around the real MMIO registers -- matches the
+ * uart_rx_ready_fn/uart_rx_read_fn function-pointer contract
+ * uart_keyboard_bridge.h defines, so the actual polling/translation
+ * logic lives in ONE tested, host-verifiable place
+ * (src/uart_keyboard_bridge.c) instead of being duplicated inline in
+ * every new QEMU demo entry point that wants interactive typing. */
+static int qemu_uart_is_ready(void) {
     volatile uint8_t *lsr = (volatile uint8_t *)UART0_LSR;
+    return (*lsr & 0x01) != 0;
+}
+
+static uint8_t qemu_uart_read_byte(void) {
     volatile uint8_t *rbr = (volatile uint8_t *)UART0_RBR;
-    while (*lsr & 0x01) {
-        uint8_t ch = *rbr;
-        if (ch == '\n') ch = '\r';
-        apple2_mem_inject_key(ch);
-    }
+    return *rbr;
 }
 
 int main(void) {
@@ -135,7 +142,7 @@ int main(void) {
     const uint32_t cycles_budget = 5000000u;
     const uint32_t chunk = 20000u;
     while (total_executed < cycles_budget) {
-        poll_uart_input();
+        uart_keyboard_bridge_poll(qemu_uart_is_ready, qemu_uart_read_byte);
         exec6502(chunk);
         total_executed += chunk;
 
@@ -153,7 +160,7 @@ int main(void) {
     /* Post-boot: keep executing 6502 instructions + polling UART keyboard
      * input so live user typing at the DOS prompt works! */
     for (;;) {
-        poll_uart_input();
+        uart_keyboard_bridge_poll(qemu_uart_is_ready, qemu_uart_read_byte);
         exec6502(10000);
         bio_display_render_frame_auto_text_aware(
             apple2_mem_is_hires_mode(), apple2_mem_is_page2_selected(),
