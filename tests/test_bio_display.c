@@ -123,6 +123,31 @@ static int test_dma_push_not_yet_called_reports_false(void) {
     return 0;
 }
 
+static int test_crt_modes(void) {
+    bio_display_set_crt_mode(BIO_CRT_MODE_COLOR);
+    if (bio_display_get_crt_mode() != BIO_CRT_MODE_COLOR) return 1;
+
+    bio_display_set_crt_mode(BIO_CRT_MODE_GREEN_PHOSPHOR);
+    if (bio_display_get_crt_mode() != BIO_CRT_MODE_GREEN_PHOSPHOR) return 1;
+    uint16_t green_rgb = bio_display_color_to_rgb565(HIRES_COLOR_WHITE);
+    if ((green_rgb & 0xF81F) != 0 || (green_rgb & 0x07E0) == 0) {
+        fprintf(stderr, "FAIL: Green Phosphor white pixel should be pure green, got 0x%04X\n", green_rgb);
+        return 1;
+    }
+
+    bio_display_set_crt_mode(BIO_CRT_MODE_AMBER);
+    if (bio_display_get_crt_mode() != BIO_CRT_MODE_AMBER) return 1;
+    uint16_t amber_rgb = bio_display_color_to_rgb565(HIRES_COLOR_WHITE);
+    if ((amber_rgb & 0x001F) != 0 || (amber_rgb & 0xF800) == 0) {
+        fprintf(stderr, "FAIL: Amber CRT white pixel should have red/green, zero blue, got 0x%04X\n", amber_rgb);
+        return 1;
+    }
+
+    bio_display_set_crt_mode(BIO_CRT_MODE_COLOR); /* restore default */
+    printf("PASS: test_crt_modes\n");
+    return 0;
+}
+
 int main(void) {
     int failures = 0;
     /* Must run first: checks the never-called state before any push. */
@@ -133,6 +158,7 @@ int main(void) {
     failures += test_render_frame_decodes_row0_pixel0_to_correct_rgb565();
     failures += test_render_frame_fills_every_pixel_no_poison_left();
     failures += test_dma_push_records_framebuffer_pointer_and_size();
+    failures += test_crt_modes();
 
     if (failures == 0) {
         printf("All tests passed.\n");

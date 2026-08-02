@@ -17,11 +17,46 @@ static const uint16_t g_color_to_rgb565[] = {
     [HIRES_COLOR_WHITE]  = 0xFFFF, /* 255,255,255 */
 };
 
+static bio_crt_mode_t g_crt_mode = BIO_CRT_MODE_COLOR;
+
+void bio_display_set_crt_mode(bio_crt_mode_t mode) {
+    if (mode >= BIO_CRT_MODE_COLOR && mode <= BIO_CRT_MODE_AMBER) {
+        g_crt_mode = mode;
+    }
+}
+
+bio_crt_mode_t bio_display_get_crt_mode(void) {
+    return g_crt_mode;
+}
+
 uint16_t bio_display_color_to_rgb565(hires_color_t color) {
     if (color < HIRES_COLOR_BLACK || color > HIRES_COLOR_WHITE) {
         return 0x0000; /* out-of-range: black fallback, matches lores_color_to_rgb565() */
     }
-    return g_color_to_rgb565[color];
+    uint16_t rgb = g_color_to_rgb565[color];
+    if (g_crt_mode == BIO_CRT_MODE_COLOR) {
+        return rgb;
+    }
+
+    /* Extract 8-bit R, G, B */
+    uint8_t r8 = (uint8_t)(((rgb >> 11) & 0x1F) * 255 / 31);
+    uint8_t g8 = (uint8_t)(((rgb >> 5) & 0x3F) * 255 / 63);
+    uint8_t b8 = (uint8_t)((rgb & 0x1F) * 255 / 31);
+
+    /* Luminance Y = 0.299*R + 0.587*G + 0.114*B */
+    uint32_t y = (uint32_t)(r8 * 77 + g8 * 150 + b8 * 29) >> 8;
+
+    if (g_crt_mode == BIO_CRT_MODE_GREEN_PHOSPHOR) {
+        /* Green Phosphor (P31): Luminance Y mapped to 6-bit Green channel */
+        uint16_t g6 = (uint16_t)((y * 63 + 127) / 255);
+        return (g6 << 5);
+    } else if (g_crt_mode == BIO_CRT_MODE_AMBER) {
+        /* Amber CRT (#FFB000): R max, G = 176/255 of R, B = 0 */
+        uint16_t r5 = (uint16_t)((y * 31 + 127) / 255);
+        uint16_t g6 = (uint16_t)((y * 176 * 63 / 255 + 127) / 255);
+        return (r5 << 11) | (g6 << 5);
+    }
+    return rgb;
 }
 
 void bio_display_render_frame(read6502_fn read_mem,

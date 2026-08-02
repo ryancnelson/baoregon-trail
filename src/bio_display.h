@@ -38,6 +38,16 @@
 #define BIO_DISPLAY_WIDTH  HIRES_PIXELS_WIDE  /* 280, native, no scaling yet */
 #define BIO_DISPLAY_HEIGHT HIRES_ROWS         /* 192, native, no scaling yet */
 
+/* CRT monochrome/color display modes (P31 Green Phosphor, Amber CRT, or NTSC Color) */
+typedef enum {
+    BIO_CRT_MODE_COLOR = 0,
+    BIO_CRT_MODE_GREEN_PHOSPHOR = 1,
+    BIO_CRT_MODE_AMBER = 2
+} bio_crt_mode_t;
+
+void bio_display_set_crt_mode(bio_crt_mode_t mode);
+bio_crt_mode_t bio_display_get_crt_mode(void);
+
 /* Convert one hires_color_t to its RGB565 (5-6-5) approximation.
  * Safety: an out-of-range color value returns 0x0000 (black fallback)
  * instead of an out-of-bounds array read, matching
