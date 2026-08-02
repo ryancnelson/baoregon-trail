@@ -88,6 +88,9 @@ static int is_loop_addr(uint16_t addr) {
     return 0;
 }
 
+static int g_seen_byte_histogram[256];
+static long g_total_d5_checks = 0;
+
 int main(int argc, char **argv) {
     uint32_t cycles = (argc > 1) ? (uint32_t)atol(argv[1]) : 20000000u;
 
@@ -154,6 +157,28 @@ int main(int argc, char **argv) {
          * (A = target track). Log A vs $0478 and whether BEQ ($25A7)
          * would actually fire, every time this exact instruction runs
          * (not rate-limited -- want every attempt). */
+        /* Direct ground-truth check: log the actual latch byte every
+         * time PC executes the CMP #$D5 at $2554 (right after LDA
+         * $C08C,X at $254F reads the nibble into A) -- this is the
+         * literal byte the address-field sync search is comparing
+         * against D5, bypassing all disassembly guesswork. */
+        static long d5_check_count = 0;
+        if (pc_before == 0x2554 && d5_check_count < 60) {
+            d5_check_count++;
+            fprintf(stderr, "[d5-check #%ld] latch_byte=A=%02X head=%d track(qtr)=%d cyc=%u\n",
+                    d5_check_count, a, ctl->drive[0].head, ctl->drive[0].track, total_executed);
+        }
+        /* Track every DISTINCT byte value seen at $2554 (CMP #$D5) across
+         * the whole run -- if D5 is NEVER once seen, that's conclusive:
+         * either the head genuinely never passes over track data
+         * containing a real D5 byte at all (bad track data), or
+         * something is masking/never latching it (a real controller
+         * timing bug distinct from anything found so far). */
+        if (pc_before == 0x2554) {
+            g_seen_byte_histogram[a]++;
+            g_total_d5_checks++;
+        }
+
         if (pc_before == 0x25A4 && seek_check_count < 200) {
             seek_check_count++;
             uint8_t cur_track_byte = read6502(0x0478);
@@ -320,6 +345,13 @@ int main(int argc, char **argv) {
     for (int i = 0; i < 0x300; i++) {
         if (pc_histogram[i] > 1000) {
             fprintf(stderr, "  $%04X: %ld\n", 0x2400 + i, pc_histogram[i]);
+        }
+    }
+
+    fprintf(stderr, "\nByte-value histogram at $2554 (CMP #$D5 check), total=%ld:\n", g_total_d5_checks);
+    for (int i = 0; i < 256; i++) {
+        if (g_seen_byte_histogram[i] > 0) {
+            fprintf(stderr, "  0x%02X: %d%s\n", i, g_seen_byte_histogram[i], i == 0xD5 ? "  <-- D5 (would exit retry loop)" : "");
         }
     }
 
