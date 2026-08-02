@@ -2,7 +2,7 @@
  * emulator_loop.c -- Full frame-driven Apple II emulator loop implementation.
  */
 #include "emulator_loop.h"
-#include <string.h>
+#include <stddef.h>
 #include "apple2_mem.h"
 #include "cpu6502.h"
 #include "boot_splash.h"
@@ -10,6 +10,29 @@
 #include "video_apple2.h"
 #include "bio_display.h"
 #include "bunnie_audio.h"
+
+/* Freestanding-safe local memset/memcpy -- matches the established
+ * convention (disk2_controller.c, rram_driver.c): the RISC-V
+ * cross-compile target (Makefile.riscv) is -ffreestanding -fno-builtin
+ * -nostartfiles with no libc, so <string.h> is not available; a real
+ * `make -f Makefile.riscv riscv-check` build failure ("string.h: No
+ * such file or directory") caught this exact gap after
+ * copy_framebuffer()'s row-stride fix introduced a real memset()/
+ * memcpy() dependency. */
+static void local_memset(void *dest, int val, size_t n) {
+    uint8_t *p = (uint8_t *)dest;
+    for (size_t i = 0; i < n; i++) {
+        p[i] = (uint8_t)val;
+    }
+}
+
+static void local_memcpy(void *dest, const void *src, size_t n) {
+    uint8_t *d = (uint8_t *)dest;
+    const uint8_t *s = (const uint8_t *)src;
+    for (size_t i = 0; i < n; i++) {
+        d[i] = s[i];
+    }
+}
 
 static boot_splash_state_t g_splash_state;
 static boot_splash_button_edge_state_t g_edge_state;
@@ -158,13 +181,13 @@ int baoregon_emulator_copy_framebuffer(uint16_t *dest, size_t dest_count) {
         return -1;
     }
     /* Clear destination buffer (sets margin pixels right of col 280 and below row 192 to 0x0000) */
-    memset(dest, 0, (320 * 240) * sizeof(uint16_t));
+    local_memset(dest, 0, (320 * 240) * sizeof(uint16_t));
 
     /* Copy native 280x192 region row-by-row into top-left of 320x240 destination */
     for (int row = 0; row < BIO_DISPLAY_HEIGHT; row++) {
         int src_offset = row * BIO_DISPLAY_WIDTH;
         int dest_offset = row * 320;
-        memcpy(&dest[dest_offset], &g_framebuffer[src_offset], BIO_DISPLAY_WIDTH * sizeof(uint16_t));
+        local_memcpy(&dest[dest_offset], &g_framebuffer[src_offset], BIO_DISPLAY_WIDTH * sizeof(uint16_t));
     }
     return 0;
 }
