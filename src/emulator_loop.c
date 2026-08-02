@@ -2,6 +2,7 @@
  * emulator_loop.c -- Full frame-driven Apple II emulator loop implementation.
  */
 #include "emulator_loop.h"
+#include <string.h>
 #include "apple2_mem.h"
 #include "cpu6502.h"
 #include "boot_splash.h"
@@ -13,7 +14,7 @@
 static boot_splash_state_t g_splash_state;
 static boot_splash_button_edge_state_t g_edge_state;
 static int g_in_splash_menu = 1;
-static uint16_t g_framebuffer[320 * 240];
+static uint16_t g_framebuffer[BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT];
 static uint64_t g_total_cycles = 0ULL;
 
 /* Shared implementation for both public "return to splash menu with
@@ -124,9 +125,11 @@ uint32_t baoregon_emulator_run_frame(void) {
     /* Render video frame based on current softswitch modes -- picks
      * HIRES vs LORES via bio_display_render_frame_auto_text_aware()
      * (which itself honors MIXED-mode's text-region boundary for the
-     * HIRES/LORES paths, AND is a safe no-op in full TEXT mode -- real
-     * Apple II defaults to TEXT mode post-reset, not graphics, and
-     * rendering graphics garbage there was a real bug this fixes). */
+     * HIRES/LORES paths, AND renders real character-ROM glyphs via
+     * text_apple2_render_frame() in full TEXT mode -- real Apple II
+     * defaults to TEXT mode post-reset, not graphics, and rendering
+     * solid black there (or graphics garbage, before that) was a real
+     * bug this fixes). */
     int is_hires = apple2_mem_is_hires_mode();
     int is_page2 = apple2_mem_is_page2_selected();
     int is_mixed = apple2_mem_is_mixed_mode();
@@ -154,8 +157,14 @@ int baoregon_emulator_copy_framebuffer(uint16_t *dest, size_t dest_count) {
     if (!dest || dest_count < (320 * 240)) {
         return -1;
     }
-    for (size_t i = 0; i < (320 * 240); i++) {
-        dest[i] = g_framebuffer[i];
+    /* Clear destination buffer (sets margin pixels right of col 280 and below row 192 to 0x0000) */
+    memset(dest, 0, (320 * 240) * sizeof(uint16_t));
+
+    /* Copy native 280x192 region row-by-row into top-left of 320x240 destination */
+    for (int row = 0; row < BIO_DISPLAY_HEIGHT; row++) {
+        int src_offset = row * BIO_DISPLAY_WIDTH;
+        int dest_offset = row * 320;
+        memcpy(&dest[dest_offset], &g_framebuffer[src_offset], BIO_DISPLAY_WIDTH * sizeof(uint16_t));
     }
     return 0;
 }
