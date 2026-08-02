@@ -335,6 +335,31 @@ confirming that host tool actually still produces a complete banner
 (all lines, not just "DOS VERSION 3.3") with a fresh run, not assumed
 correct from an old comment.
 
+**FABLE HANDOFF (2026-08-02 ~11:08am) -- real disk images, in progress,
+handing off to the crew:** built working starting points for both real
+disks Ryan asked for (parallel with the crew's own independent work on
+the same task -- some file-naming reconciliation needed, noted below):
+- `src/main_qemu_disk2boot_dos33master.c` + `src/dos33_master_nib_disk_data.h`
+  (nibblized from the REAL `~/Downloads/Apple_DOS_3.3_Master.dsk` via
+  `tools/dsk_to_nib.py` + `tools/gen_nib_disk_header.py --name dos33_master`).
+  Compiles clean, launched under QEMU with a 60,000,000 cycle budget
+  (up from the synthetic sample's 5,000,000) -- was still running/booting
+  as of this note, not yet screenshotted to a stable `]` prompt.
+- `src/main_qemu_disk2boot_zork1.c` + a Zork nibble header (note: the
+  crew independently regenerated `src/zork1_nib_disk_data.h` with
+  different array naming -- `g_zork1_tracks_*` -- than what I first used;
+  reconciled my file to match what's actually on disk, confirmed it
+  compiles clean). Also see the crew's own
+  `src/main_qemu_dos33boot.c`/`src/main_qemu_zork1boot.c` -- distinct
+  filenames from mine, both real, both worth checking for whichever is
+  furthest along before duplicating effort further.
+
+**Stepping back to reviewer role per Ryan's direction** -- the crew
+should take this the rest of the way (finish booting both real disks to
+a stable, screenshot-worthy state, capture via `hs.window:snapshot()`,
+save to `docs/`). I'll check in periodically and verify claims/results
+rather than keep building in parallel.
+
 ---
 
 ## 🚀 Step 9: Post-Stretch Goal Feature Pipeline
