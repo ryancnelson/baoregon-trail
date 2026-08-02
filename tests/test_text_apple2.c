@@ -33,7 +33,15 @@ static void expected_bits_from_rom_bytes(const uint8_t rom_bytes[8], int invert,
         uint8_t bits = rom_bytes[row] & 0x7F;
         if (invert) bits ^= 0x7F;
         for (int col = 0; col < TEXT_APPLE2_CHAR_WIDTH_PX; col++) {
-            out[row * TEXT_APPLE2_CHAR_WIDTH_PX + col] = (uint8_t)((bits >> (6 - col)) & 1);
+            /* Bit 0 = leftmost pixel (fixed 2026-08-02 alongside the
+             * real bug in text_apple2.c: this test helper had
+             * self-consistently encoded the SAME mirror-reversed bit
+             * order as the buggy implementation, so it never caught the
+             * bug -- a 'D' glyph is horizontally symmetric-ish enough
+             * that mirroring wasn't visually obvious; an 'F' glyph
+             * (asymmetric) exposed it immediately when Ryan visually
+             * inspected a real screenshot and saw mirror-reversed text). */
+            out[row * TEXT_APPLE2_CHAR_WIDTH_PX + col] = (uint8_t)((bits >> col) & 1);
         }
     }
 }

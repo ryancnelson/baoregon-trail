@@ -28,9 +28,16 @@ void text_apple2_decode_glyph(uint8_t screen_byte,
             bits ^= 0x7F;
         }
         for (int col = 0; col < TEXT_APPLE2_CHAR_WIDTH_PX; col++) {
-            /* MSB-first: bit 6 = leftmost pixel, bit 0 = rightmost. */
+            /* Bit 0 = leftmost pixel, bit 6 = rightmost (fixed
+             * 2026-08-02: the prior "bit 6 = leftmost" convention
+             * produced mirror-reversed glyphs -- caught by Ryan
+             * visually inspecting a real DOS 3.3 boot screenshot
+             * zoomed in, confirmed reproducible via a standalone 'F'
+             * glyph dump showing the vertical bar on the wrong side.
+             * Verified against MAME's apple2video.cpp bit convention
+             * directly this time, not just cited from memory. */
             out_bits[row * TEXT_APPLE2_CHAR_WIDTH_PX + col] =
-                (uint8_t)((bits >> (6 - col)) & 1);
+                (uint8_t)((bits >> col) & 1);
         }
     }
 }
