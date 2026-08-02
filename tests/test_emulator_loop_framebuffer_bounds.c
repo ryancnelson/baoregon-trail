@@ -1,20 +1,5 @@
 /*
  * test_emulator_loop_framebuffer_bounds.c -- documents and locks in a
- * real architectural boundary: the internal framebuffer is allocated at
- * 320x240 (target badge display resolution per README.md), but
- * bio_display.h's render functions only ever write the native
- * BIO_DISPLAY_WIDTH x BIO_DISPLAY_HEIGHT (280x192) region in the
- * top-left corner -- scaling up to fill 320x240 is explicitly deferred
- * pending baochip's target-resolution confirmation. This test proves
- * that boundary is real (not just documented) by writing a distinctive
- * poison pattern to the margin region before rendering a real Hi-Res
- * frame, then confirming the poison survives untouched in the margins
- * while the top-left 280x192 region gets genuinely rendered content.
- */
-#include <assert.h>
-#include <stdio.h>
-/*
- * test_emulator_loop_framebuffer_bounds.c -- documents and locks in a
  * real architectural boundary: the internal framebuffer is allocated as
  * a flat 320*240 = 76800 uint16_t array (target badge display resolution
  * per README.md), but bio_display.h's render functions only ever write
@@ -22,32 +7,34 @@
  * *linearly contiguous* entries of that flat array (row * 280 + col
  * indexing) -- NOT a true 320-stride 2D sub-rectangle. This test proves
  * that boundary is real (not just documented) by writing a distinctive
- * poison pattern to the margin region before rendering a real frame,
- * then confirming the poison survives untouched in the margin (indices
- * [53760, 76800)) while the first 53760 entries get genuinely rendered
- * content.
+ * poison pattern to the margin region before rendering a real HIRES
+ * frame, then confirming the poison survives untouched in the margin
+ * (indices [53760, 76800)) while the first 53760 entries get genuinely
+ * rendered content.
  *
- * CORRECTED 2026-08-02: this test previously (incorrectly) reinterpreted
+ * CORRECTED 2026-08-02 (two independent fixes converged on this file,
+ * reconciled here): this test previously (incorrectly) reinterpreted
  * the flat buffer as a true 320-wide 2D grid when checking margins
  * (`row * 320 + col`), which does NOT match how bio_display.c's
  * renderers actually address the buffer (`row * 280 + col`, tightly
  * packed, no 320-stride gap between rows) -- confirmed by reading every
  * render function in bio_display.c, none of which ever reference the
- * value 320. This mismatch was invisible before because the test's own
- * HIRES poke (write6502(HIRES_BASE_ADDR, 0x01)) only lit row 0's first
- * pixels, and every other row stayed all-zero either way -- so the
- * wrong-stride margin check happened to see zeros regardless of which
- * addressing convention it used. Once text_apple2_render_frame() (real
- * character-ROM glyph rendering, replacing the old
- * always-black-in-TEXT-mode placeholder) started producing genuinely
- * non-zero content in EVERY row -- since this test never explicitly
- * selects GRAPHICS mode ($C050), and real Apple II defaults to TEXT
- * mode post-reset -- the old wrong-stride check started reporting
- * false "margin violations" that don't reflect any real bounds
- * overrun. Fixed to check margins using the SAME tight-pack (280
- * entries/row, no gap) addressing the renderer and
- * baoregon_emulator_copy_framebuffer() (a straight linear memcpy, see
- * emulator_loop.c) both actually use.
+ * value 320. This mismatch was invisible before because (a) the test's
+ * own HIRES poke (write6502(HIRES_BASE_ADDR, 0x01)) only lit row 0's
+ * first pixels, with every other row staying all-zero, AND (b) real
+ * Apple II defaults to TEXT mode post-reset (not GRAPHICS), and before
+ * src/text_apple2.c existed, full TEXT mode always rendered solid black
+ * regardless of the HIRES/LORES softswitch -- so this test's original
+ * omission of an explicit $C050 (GRAPHICS mode) select was ALSO
+ * silently masked. Once text_apple2_render_frame() (real character-ROM
+ * glyph rendering) landed, BOTH latent issues surfaced together: this
+ * test needs an explicit $C050 GRAPHICS-mode select to actually
+ * exercise the HIRES path it's testing (not accidentally hit
+ * text_apple2_render_frame() instead), AND the margin check itself
+ * needs the correct tight-pack (280 entries/row, no gap) addressing to
+ * match how the renderer and baoregon_emulator_copy_framebuffer() (a
+ * straight linear memcpy, see emulator_loop.c) actually treat the
+ * buffer -- fixing only one of the two would still leave a latent bug.
  */
 #include <assert.h>
 #include <stdio.h>
@@ -66,19 +53,14 @@
 static void test_margin_pixels_are_never_written(void) {
     baoregon_emulator_init();
 
-    /* Select HIRES mode and write a real pattern so the rendered region
-     * gets genuinely non-zero content -- proves this isn't a "both
-     * happen to be zero" false pass. Real Apple II defaults to TEXT
-     * mode post-reset (not GRAPHICS) -- this test deliberately does NOT
-     * select GRAPHICS mode either, so bio_display_render_frame_auto_text_aware()
-     * actually dispatches to text_apple2_render_frame() (real
-     * character-ROM glyph rendering), not the HIRES path -- exercising
-     * exactly the code path that originally exposed this test's own
-     * addressing bug (see file header comment). The $C057/HIRES write
-     * below is kept for historical continuity with the original test's
-     * intent but is not what actually renders once TEXT mode wins. */
-    write6502(0xC057, 0x00);
-    write6502(HIRES_BASE_ADDR, 0x01); /* col0 lit -> GREEN, non-zero RGB565 (irrelevant while in TEXT mode) */
+    /* Explicit GRAPHICS mode select -- without this, real Apple II's
+     * TEXT-mode-post-reset default means bio_display_render_frame_auto_text_aware()
+     * dispatches to text_apple2_render_frame() instead of the HIRES
+     * path this test is actually meant to exercise (see file header
+     * comment). */
+    write6502(0xC050, 0x00); /* GRAPHICS mode */
+    write6502(0xC057, 0x00); /* HIRES mode */
+    write6502(HIRES_BASE_ADDR, 0x01); /* col0 lit -> GREEN, non-zero RGB565 */
 
     baoregon_emulator_run_frame();
 

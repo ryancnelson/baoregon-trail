@@ -28,28 +28,34 @@ uint32_t baoregon_emulator_get_cycles_per_frame(void);
  * real BIO Core 0 DMA path reads it directly once the SPI DMA peripheral
  * exists -- see bio_display.h).
  *
- * IMPORTANT: this buffer is allocated at 320x240 (the eventual target
- * badge display resolution per README.md), but bio_display.h's render
- * functions do NOT scale -- they only ever write the native
- * BIO_DISPLAY_WIDTH x BIO_DISPLAY_HEIGHT (280x192) region in the
- * top-left corner. The remaining 320x240 - 280x192 = 23040 pixels
- * (right/bottom margins) are NEVER written by the renderer; they stay
+ * IMPORTANT: this buffer is allocated as a flat 320*240 = 76800
+ * uint16_t array (the eventual target badge display resolution per
+ * README.md), but bio_display.h's render functions do NOT scale --
+ * they only ever write the first BIO_DISPLAY_WIDTH * BIO_DISPLAY_HEIGHT
+ * (280*192 = 53760) *linearly contiguous* entries (row * 280 + col
+ * indexing, NOT a true 320-stride 2D sub-rectangle -- there is no
+ * per-row gap). The remaining 76800 - 53760 = 23040 entries (indices
+ * [53760, 76800)) are NEVER written by the renderer; they stay
  * whatever they were initialized to (static storage -> zero-initialized
  * at program start, but NOT necessarily zero after a real 6502 program
  * writes to $2000-$3FFF/$0400-$07FF -- that only affects the rendered
- * 280x192 region, never the margins). Scaling 280x192 up to fill the
- * full 320x240 (or switching to a 480x320 target) is explicitly
- * deferred until baochip confirms the target resolution -- see
- * bio_display.h's own "no scaling yet" note. Do not assume the margin
- * pixels are meaningful display content. */
+ * first-53760-entries region, never the trailing margin). Scaling
+ * 280x192 up to fill the full 320x240 (or switching to a 480x320
+ * target) is explicitly deferred until baochip confirms the target
+ * resolution -- see bio_display.h's own "no scaling yet" note. Do not
+ * assume the margin entries are meaningful display content, and do not
+ * assume a 320-wide row stride when addressing this buffer directly --
+ * see tests/test_emulator_loop_framebuffer_bounds.c for a concrete
+ * example of a real bug caused by that exact wrong assumption. */
 const uint16_t *baoregon_emulator_get_framebuffer(void);
 
 /* Safely copy internal framebuffer (320*240 uint16_t pixels) into dest.
  * Returns 0 on success, -1 if dest is NULL or dest_count < 320*240.
  *
  * Same margin caveat as baoregon_emulator_get_framebuffer(): only the
- * top-left 280x192 pixels of the copied 320x240 buffer are real
- * rendered content; the rest are unwritten margin pixels. */
+ * first 53760 (280*192) entries of the copied flat 76800-entry buffer
+ * are real rendered content, tightly packed with no 320-stride gap;
+ * the rest are unwritten margin entries. */
 int baoregon_emulator_copy_framebuffer(uint16_t *dest, size_t dest_count);
 
 /* Read-only access to which cartridge slot is currently selected in the
