@@ -420,6 +420,10 @@ fb-view: $(BUILD_DIR)/dump_framebuffer $(BUILD_DIR)/fb_terminal_viewer
 terminal-play: $(BUILD_DIR)/terminal_emulator
 	@$(BUILD_DIR)/terminal_emulator
 
+$(BUILD_DIR)/trace_dos33_cout_caller: $(TOOLS_DIR)/trace_dos33_cout_caller.c $(SRC_DIR)/apple2_mem.c $(SRC_DIR)/disk2_controller.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_trap.c $(SRC_DIR)/bunnie_audio.c
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $(TOOLS_DIR)/trace_dos33_cout_caller.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/apple2_mem.c $(SRC_DIR)/disk2_controller.c $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_trap.c $(SRC_DIR)/bunnie_audio.c
+
 $(BUILD_DIR)/hires_demo_runner: $(TOOLS_DIR)/hires_demo_runner.c $(TOOLS_DIR)/fb_terminal_viewer.c $(SRC_DIR)/apple2_mem.c $(SRC_DIR)/apple2_mem.h $(SRC_DIR)/disk2_controller.c $(SRC_DIR)/disk2_controller.h $(SRC_DIR)/cpu6502.c $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_trap.c $(SRC_DIR)/bunnie_audio.c $(SRC_DIR)/video_apple2.c $(SRC_DIR)/bio_display.c $(SRC_DIR)/lores_apple2.c $(SRC_DIR)/text_apple2.c $(SRC_DIR)/text_apple2.c
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -DFB_TERMINAL_VIEWER_NO_MAIN -o $@ $(TOOLS_DIR)/hires_demo_runner.c $(TOOLS_DIR)/fb_terminal_viewer.c $(SRC_DIR)/apple2_mem.c $(SRC_DIR)/disk2_controller.c $(SRC_DIR)/cpu6502.c $(SRC_DIR)/disk_sector_layout.c $(SRC_DIR)/disk_trap.c $(SRC_DIR)/bunnie_audio.c $(SRC_DIR)/video_apple2.c $(SRC_DIR)/bio_display.c $(SRC_DIR)/lores_apple2.c $(SRC_DIR)/text_apple2.c $(SRC_DIR)/text_apple2.c
