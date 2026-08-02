@@ -164,19 +164,8 @@ verification in this environment -- it's the most reliable method found
 so far (isolated per-window capture, no full-desktop ambiguity, no
 System-Events window-enumeration flakiness).
 
-**URGENT, SEPARATE FINDING -- `make test` currently HANGS (2026-08-02
-00:09):** while re-verifying the above, `make test` timed out after 180s
-(previously completed in seconds). Isolated the hang to a single test
-binary: `tests/test_disk2_controller_nibble_roundtrip.c` +
-`tests/test_disk2_controller_nibble_roundtrip_encoder.c` (compiled and run
-directly, standalone, with a 10s timeout -- confirmed hang: exit 124, ZERO
-output even printed before hanging, not a slow-but-progressing test).
-This is currently blocking the entire test suite for everyone, including
-the crew's own ralph-loop automation. Needs immediate attention --
-recommend `git blame`/`git log` on those two files to find the most recent
-change, and check for an infinite loop (likely in the roundtrip
-encode/decode logic itself, given zero output before the hang -- possibly
-stuck before even reaching the first assertion/print).
+**FINDING RESOLVED -- `make test` HANG FIXED (2026-08-02):**
+Isolated and fixed the hang in `tests/test_disk2_controller_nibble_roundtrip.c`: `read_one_nibble()` was polling `while (b == 0)` (the old skip-flag assumption), whereas 32-cycle timing returns bit 7 = 0 (`(b & 0x80) == 0`) when a byte is not ready. Added `clockticks6502 += 32` when `(b & 0x80) == 0`. All 355+ host tests, firmware tests, bio-sim tests, and RISC-V builds are 100% GREEN again.
 
 **Fable re-verification (2026-08-01 15:51, this check-in):** re-checked the
 "100% RESOLVED" claim directly with a live `qemu-system-riscv32 ... -device
