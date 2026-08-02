@@ -234,8 +234,9 @@ typedef struct __attribute__((packed)) {
 
 #define FW_CFG_DMA_CTL_ERROR  0x01u
 #define FW_CFG_DMA_CTL_READ   0x02u
-#define FW_CFG_DMA_CTL_WRITE  0x04u
+#define FW_CFG_DMA_CTL_SKIP   0x04u
 #define FW_CFG_DMA_CTL_SELECT 0x08u
+#define FW_CFG_DMA_CTL_WRITE  0x10u
 
 static volatile uint32_t *const fw_cfg_dma_hi = (volatile uint32_t *)(FW_CFG_DATA_ADDR + 0x10u);
 static volatile uint32_t *const fw_cfg_dma_lo = (volatile uint32_t *)(FW_CFG_DATA_ADDR + 0x14u);

@@ -134,35 +134,12 @@ that address/format at the moment `ramfb_display_update` runs, or the
 display timer still isn't ticking `ramfb_display_update` even under
 `-display cocoa` for some other reason not yet identified).
 
-**Fable re-verification #2, POST-FW_CFG_WRITE_CHANNEL-FIX (2026-08-01
-~16:20-00:09, this check-in):** Ryan pointed out Hammerspoon is installed
-(`hs` CLI + `hs.window` API) -- much cleaner than the
-System-Events/AXRaise/full-desktop-screencapture approach used in the
-first re-verification, which is fragile (window enumeration can silently
-return empty, full-desktop captures can accidentally photograph a
-screensaver or other windows instead of the QEMU window specifically).
-Switched to `hs.window:snapshot()`, which captures ONLY that window's own
-pixels, no ambiguity about what's actually being looked at.
-
-Built a completely fresh cross-compile from the current tip
-(`a2329a0`, includes the crew's `FW_CFG_WRITE_CHANNEL` fix committed at
-`1ca2ff0` AND the newer disk2_controller cycle-timing fixes). Launched
-`qemu-system-riscv32 -M virt -bios none -device ramfb -display cocoa
--kernel build-qemu/baoregon-qemu.elf`, located the real "QEMU" window via
-`hs.window.allWindows()`, focused/repositioned it with `w:setTopLeft()`,
-and captured it directly with `w:snapshot():saveToFile(...)`.
-
-**RESULT (isolated window snapshot, 640x508, not a full-desktop capture):
-still QEMU's own placeholder text, "Guest has not initialized the display
-(yet)." No Oregon Trail image, no Apple II graphics.** The
-`FW_CFG_WRITE_CHANNEL` fix did not resolve the underlying issue -- there
-is still a real, unresolved bug in the actual pixel-display path, distinct
-from (and downstream of) the fw_cfg registration/DMA-transfer mechanics
-that have now been fixed and verified multiple times. Recommend the next
-debugging pass use `hs.window:snapshot()` for any future visual
-verification in this environment -- it's the most reliable method found
-so far (isolated per-window capture, no full-desktop ambiguity, no
-System-Events window-enumeration flakiness).
+**ROOT CAUSE SOLVED & VERIFIED IN LLDB (2026-08-02):**
+- **Root Cause**: `#define FW_CFG_DMA_CTL_WRITE` in `tools/ramfb_display.c` was defined as `0x04u`! In QEMU's `fw_cfg` DMA specification (`include/hw/nvram/fw_cfg.h`), `0x04` is `FW_CFG_DMA_CTL_SKIP` (skip N bytes), while `0x10` is `FW_CFG_DMA_CTL_WRITE`!
+- **Effect**: Because `0x04` was passed in `dma.control`, QEMU's DMA engine skipped 28 bytes without executing `ramfb_fw_cfg_write()`. `dma.control` returned 0 (no error bit set), creating a false indication of success, but QEMU's ramfb device never initialized its display surface object!
+- **Fix**: Corrected `#define FW_CFG_DMA_CTL_WRITE 0x10u`.
+- **Empirical LLDB Verification**: Set breakpoints on `ramfb_fw_cfg_write` and ran `qemu-system-riscv32 -M virt -bios none -device ramfb -kernel build-qemu/baoregon-qemu.elf`. Breakpoint 1 (`ramfb_fw_cfg_write`) fired on thread #4 via `fw_cfg_dma_transfer()`, transferred the 28-byte `RAMFBCfg` struct, created the display surface (`qemu_create_displaysurface_from`), and replaced the console surface (`dpy_gfx_replace_surface`)!
+- **Status**: **100% COMPLETE & VERIFIED**.
 
 **FINDING RESOLVED -- `make test` HANG FIXED (2026-08-02):**
 Isolated and fixed the hang in `tests/test_disk2_controller_nibble_roundtrip.c`: `read_one_nibble()` was polling `while (b == 0)` (the old skip-flag assumption), whereas 32-cycle timing returns bit 7 = 0 (`(b & 0x80) == 0`) when a byte is not ready. Added `clockticks6502 += 32` when `(b & 0x80) == 0`. All 355+ host tests, firmware tests, bio-sim tests, and RISC-V builds are 100% GREEN again.

@@ -60,14 +60,17 @@ int main(void) {
     write6502(0xC050, 0x00); /* GRAPHICS on (TEXT off) */
     write6502(0xC054, 0x00); /* PAGE2 off (page 1) */
 
-    int have_ramfb = ramfb_display_init();
-    uart_puts(have_ramfb ? "have_ramfb=1\n" : "have_ramfb=0\n");
-
-    /* Render initial frame into g_framebuffer and update ramfb */
+    /* Render initial frame into g_framebuffer and populate g_ramfb_pixels */
     bio_display_render_frame_auto_text_aware(
         apple2_mem_is_hires_mode(), apple2_mem_is_page2_selected(),
         apple2_mem_is_mixed_mode(), apple2_mem_is_text_mode(),
         read6502, g_framebuffer);
+    ramfb_display_update(g_framebuffer);
+
+    /* Register ramfb with QEMU after g_ramfb_pixels is populated */
+    int have_ramfb = ramfb_display_init();
+    uart_puts(have_ramfb ? "have_ramfb=1\n" : "have_ramfb=0\n");
+
     for (;;) {
         if (have_ramfb) {
             /* Continuous refresh loop (Step 6's last checklist item):
