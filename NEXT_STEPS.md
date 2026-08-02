@@ -689,3 +689,6 @@ target pivoted to Zork I instead, since it's real 6502 machine code
 with no Applesoft/BASIC dependency and should print its opening text
 directly via COUT once its own disk-read issue (this bug) is fixed.
 
+
+<!-- fable-ralph-loop check-in 2026-08-02 16:16:09 -->
+**Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 631 PASS / 0 FAIL (exit 0). Commits in last ~25min: 4.
