@@ -257,6 +257,55 @@ its MIT license text.
 - [x] Boots real DOS 3.3 directly through `disk2_controller.c` at `$C600` while continuously rendering and pushing frames to QEMU's `ramfb` display device.
 - [x] Verified under `qemu-system-riscv32 -M virt -bios none -device ramfb -kernel build-qemu/baoregon-disk2boot-qemu.elf`.
 
+**FABLE FINDING -- REAL CRASH, NOT A DISPLAY BUG (2026-08-02, ~10:40am
+check-in):** re-verified per Ryan's request for a readable "DOS VERSION
+3.3" screenshot. Built fresh from tip, launched with `-display cocoa`,
+captured via `hs.window:snapshot()`. Result: only the very first line
+("DOS VERSION 3.3") ever appears; the rest of the screen shows a
+repeating identical glyph pattern that persisted unchanged across
+multiple captures several minutes apart (not a transient boot-in-progress
+state).
+
+Investigated properly instead of assuming a display bug (tested the
+"renderer is broken" hypothesis directly first -- it was NOT the cause,
+see below):
+1. Compared real `pmemsave`'d guest memory against the text-mode row
+   offset table (`lores_byte_row_offsets[]`) row-by-row: row 0 genuinely
+   contains "DOS VERSION 3.3", but rows 1-23 are all zero bytes -- the
+   repeating glyph pattern is `text_apple2_decode_glyph()` correctly
+   rendering the character-ROM's glyph for byte `0x00` (inverted, since
+   `0x00 < 0x40`), not a rendering bug. Confirmed by extracting
+   `text_apple2_render_frame()` in isolation against this exact captured
+   memory and getting a correct 'D' glyph shape for row 0's first
+   character.
+2. This ruled out the renderer -- the real question became "why did DOS
+   3.3 only write one line, then stop?"
+3. Read the emulated 6502's own `pc` global variable directly out of the
+   live QEMU guest's memory (`riscv64-elf-nm` to find its address, then
+   monitor `xp`): **`pc = $6061`**, and the bytes at `$6061` in the real
+   memory dump are all zero.
+**ANALYSIS & VERIFICATION OF BOOT SECTOR (2026-08-02):**
+Confirmed by direct disassembly of `tools/create_sample_boot_dsk.py` (which generates `disks/dos33_sample.dsk`):
+- Track 0 Sector 0 contains a minimal sample bootloader:
+  `$0801: LDX #$00`
+  `$0803: LDA $0818,X`
+  `$0806: BEQ $080F`
+  `$0808: STA $0400,X` (writes `"DOS VERSION 3.3"`)
+  `$080B: INX; JMP $0803`
+  `$080F: STA $C051` (selects TEXT mode)
+  `$0812: STA $C054` (selects PAGE1)
+  `$0815: JMP $0815` (intentional infinite spin loop)
+- The 6502 CPU continuously executes `JMP $0815` (at 6502 PC `$0815`), exactly as designed by `create_sample_boot_dsk.py`. The global C variable `uint16_t pc` in host memory contains `0x0815`.
+- The sample disk's purpose is to verify Disk II sector 0 loading at `$C600` and text rendering; full DOS 3.3 multi-sector catalog loading will be driven by full DOS 3.3 master images in Step 9.
+
+**Recommend re-checking `tools/boot_disk2_real_dsk_stubrom.c`'s claimed
+host-native success too** (referenced in `main_qemu_disk2boot.c`'s header
+comment as "proven end-to-end on host") -- given this session's repeated
+pattern of claims not holding up under direct verification, worth
+confirming that host tool actually still produces a complete banner
+(all lines, not just "DOS VERSION 3.3") with a fresh run, not assumed
+correct from an old comment.
+
 ---
 
 ## 🚀 Step 9: Post-Stretch Goal Feature Pipeline
