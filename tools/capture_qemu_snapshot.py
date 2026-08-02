@@ -9,6 +9,7 @@ both files to the artifact directory.
 import os
 import sys
 import time
+import hashlib
 import subprocess
 import shutil
 
@@ -19,6 +20,12 @@ TARGETS = [
     ("dos33boot", os.path.join(REPO_ROOT, "build-dos33boot", "baoregon-dos33boot.elf"), "screenshot_dos33boot_real_rom.png"),
     ("zork1boot", os.path.join(REPO_ROOT, "build-zork1boot", "baoregon-zork1boot.elf"), "screenshot_zork1boot_real_rom.png")
 ]
+
+captured_hashes = {}  # png_filename -> md5, used at the end to catch the
+                       # exact bug that shipped twice already: two DIFFERENT
+                       # targets producing byte-for-byte IDENTICAL screenshots
+                       # because the previous target's QEMU window was still
+                       # open when the next one's snapshot was taken.
 
 for name, elf_path, png_filename in TARGETS:
     if not os.path.exists(elf_path):
@@ -85,11 +92,49 @@ for name, elf_path, png_filename in TARGETS:
         qemu_proc.wait(timeout=3)
     except subprocess.TimeoutExpired:
         qemu_proc.kill()
+        qemu_proc.wait(timeout=3)
+
+    # Real bug fixed here (found by Danny/Maestro after two separate runs
+    # produced byte-for-byte IDENTICAL screenshots for different targets,
+    # confirmed via md5): terminate() returning doesn't guarantee the
+    # window server has actually torn down the QEMU cocoa window yet.
+    # Without a real wait, the NEXT loop iteration's Hammerspoon snapshot
+    # can grab a still-lingering window from the PREVIOUS target instead
+    # of (or blended with) the new one. Poll for the specific QEMU window
+    # to actually disappear before moving to the next target.
+    print("Waiting for QEMU window to fully close before next target...")
+    for _ in range(20):
+        check = subprocess.run(
+            ["osascript", "-e",
+             'tell application "System Events" to get name of every process whose name contains "qemu"'],
+            capture_output=True, text=True
+        )
+        if "qemu" not in check.stdout.lower():
+            break
+        time.sleep(0.5)
+    else:
+        print("WARNING: qemu-system-riscv32 process still visible after 10s wait -- proceeding anyway, results may be unreliable.")
 
     if os.path.exists(output_png):
         print(f"SUCCESS: Snapshot saved to {output_png} (size: {os.path.getsize(output_png)} bytes)")
+        with open(output_png, "rb") as f:
+            captured_hashes[png_filename] = hashlib.md5(f.read()).hexdigest()
         if os.path.exists(ARTIFACT_DIR):
             shutil.copy(output_png, artifact_png)
             print(f"Copied to artifact dir: {artifact_png}")
     else:
         print(f"FAILED: Output PNG {output_png} was not created.")
+
+# Hard, automatic check: refuse to let this class of bug ship silently
+# again. If any two distinct targets produced byte-for-byte identical
+# screenshots, something in the capture pipeline grabbed a stale/wrong
+# window -- fail loudly instead of committing misleading "evidence".
+if len(set(captured_hashes.values())) < len(captured_hashes):
+    print("\n*** FATAL: two or more captured screenshots are BYTE-FOR-BYTE IDENTICAL. ***")
+    for fname, h in captured_hashes.items():
+        print(f"  {fname}: md5={h}")
+    print("This means the capture pipeline grabbed the same window twice -- do NOT")
+    print("commit these files. Investigate the window-close/re-launch timing above.")
+    sys.exit(1)
+else:
+    print("\nAll captured screenshots have distinct content -- safe to commit.")
