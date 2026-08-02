@@ -360,6 +360,65 @@ a stable, screenshot-worthy state, capture via `hs.window:snapshot()`,
 save to `docs/`). I'll check in periodically and verify claims/results
 rather than keep building in parallel.
 
+**FABLE FINAL VERIFICATION (2026-08-02 ~11:26am) -- using the newly
+wired-in emu_trace, definitive answer this time, not manual PC-sampling:**
+
+Rebuilt both `main_qemu_dos33boot.c` and `main_qemu_zork1boot.c` fresh
+from commit `78eb614` (real system ROM + emu_trace wired in). Booted
+each under `-display cocoa` with UART routed to a log file, read the
+real `emu_trace` heartbeat output to get ground truth.
+
+**DOS 3.3 Master: reaches a genuine, intentional terminal state -- but
+with NO banner text ever written.** Heartbeat log shows real, varied PC
+activity for roughly the first 200 heartbeat lines (real boot/RWTS code
+executing at `$3952`/`$3A02`/`$3DA0` etc.), then cleanly settles at
+`pc=E000, a=80, x=00, y=00, sp=FF` and stays there for the rest of the
+run. Traced `$E000` to `main_qemu_dos33boot.c`'s own deliberate
+`init_system_rom()` patch: `JMP $E000` at ROM offset `$2000` (commented
+"Applesoft BASIC spin loop"). **This is NOT a crash** -- it's DOS 3.3
+completing its real boot sequence and handing off to Applesoft BASIC's
+cold-start vector, which this build intentionally redirects into a
+harmless spin loop (matching this project's established precedent of
+stubbing out not-yet-implemented paths rather than crashing into them).
+**However**, checked screen memory (`$0400-$07FF`) via `pmemsave` at this
+settled state: **zero readable text anywhere** -- no "DOS VERSION 3.3"
+banner ever appears. Likely cause: `init_system_rom()` also patches
+`SETKBD`/`SETVID`/`COUT` (the real ROM's keyboard-init/video-init/
+character-output routines) to bare `RTS` no-ops, so any `JSR COUT` DOS's
+real code makes to print a character silently does nothing -- there's no
+real character-output implementation wired to actually write into
+`$0400-$07FF` yet for this boot path.
+
+**Zork I: genuinely still executing, NOT crashed, but stuck in what
+looks like a real repeating loop, not making qualitatively new
+progress.** Heartbeat log shows PC cycling among a small, stable set of
+addresses (`$2602`, `$2605`, `$254F`, `$2548`, `$2552`, `$257C`) for the
+ENTIRE observed run -- let it run past 24.9 billion (`0x24E600D7`)
+cycles total (i.e., wall-clock minutes, vastly beyond the nominal 50M
+budget, deep into the post-budget interactive loop) with no new address
+range ever appearing and no screen-memory text ever written. This
+pattern (small fixed set of addresses, repeating indefinitely) is
+consistent with a real RWTS/disk-read retry loop that never succeeds
+(e.g. a sector checksum/verification failure causing infinite retry) --
+genuinely different from DOS 3.3's clean, deliberate spin-loop landing,
+and worth investigating as a real, distinct bug in the disk-read path
+specifically for the Zork I disk image.
+
+**Neither disk reached a screenshot-worthy state** (no readable DOS 3.3
+`]` prompt, no Zork I opening text) -- so no `docs/screenshot_*_real.png`
+were captured; capturing a screenshot of either current terminal state
+would only show a black/blank text screen, which isn't the deliverable
+Ryan asked for. Real next steps, precisely scoped: (1) DOS 3.3 needs an
+actual `COUT`/character-output implementation (even a minimal one that
+writes the accumulator byte into the correct `$0400-$07FF`+cursor
+position) instead of a bare `RTS` stub, so the real banner text the boot
+code is presumably already trying to print actually lands in screen
+memory; (2) Zork I's repeating-address loop needs tracing with a
+breakpoint/disassembly at `$2602`/`$2605` specifically to find why its
+disk read never completes -- this is a different, likely disk2_controller
+or Zork-boot-loader-specific bug, not the same root cause as DOS 3.3's
+gap.
+
 ---
 
 ## 🚀 Step 9: Post-Stretch Goal Feature Pipeline
