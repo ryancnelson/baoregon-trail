@@ -589,3 +589,103 @@ minimal/stub Applesoft implementation actually present in the ROM.
 
 <!-- fable-ralph-loop check-in 2026-08-02 15:55:40 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 631 PASS / 0 FAIL (exit 0). Commits in last ~25min: 4.
+
+---
+
+## 🐛 OPEN BUG (2026-08-02, Duke): Zork I real-disk boot stuck in an intermittent address-field sync desync -- NOT resolved by either the corrupt-ROM fix (e6f268c/9840368) or the motor-off desync fix (be7de27)
+
+**Status: de-prioritized for tonight** (real time pressure, Baochip-1x hardware arrives next week for DEF CON) -- documenting precisely so whoever picks this up next (post-DEF-CON or tomorrow) doesn't have to re-derive the diagnosis from scratch.
+
+**Symptom** (fable-5's original emu_trace finding, dd86358): booting the real
+`Downloads/Zork_I.dsk` through `disk2_controller.c` gets stuck cycling among
+$2602/$2605/$254F/$2548/$2552/$257C for 20M+ cycles with zero forward
+progress and zero screen-memory text -- a disk-read retry loop that never
+completes.
+
+**Ruled out** (each independently verified, not just assumed):
+- **Corrupt system ROM** (`src/apple2e_system_rom.h` was bad data,
+  fixed at e6f268c/9840368) -- re-tested against the corrected ROM,
+  loop is byte-for-byte identical. Not the cause of this specific bug
+  (was a real, separate bug worth fixing on its own).
+- **Motor-off desync** (`nibble_shift()` not freezing `last_cycles` on
+  motor-off, fixed at be7de27, see `tests/test_disk2_controller_motor_off_freeze.c`)
+  -- re-tested after this fix landed, loop unchanged. Also a real,
+  separate bug, not this one.
+- **On-disk sector/address-field data itself**: independently decoded
+  track 0 AND track 1's real address fields straight from
+  `src/zork1_nib_disk_data.h` (Python, outside the emulator) -- all 16
+  `D5 AA 96 <vol> <trk> <sec> <chk> DE AA EB` address prologues per
+  track have valid 4-and-4-encoded checksums (`vol^trk^sec == chk`).
+  Not disk-data corruption.
+- **Track 1's long `0x96` byte runs**: initially flagged as suspicious
+  (343-byte runs of the same value in the data field) -- confirmed this
+  is CORRECT, expected 6-and-2 GCR output for a genuinely all-zero
+  256-byte sector (verified directly against the real `Zork_I.dsk`
+  file: track 1 sector 0's DOS-order bytes really are all zero). Not a
+  `tools/dsk_to_nib.py` encoding bug.
+- **Phase-stepping / track-clamping / head wraparound**: instrumented
+  `disk2_controller_access()`'s actual `ctl->drive[0].track` and
+  `ctl->drive[0].head` values live during a real boot run -- both
+  behave correctly (track oscillates 0<->1 in a real seek/settle
+  pattern, head wraps at the exact track length with no off-by-one).
+- **Q7 (write mode)**: never once engages during the whole run --
+  ruled out `disk2_controller.c`'s known-unimplemented write path as a
+  factor.
+- **Nibble-skip-on-slow-poll hypothesis**: wrote a RED-first test
+  (`tests/test_disk2_controller_nibble_skip_bug.c`, since deleted after
+  disproving it) simulating a CPU poll loop that takes slightly longer
+  than one `NIBBLE_CYCLES` (32-cycle) period between reads -- this
+  passed immediately against current code (correctly advances by
+  exactly one nibble, doesn't skip ahead). This specific mechanism is
+  NOT the bug.
+
+**Real, precise, ground-truth finding (the actual open lead)**:
+instrumented the boot code's three literal address-field sync-check
+instructions directly (byte-value histograms at each PC, not
+disassembly guesswork) via `tools/debug_zork1_retry_loop.c` (kept in
+the tree, untracked/scratch, NOT wired into any build -- rebuild with:
+`cc -std=c99 -Wall -Wextra -O2 -Isrc -o /tmp/debug_zork1 tools/debug_zork1_retry_loop.c src/apple2_mem.c src/cpu6502.c src/disk_sector_layout.c src/disk_trap.c src/disk2_controller.c src/bunnie_audio.c`,
+run with a cycle-count argument e.g. `/tmp/debug_zork1 5000000`):
+
+| Check (real boot-code instruction) | Address | Result over ~97K polls |
+|---|---|---|
+| `CMP #$D5` (first sync byte) | $2554 | **D5 seen 483 times** |
+| `CMP #$AA` (second sync byte, only reached after D5) | $255E | **AA follows ALL 483 times D5 was seen** (100%) |
+| `CMP #$96` (third sync byte, only reached after AA) | $2569 | **Only 257 of those 483 (~53%) see the expected 0x96** |
+
+So **roughly HALF the time a real, genuine D5-AA sync is found on the
+real disk, the very next byte comes back wrong** instead of the
+expected 0x96 -- an intermittent (not deterministic, not 0% or 100%)
+nibble-read desync inside `disk2_controller.c`'s read path, most likely
+`nibble_shift()`'s elapsed-cycle/head-advance math (`src/disk2_controller.c`
+lines ~219-260), since the on-disk data and the D5/AA portion of the
+read path are independently confirmed correct. The exact triggering
+condition (why roughly half succeed and half don't) is NOT yet
+isolated -- this is the concrete next step, not a full root-cause.
+
+**Suggested next steps for whoever picks this up**:
+1. Add a call-counter/log directly inside `nibble_shift()` itself
+   (not just at the CPU's PC) recording every `(clockticks6502, elapsed,
+   nibbles, d->head before/after)` tuple during a real Zork I boot run,
+   to see the EXACT cycle deltas at the moment a desync happens (compare
+   a run that reaches 0x96 successfully vs. one that doesn't, cycle for
+   cycle).
+2. Consider whether `is_uninit` handling (the very first `nibble_shift()`
+   call after motor-on, which does NOT advance the head, just resyncs
+   the clock) interacts badly with the specific rhythm of Zork's D5/AA/96
+   check loop -- e.g. does the polling loop's own BPL wait sometimes
+   catch the SAME already-latched byte twice for a real reason unrelated
+   to timing (bit 7 clearing behavior)?
+3. Verify against MAME or another known-good Apple II emulator's own
+   Disk II nibble-timing model side-by-side, cycle for cycle, rather
+   than re-deriving from first principles again.
+
+**Why Zork I specifically became the priority target** (documented for
+context): Woz root-caused the earlier DOS 3.3 banner-text gap as a dead
+end for the ROM set in use -- unmodified DOS 3.3 needs Applesoft BASIC
+to print its boot banner, and this project's ROM set doesn't include
+it. Per Ryan's direction, the visible-boot-text stretch-goal demo
+target pivoted to Zork I instead, since it's real 6502 machine code
+with no Applesoft/BASIC dependency and should print its opening text
+directly via COUT once its own disk-read issue (this bug) is fixed.
+

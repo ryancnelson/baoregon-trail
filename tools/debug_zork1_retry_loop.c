@@ -90,6 +90,10 @@ static int is_loop_addr(uint16_t addr) {
 
 static int g_seen_byte_histogram[256];
 static long g_total_d5_checks = 0;
+static int g_seen_aa_histogram[256];
+static long g_total_aa_checks = 0;
+static int g_seen_96_histogram[256];
+static long g_total_96_checks = 0;
 
 int main(int argc, char **argv) {
     uint32_t cycles = (argc > 1) ? (uint32_t)atol(argv[1]) : 20000000u;
@@ -177,6 +181,14 @@ int main(int argc, char **argv) {
         if (pc_before == 0x2554) {
             g_seen_byte_histogram[a]++;
             g_total_d5_checks++;
+        }
+        if (pc_before == 0x255E) {
+            g_seen_aa_histogram[a]++;
+            g_total_aa_checks++;
+        }
+        if (pc_before == 0x2569) {
+            g_seen_96_histogram[a]++;
+            g_total_96_checks++;
         }
 
         if (pc_before == 0x25A4 && seek_check_count < 200) {
@@ -352,6 +364,20 @@ int main(int argc, char **argv) {
     for (int i = 0; i < 256; i++) {
         if (g_seen_byte_histogram[i] > 0) {
             fprintf(stderr, "  0x%02X: %d%s\n", i, g_seen_byte_histogram[i], i == 0xD5 ? "  <-- D5 (would exit retry loop)" : "");
+        }
+    }
+
+    fprintf(stderr, "\nByte-value histogram at $255E (CMP #$AA check), total=%ld:\n", g_total_aa_checks);
+    for (int i = 0; i < 256; i++) {
+        if (g_seen_aa_histogram[i] > 0) {
+            fprintf(stderr, "  0x%02X: %d%s\n", i, g_seen_aa_histogram[i], i == 0xAA ? "  <-- AA (would proceed)" : "");
+        }
+    }
+
+    fprintf(stderr, "\nByte-value histogram at $2569 (CMP #$96 check), total=%ld:\n", g_total_96_checks);
+    for (int i = 0; i < 256; i++) {
+        if (g_seen_96_histogram[i] > 0) {
+            fprintf(stderr, "  0x%02X: %d%s\n", i, g_seen_96_histogram[i], i == 0x96 ? "  <-- 96 (address prolog complete)" : "");
         }
     }
 
