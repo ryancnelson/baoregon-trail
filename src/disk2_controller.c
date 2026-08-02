@@ -151,10 +151,14 @@ enum {
     LOC_DRIVEREADMODE = 0xE, LOC_DRIVEWRITEMODE = 0xF,
 };
 
+#define DISK2_CYCLES_UNINIT 0xFFFFFFFFu
+
 void disk2_controller_reset(disk2_controller_t *ctl) {
     local_memset(ctl, 0, sizeof(*ctl));
     ctl->drive[0].track = 0;
+    ctl->drive[0].last_cycles = DISK2_CYCLES_UNINIT;
     ctl->drive[1].track = 0;
+    ctl->drive[1].last_cycles = DISK2_CYCLES_UNINIT;
 }
 
 uint8_t disk2_controller_read_boot_rom(uint8_t offset) {
@@ -221,19 +225,20 @@ static uint8_t nibble_shift(disk2_controller_t *ctl, int write_mode, uint8_t wri
     }
 
     uint32_t now = clockticks6502;
-    uint32_t elapsed = (now >= d->last_cycles) ? (now - d->last_cycles) : 0;
+    int is_uninit = (d->last_cycles == DISK2_CYCLES_UNINIT);
+    uint32_t elapsed = (!is_uninit && now >= d->last_cycles) ? (now - d->last_cycles) : 0;
     uint32_t nibbles = elapsed / NIBBLE_CYCLES;
 
-    if (nibbles > 0 || d->last_cycles == 0) {
+    if (nibbles > 0 || is_uninit) {
         int track_index = d->track >> 2;
         if (track_index >= 0 && track_index < DISK2_MAX_TRACKS && d->has_disk) {
             disk2_nibble_track_t *track = &d->tracks[track_index];
             if (track->length > 0) {
-                if (nibbles > 0 && d->last_cycles > 0) {
+                if (nibbles > 0 && !is_uninit) {
                     d->head = (d->head + (int)nibbles) % track->length;
                     d->last_cycles += nibbles * NIBBLE_CYCLES;
-                } else if (d->last_cycles == 0) {
-                    d->last_cycles = (now == 0) ? 1 : now;
+                } else {
+                    d->last_cycles = now;
                 }
 
                 if (write_mode) {
