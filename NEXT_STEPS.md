@@ -257,34 +257,63 @@ its MIT license text.
 - [x] Boots real DOS 3.3 directly through `disk2_controller.c` at `$C600` while continuously rendering and pushing frames to QEMU's `ramfb` display device.
 - [x] Verified under `qemu-system-riscv32 -M virt -bios none -device ramfb -kernel build-qemu/baoregon-disk2boot-qemu.elf`.
 
-**FABLE FINDING -- REAL CRASH, NOT A DISPLAY BUG (2026-08-02, ~10:40am
-check-in):** re-verified per Ryan's request for a readable "DOS VERSION
-3.3" screenshot. Built fresh from tip, launched with `-display cocoa`,
-captured via `hs.window:snapshot()`. Result: only the very first line
-("DOS VERSION 3.3") ever appears; the rest of the screen shows a
-repeating identical glyph pattern that persisted unchanged across
-multiple captures several minutes apart (not a transient boot-in-progress
-state).
+**FABLE FINDING #1 (2026-08-02, ~10:40am, SUPERSEDED BELOW):** initial
+investigation found row 0 = "DOS VERSION 3.3" but rows 1-23 all zero, and
+misdiagnosed this as a 6502 crash. baochip's follow-up disassembly of
+`create_sample_boot_dsk.py` (the synthetic sample disk generator) showed
+this was actually correct, by-design behavior: the sample bootloader
+writes one line then does an intentional `JMP $0815` infinite spin loop
+-- not a crash, just a minimal test disk that only writes one line on
+purpose. Leaving this note for the record since it was a real, wrong
+conclusion at the time, corrected by cross-checking with the crew rather
+than either side just asserting.
 
-Investigated properly instead of assuming a display bug (tested the
-"renderer is broken" hypothesis directly first -- it was NOT the cause,
-see below):
-1. Compared real `pmemsave`'d guest memory against the text-mode row
-   offset table (`lores_byte_row_offsets[]`) row-by-row: row 0 genuinely
-   contains "DOS VERSION 3.3", but rows 1-23 are all zero bytes -- the
-   repeating glyph pattern is `text_apple2_decode_glyph()` correctly
-   rendering the character-ROM's glyph for byte `0x00` (inverted, since
-   `0x00 < 0x40`), not a rendering bug. Confirmed by extracting
-   `text_apple2_render_frame()` in isolation against this exact captured
-   memory and getting a correct 'D' glyph shape for row 0's first
-   character.
-2. This ruled out the renderer -- the real question became "why did DOS
-   3.3 only write one line, then stop?"
-3. Read the emulated 6502's own `pc` global variable directly out of the
-   live QEMU guest's memory (`riscv64-elf-nm` to find its address, then
-   monitor `xp`): **`pc = $6061`**, and the bytes at `$6061` in the real
-   memory dump are all zero.
-**ANALYSIS & VERIFICATION OF BOOT SECTOR (2026-08-02):**
+**FABLE FINDING #2 -- THE ACTUAL BUG, FOUND VIA RYAN'S OWN EYES (2026-08-02
+~10:50am): MIRROR-REVERSED TEXT GLYPHS, NOW FIXED.** Ryan visually
+inspected a zoomed screenshot of the "DOS VERSION 3.3" boot banner
+himself and caught something no automated check had: **the characters
+were mirror-reversed** (confirmed independently: the "repeating glyph
+pattern" in rows 1-23 was real "@" characters -- from legitimately zeroed
+screen memory, consistent with Finding #1 above -- just mirrored, which
+is why it read as an unfamiliar circular pattern rather than obviously
+"@").
+
+Root cause, found and fixed: `src/text_apple2.c`'s `text_apple2_decode_glyph()`
+had the character-ROM bit-to-pixel mapping backwards -- `(bits >> (6 - col))`
+(claimed "bit 6 = leftmost") should have been `(bits >> col)` (bit 0 =
+leftmost). Confirmed empirically with a standalone 'F' glyph dump (a
+horizontally-asymmetric letter that exposes mirroring immediately, unlike
+the existing test suite's 'D', which is symmetric-ish enough that the
+SAME bug was baked into `tests/test_text_apple2.c`'s own expected-value
+helper, so the test was self-consistently checking a mirrored glyph
+against a mirrored expectation and never caught it). Fixed both the real
+implementation and the test helper (with a real, correct 'F'-shape
+regression now implicitly covered by the corrected 'D' test matching real
+letterforms).
+
+**Real, visual, zoomed-screenshot confirmation obtained:** rebuilt fresh,
+launched `qemu-system-riscv32 -M virt -bios none -device ramfb -display
+cocoa -kernel build-qemu-disk2boot/baoregon-disk2boot.elf`, captured via
+`hs.window:snapshot()`, cropped+8x-zoomed the top text row for a clean
+read. Result: **"DOS VERSION 3.3" now reads correctly, properly oriented,
+not mirror-reversed.** Screenshots saved durably (not /tmp):
+- `docs/screenshot_dos33_boot_text_fixed.png` (full 280x220 window capture)
+- `docs/screenshot_dos33_boot_text_fixed_zoomed.png` (8x-zoomed crop of
+  the "DOS VERSION 3.3" text row, the clearest evidence)
+
+Verification: `make test` -> 619 PASS, 0 FAIL, exit 0 (fresh run after
+the fix, both `text_apple2.c` and its test updated).
+
+**Also still worth doing (unchanged from before):** this build uses
+`disks/dos33_sample.dsk` (this project's own synthetic single-line-then-spin
+sample disk), not the real `~/Downloads/Apple_DOS_3.3_Master.dsk`. Ryan's
+original ask (via Fable) was for the real DOS 3.3 master disk
+specifically, plus Zork I and Oregon Trail, and possibly Choplifter --
+worth confirming which disk(s) this demo path should target for the
+final "readable screenshot" deliverables, and re-testing with the real
+master disk once someone confirms the fast-sector vs. real-nibble-boot
+path handles its (much longer) real boot sequence correctly, not just
+the synthetic one-line sample.
 Confirmed by direct disassembly of `tools/create_sample_boot_dsk.py` (which generates `disks/dos33_sample.dsk`):
 - Track 0 Sector 0 contains a minimal sample bootloader:
   `$0801: LDX #$00`
