@@ -75,6 +75,19 @@ static void load_embedded_nib_disk(void) {
     }
 }
 
+#define UART0_LSR 0x10000005u
+#define UART0_RBR 0x10000000u
+
+static void poll_uart_input(void) {
+    volatile uint8_t *lsr = (volatile uint8_t *)UART0_LSR;
+    volatile uint8_t *rbr = (volatile uint8_t *)UART0_RBR;
+    while (*lsr & 0x01) {
+        uint8_t ch = *rbr;
+        if (ch == '\n') ch = '\r';
+        apple2_mem_inject_key(ch);
+    }
+}
+
 int main(void) {
     apple2_mem_reset();
     reset6502();
@@ -122,6 +135,7 @@ int main(void) {
     const uint32_t cycles_budget = 5000000u;
     const uint32_t chunk = 20000u;
     while (total_executed < cycles_budget) {
+        poll_uart_input();
         exec6502(chunk);
         total_executed += chunk;
 
@@ -134,12 +148,13 @@ int main(void) {
         }
     }
 
-    uart_puts("disk2boot: boot execution budget exhausted, entering idle refresh loop\n");
+    uart_puts("disk2boot: boot execution budget exhausted, entering interactive loop\n");
 
-    /* Post-boot: keep the window live (continuous refresh, matching
-     * main_qemu.c's own convention) so the final booted state stays
-     * visible/watchable instead of the guest halting. */
+    /* Post-boot: keep executing 6502 instructions + polling UART keyboard
+     * input so live user typing at the DOS prompt works! */
     for (;;) {
+        poll_uart_input();
+        exec6502(10000);
         bio_display_render_frame_auto_text_aware(
             apple2_mem_is_hires_mode(), apple2_mem_is_page2_selected(),
             apple2_mem_is_mixed_mode(), apple2_mem_is_text_mode(),
