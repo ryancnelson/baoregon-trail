@@ -275,8 +275,27 @@ uint8_t disk2_controller_access(disk2_controller_t *ctl, uint8_t offset, int is_
 
         case LOC_DRIVEOFF:
             /* Immediate (no wall-clock delay -- see file header notes on
-             * differences from the original). */
+             * differences from the original).
+             *
+             * Real bug fix (2026-08-02, found debugging fable-5's Zork I
+             * real-disk retry-loop finding, dd86358): must also reset
+             * BOTH drives' last_cycles to DISK2_CYCLES_UNINIT here.
+             * Without this, nibble_shift()'s elapsed-time calculation
+             * (`clockticks6502 - d->last_cycles`) keeps counting the
+             * entire motor-off dead time as real disk rotation once the
+             * motor turns back on -- RWTS commonly toggles the motor
+             * off/on between seek and read phases, so any such gap
+             * (confirmed via emu_trace: a real 102-cycle motor off->on
+             * gap was observed mid-Zork-I-boot) silently jumps the head
+             * forward by (gap/32) extra nibbles it never should have
+             * shifted, desyncing the read position from what RWTS
+             * believes it is -- exactly the kind of "almost right, byte
+             * position off by a few" symptom that makes an
+             * address-field sync search intermittently fail and retry
+             * forever. See tests/test_disk2_controller_motor_off_freeze.c. */
             ctl->motor_on = 0;
+            ctl->drive[0].last_cycles = DISK2_CYCLES_UNINIT;
+            ctl->drive[1].last_cycles = DISK2_CYCLES_UNINIT;
             break;
         case LOC_DRIVEON:
             ctl->motor_on = 1;
