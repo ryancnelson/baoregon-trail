@@ -1496,3 +1496,140 @@ increase, not a `disk2_controller.c` code fix).
 real TDD; the disk-swap CATALOG/BRUN demo remains NOT re-verified
 end-to-end; the actual nature of the remaining "bug" (if a bug at all,
 vs. a slow-but-correct DRVERR) is still genuinely open.
+
+---
+
+## 📋 DUKE'S COMPREHENSIVE HANDOFF SUMMARY (2026-08-03 ~07:05) -- disk-swap/RWTS investigation, stopping point for tonight
+
+**Update**: Bunnie ran the exact large-cycle-budget test recommended
+above (10-100x larger than the ~200,000,000 cycles used in this
+session's own trace). **Result: the DRVERR-completion reframing is
+ALSO DISPROVEN.** Even with a multi-billion-cycle budget, the boot
+still genuinely freezes at `PC=$FD1D` and never reaches a real
+`DRVERR`/error message. This is not a patience/cycle-budget problem --
+there is a real, still-open bug in the disk-swap scenario.
+
+**Full list of what has been ruled out tonight, with real evidence
+(not guesses), for whoever continues this** (possibly fresh eyes
+tomorrow):
+
+1. **Disk-data corruption / copy-protection on the Zork disk itself**
+   -- RULED OUT. Tested three independently-sourced Zork I disk images
+   (original/`zork1_plain.dsk`, qkumba's `00_DualBootHelper` crack, 4am's
+   crack) -- all three fail identically. Track 17's VTOC sector decodes
+   with fully valid address-field AND data-field checksums via the
+   project's own proven decoder (`test_disk2_controller_nibble_roundtrip.c`'s
+   `read_and_decode_sector()`) on both the DOS 3.3 Master disk and the
+   Zork disk. The real disk data is completely fine.
+
+2. **`disk2_controller.c`'s seek-overshoot clamp silently corrupting or
+   suppressing subsequent reads** -- RULED OUT via a real RED test
+   (`test_disk2_controller_seek_overshoot_readable.c`, committed,
+   passing on unmodified code). A real bus-level address-field read at
+   the clamped position correctly reports the true clamped track
+   number with a valid checksum, matching real Disk II hardware's
+   hard-stop behavior.
+
+3. **`d->head`'s position after a realistic overshoot sequence being
+   too far from the next sync mark for RWTS's real retry budget to
+   find** -- RULED OUT via a real RED test
+   (`test_disk2_controller_head_desync_after_overshoot.c`, committed,
+   passing on unmodified code). Sync-mark convergence from 6 different
+   arbitrary starting head positions across a full realistic track
+   took 14-400 nibbles -- trivially fast, nowhere near any realistic
+   bound.
+
+4. **The scenario just needing more patience/cycle budget to reach a
+   real, correct `DRVERR` failure** -- RULED OUT by Bunnie's
+   multi-billion-cycle test (this update). The boot genuinely freezes
+   forever at `PC=$FD1D`, not just "eventually" reaches an error.
+
+5. **The motor-off freeze bug** (`nibble_shift()` not resetting
+   `last_cycles` on motor-off) -- a REAL bug, found and FIXED this
+   session (commit `be7de27`), but confirmed NOT sufficient to resolve
+   this specific disk-swap symptom on its own.
+
+**What we know FOR CERTAIN, with direct evidence, about the actual
+symptom**:
+
+- `$0478` (DOS's real RWTS current-track shadow variable, per Beneath
+  Apple DOS's own documentation of `SEEKABS`) climbs UNBOUNDED past
+  the valid 0-34 track range during the post-swap CATALOG attempt
+  (observed reaching 204 in one live trace) while `d->track` (this
+  project's real quarter-track counter) stays CORRECTLY clamped the
+  entire time at the physical maximum (139 = track 34).
+- Real disk reads DO happen during this window (33,287 total
+  `LOC_DRIVEREAD` accesses observed in one trace) -- this is not a
+  totally inert freeze; there is real ongoing CPU/controller activity.
+- PC genuinely visits real, correctly-addressed RWTS routines
+  (`SEEKABS` $B9A0, arm-delay $BA00, `TRYTRK` $BDBC, `RDADR` $B944) --
+  confirming this is genuinely the real DOS 3.3 RWTS code, correctly
+  positioned in ROM, not a corrupted or misloaded ROM image.
+- The final resting state (in the ~200M-cycle trace) showed
+  `motor=0`, which looked like it might indicate a completed
+  `DRVERR` path -- this specific interpretation is now DISPROVEN by
+  Bunnie's much-longer test; the true meaning of that `motor=0`
+  transition (if it's real and reproducible at all under a longer
+  budget) is unexplained.
+
+**What remains genuinely unknown / untested** (candidate directions
+for a fresh continuation, NOT yet tried):
+
+- **A CPU-emulation-level bug specific to RWTS's exact instruction
+  sequence** -- none of the three disproven hypotheses actually ran
+  real 6502 code through RWTS; all three used direct
+  `disk2_controller_access()` calls with synthetic phase-step/read
+  sequences to isolate the controller layer. A genuine instruction-by-
+  instruction trace of `cpu6502.c`'s execution during the real failing
+  scenario, cross-referenced against Beneath Apple DOS's real
+  disassembly instruction-by-instruction (not just address-by-address,
+  which was already done), could reveal a subtle opcode/flag/cycle-
+  count bug specific to whatever exact sequence RWTS executes in this
+  scenario. This is a substantially larger, more open-ended
+  investigation than any of the three run tonight -- not a quick
+  follow-up test, a genuinely different scale of effort.
+- **The interaction between REPEATED motor-off/motor-on toggling
+  (common in RWTS) and the ALREADY-FIXED `last_cycles` freeze logic**
+  under the specific highly-abnormal "many back-to-back
+  overshoot-then-clamp seeks" pattern -- flagged as a possibility
+  earlier this session but never isolated/tested directly with its own
+  dedicated RED test (distinct from hypotheses #2/#3 above, which
+  tested clamp-then-read and head-position-after-overshoot separately,
+  not the repeated-motor-toggle interaction specifically).
+- Whether `$0478`'s specific unbounded-growth PATTERN (not just its
+  final value) reveals something about which exact 6502 instructions
+  are executing repeatedly -- e.g., disassembling the real ROM bytes at
+  the addresses PC was observed cycling through this session
+  ($BDA0-$BDA5 in one trace) instruction-by-instruction, the same way
+  the original Zork boot-sector investigation did for ITS retry loop,
+  to understand exactly what arithmetic is producing the runaway
+  `$478` growth at the 6502-instruction level (not just observing the
+  net effect on `$478`'s value between samples, which is all this
+  session's traces did).
+
+**Recommendation for tomorrow (or whoever continues)**: the disk2
+controller code itself (clamping, decode, sync-search) has now been
+tested rigorously in isolation and found correct at every layer probed
+so far. The remaining productive path is almost certainly a genuine
+instruction-level 6502 trace of the LIVE failing scenario (not more
+isolated controller-level unit tests, which have now exhausted the
+plausible-sounding hypotheses at that layer) -- disassemble the exact
+RWTS instruction sequence executing during the stuck `$BDA0-$BDA5`
+loop and verify it byte-for-byte, flag-for-flag against real 6502
+semantics and Beneath Apple DOS's documented behavior. This is real,
+substantial, open-ended work -- not a quick fix -- and is exactly the
+kind of task that benefits from fresh attention rather than continuing
+after a long session of (honest, productive, but so-far-inconclusive)
+investigation.
+
+**Session summary of durable value produced tonight** (even without a
+final fix): real corrupt-ROM fix (`e6f268c`/`9840368`), real motor-off
+freeze fix (`be7de27`), real Lo-Res CRT-tint fix (`fd7d132`), a
+definitive real-hardware-behavior answer via primary-source research
+(Beneath Apple DOS, `eb8afcc`) that this is a genuine bug and not
+period-accurate behavior, two new permanent regression-guard tests
+proving the controller's read pipeline is correct at the layers tested
+(`547b88e`, `ad5e126`), and this comprehensive ruled-out list to save
+whoever continues from repeating already-disproven hypotheses. The
+disk-swap CATALOG/BRUN stretch-goal demo itself remains unresolved and
+is the honest, clearly-documented state to hand off.
