@@ -68,7 +68,7 @@ $(BIN): $(ELF)
 
 $(ELF): $(OBJECTS) linker.ld
 	@mkdir -p $(BUILD_DIR)
-	$(CC) $(LDFLAGS) -o $@ $(OBJECTS)
+	$(CC) $(LDFLAGS) -o $@ $(OBJECTS) -lgcc
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(BUILD_DIR)
@@ -110,12 +110,11 @@ REINETTE_SOURCES = \
     $(SRC_DIR)/lores_apple2.c \
     $(SRC_DIR)/text_apple2.c \
     $(SRC_DIR)/bio_display.c \
-    $(SRC_DIR)/emu_trace.c \
-    tools/ramfb_display.c
+    $(SRC_DIR)/emu_trace.c
 
 REINETTE_OBJECTS = $(patsubst $(SRC_DIR)/%.S,$(REINETTE_BUILD_DIR)/%.o,\
-    $(patsubst $(SRC_DIR)/%.c,$(REINETTE_BUILD_DIR)/%.o,\
-    $(patsubst tools/%.c,$(REINETTE_BUILD_DIR)/%.o,$(REINETTE_SOURCES))))
+    $(patsubst $(SRC_DIR)/%.c,$(REINETTE_BUILD_DIR)/%.o,$(REINETTE_SOURCES))) \
+    $(REINETTE_BUILD_DIR)/tools_ramfb_display.o
 
 REINETTE_CFLAGS = $(CFLAGS) -Isrc -Isrc/reinette
 
@@ -126,8 +125,8 @@ reinette-qemu: $(REINETTE_ELF)
 $(REINETTE_ELF): $(REINETTE_OBJECTS) linker-qemu.ld
 	@mkdir -p $(REINETTE_BUILD_DIR)
 	$(CC) -march=$(MARCH) -mabi=$(MABI) -nostartfiles -nostdlib \
-	    -T linker-qemu.ld -Wl,-Map=$(REINETTE_BUILD_DIR)/reinette.map -lgcc \
-	    -o $@ $(REINETTE_OBJECTS)
+	    -T linker-qemu.ld -Wl,-Map=$(REINETTE_BUILD_DIR)/reinette.map \
+	    -o $@ $(REINETTE_OBJECTS) -lgcc
 
 $(REINETTE_BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
@@ -141,6 +140,6 @@ $(REINETTE_BUILD_DIR)/%.o: $(SRC_DIR)/%.S
 	@mkdir -p $(dir $@)
 	$(CC) $(REINETTE_CFLAGS) $(ASFLAGS) -c -o $@ $<
 
-$(REINETTE_BUILD_DIR)/%.o: tools/%.c
+$(REINETTE_BUILD_DIR)/tools_ramfb_display.o: tools/ramfb_display.c
 	@mkdir -p $(dir $@)
 	$(CC) $(REINETTE_CFLAGS) -c -o $@ $<
