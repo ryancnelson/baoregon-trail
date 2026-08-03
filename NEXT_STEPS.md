@@ -820,3 +820,55 @@ Dispatched to Duke (owns the most context on `disk2_controller.c` and
 Zork's real disk layout from tonight's investigation). Real checkpoint
 to look for: a genuine `CATALOG` listing showing Zork I's actual
 filenames, verified via memory dump or screenshot -- not a claim.
+
+**DUKE'S PRE-FLIGHT CHECK (2026-08-02 ~21:50) -- foundation not actually
+confirmed yet, real gap found before building the swap demo:**
+
+Before building the disk-swap/CATALOG demo, independently re-verified
+this pivot's stated premise ("DOS 3.3 already boots successfully
+through the composed system, confirmed, byte-verified this session").
+That confirmation (lines 294-304 above) is real, but it's for
+`disks/dos33_sample.dsk` (this project's own synthetic
+one-line-then-spin sample) via `src/main_qemu_disk2boot.c` -- a
+DIFFERENT, much simpler program than the one relevant here. The REAL
+`~/Downloads/Apple_DOS_3.3_Master.dsk` boot, via `src/main_qemu_dos33boot.c`
+(the actual program a CATALOG-driving demo needs), is still the
+still-open gap documented above at lines 380-502 -- confirmed via a
+fresh host-side reproduction of that exact code path, current committed
+state (real system ROM + COUT fix + motor-off fix, all present):
+
+- PC correctly lands at `$E000` (the intended landing pad -- the
+  BRK-storm bug is genuinely fixed).
+- Cursor mechanism (zero-page `$24`) correctly advances to `0x12` (18),
+  meaning COUT is being called roughly the right number of times for a
+  short banner and each call succeeds mechanically.
+- **But the actual bytes written to `$0400-$042F` are NOT
+  "DOS VERSION 3.3"** -- raw dump: `54 4A DB 47 4E 41 C5 85 D0 21 10 3C
+  DA 24 80 85 B9 A4 00 C4 00...`, which decodes (via `&0x7F`, matching
+  the ROM's normal-video convention) to garbage (`TJ[GNAE...`), not
+  readable text.
+
+This is a MORE SPECIFIC finding than earlier reports ("no text
+anywhere" / "still not readable") -- it shows COUT itself (the
+mechanism) is fine, but whatever DOS-internal code is calling it is
+feeding it wrong/uninitialized character values, OR the boot hasn't
+actually reached DOS's real banner-print routine at all and this is
+some other code path incidentally calling COUT with unrelated data
+(e.g. RWTS error-reporting, or garbage left over from the earlier
+BRK-storm before the landing-pad fix took effect). Root cause not yet
+identified -- did not chase further pending explicit direction, per
+tonight's stand-down precedent and to avoid building a demo on top of
+an unverified foundation.
+
+**Recommendation before building the disk-swap/CATALOG demo**: either
+(a) resolve why COUT is receiving wrong character data on the real
+Master disk boot (baochip suggested two options when asked: add a real
+Applesoft ROM image so `$E000`'s natural init path runs, or place an
+explicit small stub at `$E000` that directly calls COUT with the known
+"DOS VERSION 3.3" string bytes to at least prove the display pipeline
+end-to-end on the real disk), or (b) if the CATALOG demo doesn't
+actually require the banner text specifically (only needs DOS's file
+manager/RWTS to be reachable and functional, which may be true even if
+the *visible* banner print has a separate bug), proceed directly to
+attempting CATALOG and treat the banner-text gap as a parallel,
+lower-priority issue. Standing by for direction on which path to take.
