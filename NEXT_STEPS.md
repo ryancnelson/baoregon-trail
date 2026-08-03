@@ -1322,6 +1322,111 @@ removed after use, not committed -- only the reusable
 
 ---
 
+## 🎯 BUNNIE'S REAL ROOT CAUSE + FIX FOR THE MOTOR-OFF STALL (2026-08-03 ~02:15) -- confirmed real Disk II hardware spindown-timer behavior missing from disk2_controller.c, fixed, more progress unlocked
+
+Per Ryan's direction, dug into the exact motor-off stall from the entry
+above using the same rigorous methodology (instruction-level tracing,
+checking against the real reference implementation) to find the actual
+root cause.
+
+**False start, corrected honestly**: initial hypothesis was that
+`nibble_shift()`'s `ctl->latch = 0` on motor-off was itself wrong (a
+deviation from the reference `NibbleDiskDriver.onQ6Low()`). Wrote a RED
+test, a fix, confirmed GREEN -- then, before committing, re-read the
+REAL reference source more carefully and found the opposite: apple2js's
+`onQ6Low()` DOES zero `controller.latch` when the drive is off (line 59:
+`} else { this.controller.latch = 0; }`), matching our original code
+exactly. **Reverted this fix and deleted the incorrect test** -- the
+latch-zeroing behavior was correct all along; my first read of the
+reference source had misparsed the guard condition.
+
+**Real root cause, found by continuing to read the actual reference
+source (`js/cards/disk2.ts`, not just the driver file)**: real Apple II
+Disk II hardware does NOT stop the drive motor instantly on a
+`LOC_DRIVEOFF` (`$C0E8`) access -- it starts a real **~1-second
+spindown timer**:
+
+```typescript
+case LOC.DRIVEOFF: // 0x08
+    if (!this.offTimeout) {
+        if (state.on) {
+            this.offTimeout = window.setTimeout(() => {
+                state.on = false;
+                ...
+            }, 1000);
+        }
+    }
+    break;
+case LOC.DRIVEON: // 0x09
+    if (this.offTimeout) {
+        window.clearTimeout(this.offTimeout);
+        this.offTimeout = null;
+    }
+    ...
+```
+
+The drive motor keeps PHYSICALLY spinning (and the data latch keeps
+producing real shifted-in nibbles) for that full second unless a
+`LOC_DRIVEON` cancels the pending spindown first. This project's
+`disk2_controller.c` already documented dropping this as a deliberate
+simplification ("Removed browser-specific bits: `window.setTimeout`-
+based drive-off delay (UI polish for a GUI emulator) is replaced with
+an immediate drive-off, since we have no wall-clock/UI timer concept
+here") -- but this investigation found it is **NOT merely cosmetic**:
+real 4am-crack boot code (Lode Runner) genuinely depends on the motor
+staying physically on for a real window after a `$C0E8` access, polling
+`$C0EC` one more time expecting a real freshly-shifted nibble (bit 7
+set) -- exactly the `LDA $C0E8 / LDA $C0EC / BPL` sequence found stuck
+in the previous entry. With an instant motor-off, that poll can never
+see a fresh nibble and spins forever.
+
+**Real fix, TDD, no wall-clock/UI timer needed**: added
+`disk2_controller_t.motor_off_pending_since` (a `clockticks6502`
+timestamp, matching this project's own existing cycle-accurate timing
+model rather than reintroducing a `window.setTimeout` dependency) and a
+new `motor_is_physically_spinning()` helper that grants a real
+`MOTOR_SPINDOWN_CYCLES` (1,023,000 -- real ~1.023 MHz Apple II clock ×
+1 real second) grace period after `LOC_DRIVEOFF`, cancelled by
+`LOC_DRIVEON` exactly like the reference's `clearTimeout`. `set_phase()`
+(head-positioning stepper) deliberately still checks the raw,
+logically-commanded `ctl->motor_on` (not the new grace-period helper) --
+confirmed via the reference's own `setPhase()`, which checks
+`this.state.on` (not physical-spin state) for the identical reason.
+Two new RED-then-GREEN tests:
+`tests/test_disk2_controller_motor_spindown_grace_period.c` (motor
+stays "physically spinning" well within the grace period; motor
+genuinely stops well past it). The pre-existing
+`test_disk2_controller_motor_off_freeze.c` (Zork investigation)
+continues to pass unaffected -- its 320-cycle motor-off gap sits well
+within the new grace period, and its own `last_cycles`-reset behavior
+was untouched by this fix.
+
+**Real, verified improvement to Lode Runner's boot** (re-ran
+`tools/loderunner_altrom_boot.c` after the fix): PC no longer stalls at
+`$00D8` -- it now visits many DIFFERENT real addresses across a
+3,000,000,000-cycle run (`$86B7`, `$86B8`, `$8953`, `$619B`, `$84A0`,
+`$849D`, `$7A3E`, and more), consistent with real, ongoing 6502
+execution rather than a stuck spin loop. **Screen memory (Page 1,
+`$0400`) is still completely blank** at the end of this run, though --
+**no title screen or game text has appeared yet**. This is real,
+substantial further progress from a real, confirmed root-cause fix, but
+NOT yet a completed boot. Whoever continues this should pick up from
+here: trace where the game code goes after this point (a genuinely
+different, likely much shorter investigation than starting over, since
+the motor-off stall itself is now resolved) to find whatever's still
+keeping the screen blank -- possibly a real Hi-Res/graphics-mode
+softswitch the boot code sets that this project's `bio_display.c`
+render path doesn't yet correctly wire up for Lode Runner's specific
+sequence, or a further, different, real disk-read stall later in the
+boot.
+
+**Full host suite verified green** (`make test`, exit 0, zero `FAIL:`
+lines) and **RISC-V cross-compile verified green**
+(`make -f Makefile.riscv riscv-check`, exit 0, all sections correctly
+placed) both before and after this change.
+
+---
+
 ## 🎯 DUKE'S DISK-SWAP RESEARCH (2026-08-02 ~23:55) -- DEFINITIVE ANSWER via a real technical source, with citations: this IS a real, fixable bug, not accurate 1980s hardware behavior
 
 Per Ryan's direction, researched whether real Apple II hardware would

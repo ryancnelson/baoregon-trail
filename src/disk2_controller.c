@@ -151,14 +151,13 @@ enum {
     LOC_DRIVEREADMODE = 0xE, LOC_DRIVEWRITEMODE = 0xF,
 };
 
-#define DISK2_CYCLES_UNINIT 0xFFFFFFFFu
-
 void disk2_controller_reset(disk2_controller_t *ctl) {
     local_memset(ctl, 0, sizeof(*ctl));
     ctl->drive[0].track = 0;
     ctl->drive[0].last_cycles = DISK2_CYCLES_UNINIT;
     ctl->drive[1].track = 0;
     ctl->drive[1].last_cycles = DISK2_CYCLES_UNINIT;
+    ctl->motor_off_pending_since = DISK2_CYCLES_UNINIT;
 }
 
 uint8_t disk2_controller_read_boot_rom(uint8_t offset) {
@@ -204,6 +203,32 @@ __attribute__((weak)) uint32_t clockticks6502 = 0;
 
 #define NIBBLE_CYCLES 32u
 
+/* Real Apple II CPU clock is ~1.023 MHz; a real Disk II motor's
+ * spindown timer is ~1 second (see whscullin/apple2js's
+ * `window.setTimeout(..., 1000)` in js/cards/disk2.ts's LOC.DRIVEOFF
+ * handler) -- roughly 1,023,000 6502 cycles. Using this project's own
+ * cycle-accurate clockticks6502 timing model (matching nibble_shift()'s
+ * existing NIBBLE_CYCLES approach) instead of reintroducing a
+ * wall-clock/UI timer dependency this project doesn't have. */
+#define MOTOR_SPINDOWN_CYCLES 1023000u
+
+/* Returns whether the drive motor is PHYSICALLY still spinning right
+ * now, accounting for the real spindown grace period after a
+ * LOC_DRIVEOFF access (see disk2_controller_t.motor_off_pending_since's
+ * doc comment). Distinct from ctl->motor_on, which tracks the
+ * logically-COMMANDED state (matches real hardware's `state.on`,
+ * flipped to false only once the spindown timer actually fires). */
+static int motor_is_physically_spinning(const disk2_controller_t *ctl) {
+    if (ctl->motor_on) {
+        return 1;
+    }
+    if (ctl->motor_off_pending_since == DISK2_CYCLES_UNINIT) {
+        return 0;
+    }
+    uint32_t elapsed = clockticks6502 - ctl->motor_off_pending_since;
+    return elapsed < MOTOR_SPINDOWN_CYCLES;
+}
+
 /* Reads/writes the next raw nibble at the current drive's head position,
  * on the current track (Q6 LOW / "shift" case). Ported from
  * NibbleDiskDriver.onQ6Low().
@@ -219,7 +244,7 @@ __attribute__((weak)) uint32_t clockticks6502 = 0;
 static uint8_t nibble_shift(disk2_controller_t *ctl, int write_mode, uint8_t write_value) {
     disk2_drive_state_t *d = &ctl->drive[ctl->selected_drive];
 
-    if (!ctl->motor_on) {
+    if (!motor_is_physically_spinning(ctl)) {
         ctl->latch = 0;
         return 0;
     }
@@ -274,8 +299,23 @@ uint8_t disk2_controller_access(disk2_controller_t *ctl, uint8_t offset, int is_
         case LOC_PHASE3ON:  set_phase(ctl, 3, 1); break;
 
         case LOC_DRIVEOFF:
-            /* Immediate (no wall-clock delay -- see file header notes on
-             * differences from the original).
+            /* Real bug fix (2026-08-03, found retesting Lode Runner's
+             * boot with the real apple2-asoft-auto.rom -- NEXT_STEPS.md):
+             * real Apple II hardware does NOT stop the drive motor
+             * instantly here -- it starts a real ~1-second spindown
+             * timer (see whscullin/apple2js's `window.setTimeout(...,
+             * 1000)` in this exact softswitch's handler); the motor
+             * keeps physically spinning until that timer fires. Real
+             * 4am-crack boot code depends on this: it accesses $C0E8
+             * then polls $C0EC one more time expecting a real fresh
+             * nibble, not a hard zero. `ctl->motor_on` still flips to 0
+             * immediately here (matching real hardware's logically-
+             * commanded `state.on`, which real setPhase()/phase-
+             * stepping correctly still gates on) -- but
+             * `motor_off_pending_since` now records this transition so
+             * nibble_shift()'s motor_is_physically_spinning() check can
+             * grant the real spindown grace period for reads. See
+             * tests/test_disk2_controller_motor_spindown_grace_period.c.
              *
              * Real bug fix (2026-08-02, found debugging fable-5's Zork I
              * real-disk retry-loop finding, dd86358): must also reset
@@ -293,11 +333,19 @@ uint8_t disk2_controller_access(disk2_controller_t *ctl, uint8_t offset, int is_
              * position off by a few" symptom that makes an
              * address-field sync search intermittently fail and retry
              * forever. See tests/test_disk2_controller_motor_off_freeze.c. */
+            if (ctl->motor_on) {
+                ctl->motor_off_pending_since = clockticks6502;
+            }
             ctl->motor_on = 0;
             ctl->drive[0].last_cycles = DISK2_CYCLES_UNINIT;
             ctl->drive[1].last_cycles = DISK2_CYCLES_UNINIT;
             break;
         case LOC_DRIVEON:
+            /* Real hardware cancels any pending spindown outright on a
+             * fresh DRIVEON, same as this project's own
+             * motor_off_pending_since semantics (see LOC_DRIVEOFF
+             * above and js/cards/disk2.ts's `window.clearTimeout`). */
+            ctl->motor_off_pending_since = DISK2_CYCLES_UNINIT;
             ctl->motor_on = 1;
             break;
 

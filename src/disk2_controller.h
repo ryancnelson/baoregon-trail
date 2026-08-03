@@ -17,6 +17,11 @@
  * NibbleDisk format. Sized generously here. */
 #define DISK2_MAX_TRACK_BYTES 6656
 
+/* Sentinel cycle-timestamp value meaning "uninitialized" / "not
+ * pending" -- shared by disk2_drive_state_t.last_cycles and
+ * disk2_controller_t.motor_off_pending_since. */
+#define DISK2_CYCLES_UNINIT 0xFFFFFFFFu
+
 typedef struct {
     uint8_t data[DISK2_MAX_TRACK_BYTES];
     int length; /* actual bytes used, <= DISK2_MAX_TRACK_BYTES */
@@ -44,6 +49,21 @@ typedef struct {
     disk2_drive_state_t drive[2]; /* drive 1, drive 2 */
     int selected_drive;           /* 0 or 1 (maps to drive 1/drive 2) */
     int motor_on;
+    /* Real Apple II Disk II hardware doesn't stop the drive motor
+     * instantly on a LOC_DRIVEOFF ($C0E8) access -- it starts a real
+     * ~1-second spindown timer; the motor keeps physically spinning
+     * (and the data latch keeps producing real shifted-in nibbles)
+     * until that timer actually fires. A subsequent LOC_DRIVEON
+     * ($C0E9) access before the timer fires cancels the pending
+     * off entirely. Real 4am-crack boot code (Lode Runner, see
+     * NEXT_STEPS.md) depends on this: it accesses $C0E8 then polls
+     * $C0EC one more time expecting a real fresh nibble, not a hard
+     * zero. `motor_off_pending_since` records the clockticks6502
+     * timestamp of the LOC_DRIVEOFF access that started this grace
+     * period; DISK2_CYCLES_UNINIT means no spindown is pending (either
+     * never started, or cancelled by a LOC_DRIVEON). See
+     * tests/test_disk2_controller_motor_spindown_grace_period.c. */
+    uint32_t motor_off_pending_since;
     int q6;
     int q7;
     uint8_t latch;
