@@ -1,5 +1,107 @@
 # Next Steps — Action Plan for Bao-Oregon-Trail
 
+---
+
+## 📍 STATUS SUMMARY (as of 2026-08-03 ~10:15 -- read this first)
+
+This file is a long, chronological investigation log spanning several
+sessions. This section is a navigable summary of where things actually
+stand right now -- the full historical log below is kept intact for
+detail/citations, but start here.
+
+### ✅ Confirmed working right now (real, verified, screenshotted -- not guesses)
+
+- **DOS 3.3 boot on live QEMU `ramfb`** -- real DOS 3.3 Master disk boots
+  through `src/main_qemu_disk2boot_dos33master.c` via `disk2_controller.c`
+  at `$C600`, correctly-oriented "DOS VERSION 3.3" banner text confirmed
+  via a zoomed `hs.window:snapshot()` screenshot
+  (`docs/screenshot_dos33_boot_text_fixed_zoomed.png`). See **Step 8**
+  below for the full history (including a real mirror-reversed-glyph bug
+  that was found and fixed along the way).
+- **Lode Runner boot on live QEMU `ramfb`, real gameplay graphics** --
+  boots through `src/main_qemu_loderunner.c` (real Apple II+ Autostart
+  ROM, `src/apple2_autostart_rom.h`), reaches genuine Hi-Res Graphics
+  gameplay content (ladders/platforms/character sprite), independently
+  confirmed via `vision_analyze` on a real screenshot WITHOUT being told
+  the game -- it correctly identified Lode Runner-like platform-game
+  graphics from the pixels alone. Saved to
+  `docs/screenshot_loderunner_qemu_gameplay.png`. See **"DUKE'S LODE
+  RUNNER STRETCH-GOAL-EXTENSION DEMO"** (bottom of this file, most
+  recent entry) for full details, and **"BUNNIE'S REAL, CONFIRMED
+  SUCCESS"** above it for the original host-side discovery + the real
+  Disk II motor-spindown-grace-period bugfix (`disk2_controller.c`,
+  commit `3bdc3d8`) that unblocked it.
+- **reinette-II-plus RISC-V spike, first real QEMU boot** -- an
+  independent reference 6502/Apple II core (`reinette-II-plus`, vendored
+  MIT-licensed) cross-compiled to RISC-V and booted under QEMU, real
+  Apple II+ Autostart ROM cold-start banner ("APPLE ][") confirmed via
+  both a `pmemsave` memory dump and a screenshot
+  (`docs/screenshot_reinette_first_boot.png`). **This lives on the
+  `spike-reinette-port` branch, not yet merged to `main`** (commit
+  `6502251` on that branch) -- no disk image attached yet in that spike.
+- **Text-mode character-ROM rendering, audio (`$C030` speaker), CRT/color
+  modes, UART keyboard bridge** -- all confirmed complete earlier this
+  session (Step 9 and surrounding entries below); not restated here in
+  detail since nothing about them is currently in question.
+
+### 🐛 Genuinely still open
+
+- **Zork I's own boot-sector text-output mystery.** `disk2_controller.c`
+  itself is now CONFIRMED CORRECT for this scenario (Duke's reinette-vs-
+  ours instruction-level comparison matched byte-for-byte on every real
+  `$C0EC` disk access through a 500,000,000-instruction run -- see
+  "DUKE'S 500M-INSTRUCTION FREEZE-POINT VERDICT"). The interpreter loaded
+  from Zork's disk is disassembled-confirmed to be running real,
+  structured Z-machine interpreter dispatch code (JSR/RTS, indirect-
+  indexed pointer walking, real arithmetic) -- not stuck in a disk-read
+  retry loop. It just hasn't yet printed anything or reached a keyboard-
+  polling point within the cycle budgets tested so far (up to 500M
+  instructions), and a keypress-injection test (matching the pattern
+  that unblocked nothing, since there's genuinely no keyboard poll
+  happening yet) came back negative. **Real next steps, not yet done**:
+  either a much larger cycle budget, or isolating whether the loaded
+  interpreter code path itself matches reinette's beyond the disk-access
+  level (RAM init / soft-switch state neither harness has yet checked).
+  See "DUKE'S REINETTE-VS-OURS BOOT COMPARISON" and the two entries after
+  it for full detail.
+
+### 🚫 Explicitly ruled out / abandoned (see cited entries below for full evidence)
+
+- **DOS-3.3-bootstraps-Zork approach** (booting Zork I via a DOS 3.3
+  disk-swap + `CATALOG`/`BRUN`/`EXEC` instead of Zork's own boot sector)
+  -- confirmed dead end, both empirically and via real DOS 3.3
+  disassembly documentation (Zork's disk was never a real DOS-3.3-
+  formatted volume; every DOS command that could load it routes through
+  the same VTOC/catalog-chain lookup that fails on Zork's actual byte
+  layout). See "DUKE'S BRUN/EXEC FEASIBILITY VERDICT" and the "NEW PIVOT"
+  section that started this whole thread.
+- **Several specific `disk2_controller.c` hypotheses for Zork's original
+  disk-swap stall**, all individually disproven with real RED tests or
+  large-cycle-budget re-tests (not just abandoned without evidence):
+  disk-data corruption/copy-protection on the Zork disk itself; the
+  seek-overshoot clamp silently corrupting reads; head desync after
+  overshoot being too far for RWTS's retry budget; "just needs more
+  cycles to reach a real DRVERR" (tested to 20,000,000,000 cycles, still
+  froze); removing the nibble-read elapsed-cycle timing gate entirely
+  (tested against reinette's simpler model, no change, D5 sync byte
+  never seen either way). See "DUKE'S COMPREHENSIVE HANDOFF SUMMARY" for
+  the fullest single list, and "BUNNIE'S NO-TIMING-GATE EXPERIMENT" for
+  the timing-gate test specifically.
+- **The real motor-off-freeze bug found along the way** (`nibble_shift()`
+  not resetting `last_cycles` on motor-off, commit `be7de27`) was a real,
+  fixed bug, but confirmed NOT sufficient on its own to resolve Zork's
+  disk-swap stall -- don't re-propose it as "the fix" without checking
+  this note.
+- **WOZ (.woz) disk format support** -- scoped, not currently needed.
+  A real parser already exists (`src/woz_disk.c`/`.h`, tested) but is
+  unintegrated; nothing this project currently targets (the 6-game
+  roadmap, tonight's Zork/Lode Runner work) actually requires it, since
+  all target disks are already-cracked, standard-nibble-compatible
+  images. See "BUNNIE'S WOZ DISK FORMAT SCOPING" for the full scope
+  estimate if this becomes relevant later.
+
+---
+
 Here is the immediate step-by-step action plan to begin implementation:
 
 ---
