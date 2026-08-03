@@ -2124,7 +2124,10 @@ out NOT to be the cause):
    (`NIBBLE_CYCLES=32`) and only sets/clears bit 7 when a genuinely new
    nibble arrives. **Already ruled out earlier this session** (see the
    ~16:00 entry): substituting reinette's exact no-timing model into an
-   isolated copy of `disk2_controller.c` produced the same result.
+   isolated copy of `disk2_controller.c` produced the same result. See
+   Bunnie's entry immediately below this one for that experiment's own
+   full writeup (this citation was pointing at a not-yet-landed entry
+   when first written; now landed).
 2. Reinette's `stepMotor()` tracks phase history three generations
    back (`phases`/`phasesB`/`phasesBB`) vs. our `set_phase()`'s
    one-generation `PHASE_DELTA` table -- architecturally different but
@@ -2220,6 +2223,71 @@ determine which of the two hypotheses above (real error path vs.
 genuinely running loaded game code past its disk-dependent portion) is
 correct -- this is a much more promising, concretely-bounded lead than
 anything found in tonight's now-closed DOS-3.3-bootstrap investigation.
+
+---
+
+## 🎯 BUNNIE'S NO-TIMING-GATE EXPERIMENT (2026-08-03 ~02:20) -- confirms Duke's citation above: independently reproduced, real negative result
+
+Per Ryan's direction, independently tested the specific "remove our
+NIBBLE_CYCLES=32 elapsed-cycle timing gate, match reinette's simpler
+immediate-next-nibble model" hypothesis as an isolated scratch
+experiment, using `tools/debug_zork1_retry_loop.c` (fable-5's existing,
+already-committed Zork boot-sector-only host harness -- no DOS 3.3
+bootstrap involved) against a `/tmp`-only scratch copy of
+`disk2_controller.c` with `nibble_shift()`'s elapsed-time/`NIBBLE_CYCLES`
+math entirely removed: every real `$C0EC` access now unconditionally
+advances the head by 1 and latches the next byte immediately, matching
+reinette's model as closely as possible while keeping the existing
+bit-7-clear-after-read and motor-off/spindown-grace-period behavior
+unchanged (out of scope for this specific test). **Never touched the
+real, committed `src/disk2_controller.c`/`.h`** -- confirmed via
+`git status --short`/`git diff --stat` showing zero diff on those files
+throughout and after this experiment.
+
+**Real result: this is the same negative finding Duke's citation above
+already refers to** (that citation was written pointing at this
+not-yet-landed entry). Ran the no-timing-gate scratch build against the
+real `tools/zork1_4amcrack.dsk`-derived embedded nibble data
+(`src/zork1_nib_disk_data.h`) for both 20,000,000 and 300,000,000
+cycles:
+  - At 300M cycles, STILL genuinely stuck cycling among the exact same
+    6 loop addresses (`$2602`/`$2605`/`$254F`/`$2548`/`$2552`/`$257C`)
+    fable-5 originally found -- 110,727,919 hits on `$2602` alone by the
+    end of the run, no different in kind from the baseline (timing-gate
+    intact) run's own loop-address hit pattern.
+  - The `$2554` (`CMP #$D5`) byte-value histogram **never once shows
+    `0xD5`** across 5,505,565 real checks at that instruction, same as
+    the timing-gated baseline -- the address-field sync search never
+    succeeds either way. This is the single most direct, decisive data
+    point: removing the timing gate does not let the boot code ever
+    actually see the sync byte it's searching for, so it cannot be the
+    root cause of the stall.
+  - Track/head position wanders (track 0→4 at 20M cycles, back to
+    track 0 by 300M) rather than converging -- consistent with genuine,
+    ongoing (but fruitless) retry activity, not a hard single-PC freeze,
+    same qualitative behavior as the timing-gated baseline.
+
+**Real, additional data point beyond Duke's citation**: also verified
+this same no-timing-gate scratch model against DOS 3.3 Master's real
+boot (`tools/boot_disk2_real_dsk_stubrom.c`-style harness, `disks/
+dos33_sample.dsk` via `tools/dsk_to_nib.py`) -- **still boots
+successfully** ("DOS VERSION 3.3" confirmed in screen memory at 5M
+cycles), same as with the real timing-gated code. So removing the
+timing gate is not merely neutral-on-Zork -- it's neutral-on-DOS-3.3
+too, in both directions: neither helps nor hurts either boot path in
+this isolated test.
+
+**Conclusion**: this specific hypothesis (elapsed-cycle timing gating
+in `nibble_shift()` is the real Zork bug) is now DISPROVEN by two
+independent implementations of the same experiment (Duke's dual-tap
+lockstep harness, and this standalone scratch-copy harness), converging
+on the same real result via different methods. The actual bug is
+elsewhere -- most likely in the genuinely deeper freeze point Duke's
+entry above found (track 7→ stuck after ~46-48M real instructions,
+independent of this timing-gate question entirely). No changes made to
+`src/disk2_controller.c` as a result of this experiment; scratch files
+(`/tmp/scratch_notiming/`) removed after use, nothing committed from
+this entry beyond this documentation.
 
 <!-- fable-ralph-loop check-in 2026-08-03 02:19:30 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 635 PASS / 0 FAIL (exit 0). Commits in last ~25min: 3.
