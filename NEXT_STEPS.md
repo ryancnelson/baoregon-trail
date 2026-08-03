@@ -2651,3 +2651,6 @@ task's own framing. Full host suite unaffected (no files touched).
 
 <!-- fable-ralph-loop check-in 2026-08-03 02:59:43 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 635 PASS / 0 FAIL (exit 0). Commits in last ~25min: 3.
+
+<!-- fable-ralph-loop check-in 2026-08-03 03:19:49 -->
+**Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 635 PASS / 0 FAIL (exit 0). Commits in last ~25min: 2.
