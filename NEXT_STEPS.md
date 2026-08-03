@@ -1323,3 +1323,87 @@ demo/test harness).
 `/tmp/beneath_apple_dos.txt` are local scratch research artifacts (not
 committed, not part of the repo) -- kept at those paths in case this
 needs re-checking without re-downloading, but not durable/tracked.
+
+---
+
+## 🎯 DUKE'S TDD FIX ATTEMPT (2026-08-03 ~06:30) -- specific hypothesis DISPROVEN by a real RED test; the actual defect remains open, not where predicted
+
+Per Ryan's direction, wrote the RED test first as instructed, reproducing
+the EXACT hypothesis from the research above: "our controller silently
+absorbs seek overshoot at the clamp boundary without ever letting a
+subsequent bus-level read report the correct clamped track number."
+
+**New test added and wired into the suite**:
+`tests/test_disk2_controller_seek_overshoot_readable.c` -- drives 200
+real phase-step pulses via `disk2_controller_access()` (far more than
+needed to hit the clamp from any starting position), confirms
+`d->track` is genuinely clamped at `DISK2_MAX_TRACKS*4-1` (139, i.e.
+whole track 34), then performs a REAL bus-level address-field read
+(via the same `disk2_controller_access()`/`nibble_shift()` path real
+RWTS code uses, not raw array indexing) and checks the decoded track
+number and checksum.
+
+**Result: this test PASSES on unmodified `disk2_controller.c`,
+disproving the specific hypothesis.** The address field read at the
+overshot/clamped position correctly reports `track=34` (the real
+clamped track), with a valid checksum -- exactly matching real Disk II
+hardware's hard-stop behavior, and exactly what should let DOS's real
+`RDRIGHT`/`SETTRK` self-correction trigger. `disk2_controller.c`'s read
+pipeline is NOT silently corrupting or suppressing reads at the clamp
+boundary. **There is no fix to make here because this specific code
+path was never broken.**
+
+**Wired into the Makefile/test suite as a permanent regression guard**
+(`test_disk2_controller_seek_overshoot_readable`, in both the `test`
+target's dependency list and run-list) since it's a genuinely valuable
+proof even though it disproves rather than confirms the hypothesis --
+it documents and locks in this specific real-hardware-matching
+behavior for future engineers. Full suite verified green
+(`make test`, exit 0, zero `FAIL:` lines) with the new test included.
+
+**Where this leaves the actual bug -- still genuinely open, not
+resolved**: the real live boot trace (this session, DOS 3.3 -> Zork I
+swap -> CATALOG) still shows the documented symptom (`$0478` climbing
+unboundedly past 34, e.g. to 204, while `d->track` stays correctly
+clamped) and DOS's RWTS still never recovers within any reasonable
+cycle budget. Since the isolated read-at-clamp-position mechanism is
+now proven correct in isolation, the difference between my clean unit
+test and the real failing scenario must be something NOT captured by
+this test:
+
+1. My unit test resets `d->head = 0` right before the read attempt --
+   a clean, immediate sync-search start. The real live boot's `d->head`
+   is whatever `nibble_shift()`'s elapsed-cycle timing model left it at
+   from BEFORE the overshoot sequence -- not reset. If real RWTS's
+   retry budget (48 outer retries per Beneath Apple DOS, each attempt
+   presumably scanning a bounded number of nibbles) assumes it's
+   starting reasonably close to a sync mark (as it would after a
+   normal, non-overshooting seek), an overshoot-and-clamp scenario
+   could leave `d->head` arbitrarily far from the next real sync mark,
+   exhausting RWTS's retry budget before ever finding one -- not
+   because the data is wrong, but because the SEARCH never gets there
+   in time. This is a genuinely different, deeper hypothesis than the
+   one just disproven, and has NOT yet been tested in isolation.
+
+2. Alternatively (or additionally), the interaction between REPEATED
+   motor-off/motor-on toggling (RWTS commonly toggles the motor between
+   seek and read attempts) and `nibble_shift()`'s `last_cycles`
+   freeze/unfreeze logic (already fixed once this session for a related
+   but distinct bug, commit `be7de27`) could still have an unexplored
+   edge case specifically under the highly abnormal "many back-to-back
+   overshoot-then-clamp seeks, each preceded/followed by a motor
+   toggle" pattern real RWTS exhibits when its own `$478` belief is
+   this badly wrong -- worth testing directly with a new RED test that
+   simulates that exact motor-toggle-heavy sequence, not just a single
+   clean overshoot.
+
+**Honest status, not overclaiming**: the disk-swap CATALOG/BRUN demo
+was NOT re-verified end-to-end this session -- the specific fix Ryan
+asked for turned out not to be a fix at all (the code under test was
+already correct), and pushing forward to re-verify the full demo
+without first understanding the REAL remaining defect would risk
+papering over a genuine unresolved bug. Recommending hypothesis #1
+above (head-position-after-overshoot vs. RWTS's retry-budget) as the
+most promising next concrete test to write, given it's the one
+concrete behavioral difference between the passing isolated test and
+the failing live scenario identified so far.
