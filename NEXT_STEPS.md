@@ -1224,3 +1224,6 @@ this is queued prep, not the active priority.
 **Housekeeping**: scratch boot-test harness (`tools/loderunner_boot_host.c`)
 and generated `build-scratch/loderunner_4am_nib_disk_data.h` removed
 after use, not committed -- working tree clean.
+
+<!-- fable-ralph-loop check-in 2026-08-02 22:58:28 -->
+**Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 631 PASS / 0 FAIL (exit 0). Commits in last ~25min: 5.
