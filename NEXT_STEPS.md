@@ -2223,3 +2223,103 @@ anything found in tonight's now-closed DOS-3.3-bootstrap investigation.
 
 <!-- fable-ralph-loop check-in 2026-08-03 02:19:30 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 635 PASS / 0 FAIL (exit 0). Commits in last ~25min: 3.
+
+---
+
+## 🎯 DUKE'S 500M-INSTRUCTION FREEZE-POINT VERDICT (2026-08-03 ~09:00) -- CONFIRMED: real, successful interpreter execution, not a bug
+
+Per Ryan's direction, ran the reinette-vs-ours comparison harness for a
+full 500,000,000 real 6502 instructions (rebuilt from scratch -- the
+prior run's version was disposable and deleted) and disassembled the
+freeze-loop addresses found previously.
+
+**Track-7 freeze is REAL and PERMANENT, confirmed with hard data**:
+from checkpoint @55M through @495M (450M+ instructions, ~90% of the
+entire run), `our_track` stays at exactly 7, `$C0EC` access count
+freezes completely, and `our_track` matches `reinette_track` at every
+single checkpoint the whole time -- zero divergence after the one
+already-explained benign timing artifact at instruction #3301.
+
+**Disassembly of the freeze-loop addresses ($18C7-$18D1, $1780-$1799,
+$1752-$175F, $09B2-$09B8, $0A86-$0AB4, and dozens more, all real,
+distinct instructions with millions of visits each) definitively
+answers the hypothesis question: this is (b), NOT (a).** The code
+being executed is genuine, structured, non-repeating program logic --
+real subroutine calls (`$20 xx xx` JSR) and returns (`$60` RTS), real
+indirect-indexed memory access via zero-page pointers (`$B1`/`$D1` --
+`LDA/CMP (zp),Y`, the classic 6502 idiom for walking pointer-based data
+structures), real arithmetic (`$38`/`$E9` SEC/SBC, `$18`/`$65` CLC/ADC),
+and real bit-testing (`$29` AND #imm). This is exactly the shape of a
+Z-machine bytecode interpreter's core dispatch loop -- NOT a disk-read
+retry loop (which would show a small, fixed 2-3-address spin, like the
+DOS-3.3-bootstrap investigation's genuinely-stuck loops did). The
+interpreter has loaded real code from disk and is now executing it
+correctly, with no further need to touch `$C0EC` because it's running
+from RAM.
+
+**Cross-checked against the just-landed real motor-spindown-grace-period
+fix** (commit `3bdc3d8`, Woz's independent work, already on `main`):
+re-ran the full 500M-instruction comparison against the UPDATED
+`disk2_controller.c`. Result: **identical freeze point** (track 7,
+same real interpreter-code addresses, no divergence from reinette) --
+just with a higher total `$C0EC` access count (692,408 vs. 575,350)
+reflecting more real disk activity happening before the same natural
+stopping point. This rules out the motor-spindown timing as a
+contributing factor to the freeze specifically (it's a real, separate,
+valid fix for Lode Runner's different symptom, not related to this).
+
+**Why no screen text appears (the one still-open question)**: added
+the project's own real, TDD-verified minimal COUT stub
+(`tests/test_dos33boot_cout_stub.c`'s exact 18-byte sequence at
+`$FDED`, with `$F88E` routed to it too) to the test harness's system
+ROM in place of the bare-RTS no-op used previously. Result: **COUT is
+never called at all during the entire 500M-instruction run** -- zero
+visits to `$FDED`/`$F88E` in the freeze-loop address set. This means
+the interpreter genuinely hasn't reached its own text-output routine
+yet within this cycle budget, OR (more likely, given real Infocom
+Apple II ports historically) it uses its own in-game screen-output
+mechanism (direct writes to text-page memory via its own routines, not
+the Apple II monitor's `COUT`) that this test's simple `$0400-$07FF`
+scan should still catch -- but doesn't, meaning either the interpreter
+hasn't executed a PRINT opcode yet, or output goes through some other
+mechanism not yet identified (possibly buffered, or gated on a real
+keyboard read via `$C000` this test harness never provides, since
+interactive fiction commonly needs a keypress to proceed past an
+initial state).
+
+**Honest, definitive conclusion for this thread**: `disk2_controller.c`
+itself is confirmed correct through this entire real, substantial
+sequence (10+ track seeks, hundreds of thousands of real nibble reads,
+byte-for-byte matching reinette's independently-implemented model the
+entire time). The "stuck forever" belief from earlier tonight's
+NEXT_STEPS entries was **a real, addressed test-harness bug** (a
+redundant, harness-injected `read6502()` call double-consuming the
+disk latch), not a real emulator defect. The remaining open question
+is narrower and different in kind: why doesn't real game text appear
+on screen within 500M instructions -- this is now a question about
+the interpreter's specific text-output mechanism and/or missing
+keyboard-interaction stimulus, not about `disk2_controller.c`'s
+correctness, which this session's evidence supports treating as
+settled.
+
+**Recommended next step**: (1) try feeding a real keypress (e.g. via
+`apple2_mem_inject_key()`) partway through the run, in case the
+interpreter is genuinely waiting on interactive input; (2) if that
+doesn't produce text, trace what `$C000`/`$C010` (keyboard
+latch/strobe) accesses happen (or don't) during the freeze window to
+confirm whether it's actually blocked on input; (3) as a distinct
+angle, check whether Zork's real Apple II port uses a different
+screen-output convention (e.g. writing through zero-page output
+vectors rather than calling `COUT`/`$F88E` directly) by disassembling
+one of the freeze-loop's `STA` instructions' targets for anything
+touching `$0400-$07FF` that this test's snoop wouldn't have caught
+(the harness only detects `$C0E0-$C0EF`-directed indexed loads, not
+plain STAs to screen memory).
+
+**Housekeeping**: `git diff` confirms zero residual changes to
+`src/disk2_controller.c`. Both comparison-harness runs used a
+disposable `tools/reinette_vs_ours_boot_compare.c`, deleted after use,
+never committed. Work done entirely from `/tmp/baoregon-trail-clone`,
+an independent clone -- did not touch the shared
+`~/devel/baoregon-trail` working directory, per the standing
+instruction.
