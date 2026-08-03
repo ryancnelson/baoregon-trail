@@ -951,3 +951,77 @@ use, working tree clean.
 
 <!-- fable-ralph-loop check-in 2026-08-02 22:18:14 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 631 PASS / 0 FAIL (exit 0). Commits in last ~25min: 3.
+
+---
+
+## 🎯 DUKE'S THREE-DISK RE-TEST (2026-08-02 ~22:30) -- root cause narrowed to the SWAP MECHANISM, not the disk
+
+Per Ryan's direction, re-ran the disk-swap/CATALOG test against THREE
+Zork I disk image candidates in order: `tools/zork1_4amcrack.dsk` (4am's
+Spiradisc/copy-protection removal crack, tried first per Ryan's
+priority), `tools/zork1_dualboothelper.dsk` (qkumba's DualBootHelper),
+and the original `tools/zork1_plain.dsk` (already confirmed failing,
+not retested). Same real project code path each time: real DOS 3.3
+Master boot to a stable `]` prompt via `apple2-asoft-auto.rom`, disk
+swap via `disk2_controller_load_nibble_disk()` with no reset, `CATALOG`
+typed via `apple2_mem_inject_key()`.
+
+**All three disks hit the exact same failure pattern**: repeating
+"DISK VOLUME 254" + real Apple II Monitor ROM `RDKEY`-wait loop
+(`$FD1D`), never converging to an actual file listing, needing
+hundreds of injected RETURN keypresses that never resolve anything.
+
+**This result is itself the important finding**: if 4am's
+protection-removed crack and qkumba's clean-boot-focused disk both fail
+*identically* to the original, disk-specific copy-protection/
+non-standard-interleaving is very unlikely to be the actual cause --
+all three real, independently-sourced, differently-prepared disk images
+can't plausibly share the same specific defect. The common factor
+across all three runs is the swap mechanism itself, not the disk
+content.
+
+**Root-cause hypothesis tested directly** (not just theorized):
+inspected `disk2_controller.c`'s real state right after the swap --
+found `disk2_controller_load_nibble_disk()` (`src/disk2_controller.c`
+line ~168) replaces a drive's track data but does **not** reset
+`d->head` (byte offset within the current track) or normalize
+`d->track`. Confirmed via direct struct inspection: after the real DOS
+3.3 boot, `drive[0].track=32` (quarter-tracks, i.e. whole track 8) and
+`drive[0].head=3750` -- both **carried over unchanged** into the
+swapped-in Zork disk. Manually reset `head=0` post-swap as a direct
+test of this hypothesis: **did not resolve the loop** -- same repeating
+"DISK VOLUME 254" pattern persisted. So the stale `head` offset alone
+isn't the (or isn't the only) cause; `d->track` itself, or something in
+how DOS's own RWTS re-seeks/re-verifies track position via its zero-
+page shadow variables (`$0478` et al, from the earlier boot-sector
+investigation) after a disk swap, is more likely the deeper issue --
+worth investigating with a fresh, dedicated pass rather than more
+guesses layered on top of an already-long investigation thread tonight.
+
+**Disks used this round** (all real, downloaded by Ryan from
+archive.org/details/Zork_I, all confirmed 143,360 bytes / standard
+Apple II 5.25" size, all untracked in git -- not committed, these are
+large binary reference files):
+- `tools/zork1_4amcrack.dsk` ("ZorkI_r15_4amCrack")
+- `tools/zork1_dualboothelper.dsk` ("00_DualBootHelper_qkumba.dsk")
+- `tools/zork1_plain.dsk` (original, already known-failing, not
+  retested this round)
+
+**Recommendation for whoever picks this up next**: don't keep trying
+more Zork disk variants -- that avenue is now reasonably ruled out by
+this three-way identical-failure result. Instead, trace exactly what
+DOS's RWTS does differently on a disk-swap vs. a fresh boot (does it
+re-verify track 17's address field against a cached expectation from
+the OLD disk? does `$0478` or a similar shadow variable need explicit
+clearing on swap that we're not doing?) -- likely needs the same kind
+of careful LLDB/disassembly tracing used earlier tonight for the
+original Zork boot-sector investigation, just aimed at DOS's RWTS code
+instead of Zork's own boot loader.
+
+**Housekeeping**: all three scratch test harnesses (dos33_zork_swap_host.c,
+dos33_zork_dbh_swap_host.c, dos33_zork_4am_swap_host.c) and generated
+scratch headers removed after use -- none committed, working tree
+clean. `disk2_controller.c`/`.h` were NOT modified (the `head=0` test
+was done by direct struct manipulation in the scratch test harness, not
+a real code change) -- no fix has actually landed yet, this is still an
+open, unresolved blocker.
