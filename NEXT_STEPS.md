@@ -2220,3 +2220,6 @@ determine which of the two hypotheses above (real error path vs.
 genuinely running loaded game code past its disk-dependent portion) is
 correct -- this is a much more promising, concretely-bounded lead than
 anything found in tonight's now-closed DOS-3.3-bootstrap investigation.
+
+<!-- fable-ralph-loop check-in 2026-08-03 02:19:30 -->
+**Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 635 PASS / 0 FAIL (exit 0). Commits in last ~25min: 3.
