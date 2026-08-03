@@ -2524,3 +2524,6 @@ point for this specific investigative thread.
 test, used, and deleted; zero residual changes to `src/disk2_controller.c`
 (`git diff` confirms empty). Work done entirely from
 `/tmp/baoregon-trail-clone`, an independent clone.
+
+<!-- fable-ralph-loop check-in 2026-08-03 02:59:43 -->
+**Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 635 PASS / 0 FAIL (exit 0). Commits in last ~25min: 3.
