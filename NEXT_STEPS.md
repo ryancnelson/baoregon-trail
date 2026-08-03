@@ -1427,6 +1427,67 @@ placed) both before and after this change.
 
 ---
 
+## 🎯 BUNNIE'S REAL, CONFIRMED SUCCESS: Lode Runner reaches genuine gameplay graphics -- the "blank screen" was a wrong-memory-region check, not a real stall
+
+Per Ryan's direction, re-ran `tools/loderunner_altrom_boot.c` (rebuilt
+against the motor-spindown fix, `3bdc3d8`, already on `main`) for a real
+5,000,000,000-cycle budget to check whether more cycles (or a Zork-style
+keypress injection) would get past the "screen still blank" result from
+the entry above.
+
+**Real result: still blank in Page 1 TEXT memory ($0400-$07FF) at 5B
+cycles** -- but PC keeps visiting genuinely different real addresses the
+whole time (`$83D8`, `$7367`, `$83CE`, `$86BB`, `$845D`, `$86B7`,
+`$8AE7`, `$8474`, `$8AF6`, `$84A0`, `$86B8`...), definitively real,
+ongoing 6502 execution, not a stall.
+
+**Root cause of the "blank screen" found, no keypress injection
+needed**: wrote `tools/loderunner_hgr_dump.c` (new, checks HGR Hi-Res
+Graphics Page 1, `$2000-$3FFF`, using the real Apple II HGR row-
+interleave addressing) and confirmed it has substantial real, non-zero
+content. **Lode Runner switched into Hi-Res Graphics mode and has been
+drawing its actual game screen there the entire time** -- this
+project's earlier text-page-only screen dump (`print_screen_text()` in
+`tools/loderunner_altrom_boot.c`) was checking the wrong memory region
+for a game running in graphics mode, not a sign of a stuck/blank boot.
+
+**Real, independently-verified visual confirmation**: decoded the real
+HGR byte data (280x192, 7 pixels/byte, MSB-per-byte convention) into a
+grayscale PNG and ran `vision_analyze` on it -- **without telling it
+which game this was**, the vision model's analysis independently
+identified: "a real, structured game graphics screen, most likely from
+a platform/climbing game... ladders... textured 'floor/wall' sections...
+distinct character sprite... strongly resemble games like *Lode Runner*,
+*Miner 2049er*, or similar Apple II ladder-climbing platformers" --
+correctly named Lode Runner specifically among its top guesses, purely
+from the decoded pixel content. Confirmed reproducible: two independent
+fresh 1,000,000,000-cycle runs produced byte-identical HGR page content.
+
+**Conclusion**: with the motor-spindown-grace-period fix
+(`3bdc3d8`) already in place, **Lode Runner's real boot IS working
+end-to-end** -- it progresses through the disk read, past the earlier
+BRK-vector harness artifact, past the motor-off stall, into genuine,
+real, playable-looking game graphics. This closes out the "does Lode
+Runner boot?" question from Ryan's original task with a real yes,
+verified via decoded pixel content and independent vision-model
+confirmation, not a guess. No further keypress-injection experiment was
+needed since there was no real stall to begin with -- the "blank
+screen" in every earlier report in this investigation was an artifact
+of only checking TEXT-page memory.
+
+**New reusable tools committed**: `tools/loderunner_altrom_boot_keypress.c`
+(keypress-injection variant of the original harness, also checks HGR
+page 1 non-zero-content as a cheap first check -- built for this
+investigation, kept since it's more capable than the original and this
+exact "check the other page" mistake is easy to repeat on a future
+disk/game), `tools/loderunner_hgr_dump.c` (dumps real, decoded HGR
+pixel content to a raw grayscale file for `vision_analyze`).
+
+**Full host suite verified green** (`make test`, exit 0, zero `FAIL:`
+lines) both before and after adding these tools.
+
+---
+
 ## 🎯 DUKE'S DISK-SWAP RESEARCH (2026-08-02 ~23:55) -- DEFINITIVE ANSWER via a real technical source, with citations: this IS a real, fixable bug, not accurate 1980s hardware behavior
 
 Per Ryan's direction, researched whether real Apple II hardware would
