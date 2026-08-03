@@ -872,3 +872,6 @@ manager/RWTS to be reachable and functional, which may be true even if
 the *visible* banner print has a separate bug), proceed directly to
 attempting CATALOG and treat the banner-text gap as a parallel,
 lower-priority issue. Standing by for direction on which path to take.
+
+<!-- fable-ralph-loop check-in 2026-08-02 21:58:07 -->
+**Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 631 PASS / 0 FAIL (exit 0). Commits in last ~25min: 5.
