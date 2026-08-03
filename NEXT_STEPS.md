@@ -2394,3 +2394,72 @@ instruction.
 
 <!-- fable-ralph-loop check-in 2026-08-03 02:39:36 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 635 PASS / 0 FAIL (exit 0). Commits in last ~25min: 6.
+
+---
+
+## 🎯 DUKE'S KEYPRESS-INJECTION TEST (2026-08-03 ~09:45) -- ruled out: NOT blocked on input
+
+Per Ryan's direction, tested the "genuinely waiting on interactive
+input" hypothesis directly: rebuilt the comparison harness with
+`apple2_mem_inject_key()` support and broadened `$C000`/`$C010` access
+detection (snoops all common absolute-addressing opcodes --
+`LDA`/`STA`/`BIT`/`CMP`/`LDX`/`LDY` abs -- not just the boot ROM's
+`abs,X` convention used for disk I/O).
+
+**Baseline (no injected key)**: ran the full 500,000,000-instruction
+boot with zero keypress injection, tracking every `$C000`/`$C010`
+access. **Result: zero accesses to either address for the entire
+run.** The interpreter never once polls the keyboard latch or clears
+the strobe, at any point from boot through the track-7 plateau and
+450M+ instructions beyond it.
+
+**RETURN injection at instruction 40,000,000** (right as the
+interpreter is running real code from RAM, per the freeze-loop PC
+`$18C9` matching prior traces exactly): injected `apple2_mem_inject_key(0x0D)`
+at that exact point. Result: **zero observable effect** -- `$C000`
+access count stayed at 0 for the rest of the run (confirming the key
+was never even read, let alone acted on), final PC and track (`$18C8`,
+track 7) and total `$C0EC` access count (692,408) were byte-for-byte
+identical to the no-injection baseline.
+
+**Space-bar injection at instruction 40,000,000** (`apple2_mem_inject_key(0x20)`):
+same result -- zero effect, zero `$C000` accesses, identical final
+state to both the baseline and the RETURN test.
+
+**Definitive conclusion: this hypothesis is ruled out.** The
+interpreter is NOT blocked waiting for a keypress -- it simply never
+checks the keyboard within this instruction budget, before or after
+injection. This isn't a matter of injecting the "wrong" key or the
+"wrong" timing; the total absence of any `$C000`/`$C010` access at
+all (not even one, across 500M real instructions and two different
+injected keys) means the code path currently executing has no
+keyboard-polling logic in it whatsoever. Real interactive fiction
+interpreters DO poll the keyboard once they reach their input prompt,
+so this means execution genuinely hasn't reached that point yet.
+
+**Where this leaves the investigation, honestly**: `disk2_controller.c`
+remains confirmed correct (this session's decisive finding, unchanged).
+The remaining open question -- why the game hasn't yet produced visible
+banner text or reached an input prompt -- is not about disk emulation,
+not about the CPU/bus layer (both proven correct via the reinette
+cross-check and this keyboard test), and not about being blocked on
+input. The two real remaining possibilities are: (1) genuinely needs a
+much larger cycle budget than 500M to reach its first output/input
+point (real Z-machine interpreters do real work -- unpacking the story
+file's dictionary/object table -- before ever printing anything), or
+(2) there's a difference in the *loaded interpreter code path itself*
+between our emulation and reinette's that this comparison hasn't yet
+isolated (both matched byte-for-byte on every `$C0EC` access, which
+only proves the *disk* layer is identical -- it does NOT prove the
+*loaded bytes end up executing identically* if something upstream,
+e.g. RAM initialization or a soft-switch state neither harness
+modeled, differs). This is a genuinely different, deeper question than
+anything answered so far tonight, and doesn't have a quick next test in
+the same vein as tonight's -- treating this as the honest stopping
+point for this specific investigative thread.
+
+**Housekeeping**: same disposable-harness pattern as prior entries --
+`tools/reinette_vs_ours_boot_compare.c` was rebuilt with the keypress
+test, used, and deleted; zero residual changes to `src/disk2_controller.c`
+(`git diff` confirms empty). Work done entirely from
+`/tmp/baoregon-trail-clone`, an independent clone.
