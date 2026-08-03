@@ -1156,3 +1156,71 @@ not more guessing.
 `disk2_controller.c` (confirmed clean, `git diff --stat` shows zero
 diff), scratch trace harness (`tools/dos33_zork_rwts_trace.c`) and
 generated build-scratch headers removed after use, not committed.
+
+---
+
+## 🎯 DUKE'S LODE RUNNER PREP (2026-08-02 ~23:40) -- boots further than expected via own boot sector; different failure mode (harness BRK-vector artifact, NOT the Zork RWTS-swap bug)
+
+Per Ryan's direction (queued next demo target, non-blocking prep while
+Bunnie/Woz work their own fronts), nibblized `tools/loderunner_4amcrack.dsk`
+(4am's Lode Runner crack, same trusted source as the working Zork
+crack) via `tools/dsk_to_nib.py` and did a first host-side boot test
+through this project's real `disk2_controller.c` pipeline -- same
+proven stub-ROM approach as `tools/boot_disk2_real_dsk_stubrom.c`
+(minimal all-`0x60`/RTS 16KB ROM, since Lode Runner boots via its own
+boot sector directly at `$C600`, no DOS 3.3/Applesoft bootstrap needed
+for this test -- **not** the disk-swap scenario, so the Zork RWTS
+investigation above doesn't directly apply here).
+
+**Real, distinct result**: the disk read pipeline itself works well --
+confirmed real GCR sync/address-field decode on track 0 (32 real sync
+marks found, standard 16-sector structure), and the boot loader
+genuinely executes, loads code, and **jumps from ROM into loaded RAM
+code at `$6060`** (same kind of real forward progress the original
+Zork boot-sector investigation saw days ago) -- reached with only
+~340,000 cycles, extremely fast. Ran it out to 300,000,000 cycles (6x
+further) to confirm this wasn't just "needs more time": PC stayed
+frozen at `$6060` the entire time, but `SP` kept dropping (0xE7→0x8F,
+~88 bytes over the extended run) -- real activity, not a true crash,
+just not advancing PC.
+
+**Root cause of the stall, confirmed by direct memory read (not
+guessed)**: raw bytes at `$6058-$6068` are **all zero**. `$6060`
+itself is a `BRK` (`0x00`) opcode. Real 6502 `BRK` reads its vector
+from `$FFFE`/`$FFFF` -- and this test harness's minimal stub ROM is
+all `0x60` (RTS) bytes, meaning `$FFFE`/`$FFFF` read as `0x60, 0x60` =
+**`$6060`, pointing right back at itself**. This creates a
+self-sustaining BRK-retrigger loop (BRK pushes 3 stack bytes, jumps to
+its own vector at `$6060`, hits `BRK` again, repeat) -- exactly the
+same "BRK-storm" failure pattern already documented above for the real
+DOS 3.3 Master boot investigation (see the `$E000-$E0FF` all-zero
+section note), just triggered here by the test harness's own minimal
+stub ROM rather than a real system ROM's incomplete `$E000-$E0FF`
+range.
+
+**This is a harness limitation, NOT the Zork RWTS-disk-swap bug** --
+Lode Runner in this test never goes through a disk-swap at all (boots
+directly via its own boot sector, same as the original single-disk
+Zork boot investigation), so this is architecturally unrelated to the
+`$0478` track-shadow desync found above. The real, useful data point:
+**Lode Runner's own boot-sector code loads real game data into RAM
+successfully and jumps to it** -- unlike Zork I's boot sector (which
+never got past its own sync-search retry loop, per the original
+investigation), Lode Runner's crack appears to boot further/faster on
+this project's emulator. Whether it goes on to actually run correctly
+is unknown -- this test only proves it reaches loaded RAM code, not
+that the loaded code is subsequently correct, since the harness's stub
+ROM can't support real BRK/IRQ vector handling.
+
+**Next step, if this becomes an active priority**: retest with the
+same real `apple2-asoft-auto.rom` (proven, real BRK/IRQ vector table
+at `$FFFE`/`$FFFF` instead of a self-referencing stub) used for the
+DOS 3.3 work above, to see if Lode Runner's boot code progresses past
+`$6060` into genuine gameplay code, or hits a real (non-harness)
+blocker of its own. Not chased further this session per Ryan's
+explicit "don't get stuck, just document and move on" direction --
+this is queued prep, not the active priority.
+
+**Housekeeping**: scratch boot-test harness (`tools/loderunner_boot_host.c`)
+and generated `build-scratch/loderunner_4am_nib_disk_data.h` removed
+after use, not committed -- working tree clean.
