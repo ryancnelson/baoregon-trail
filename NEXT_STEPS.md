@@ -1407,3 +1407,92 @@ above (head-position-after-overshoot vs. RWTS's retry-budget) as the
 most promising next concrete test to write, given it's the one
 concrete behavioral difference between the passing isolated test and
 the failing live scenario identified so far.
+
+---
+
+## 🎯 DUKE'S HYPOTHESIS #1 TEST (2026-08-03 ~06:50) -- ALSO DISPROVEN; real reframing of the whole investigation
+
+Per Ryan's direction, wrote a second RED test for hypothesis #1: does
+`d->head`'s realistic post-overshoot position (not reset to 0, unlike
+the disproven test above) fall far enough from the next sync mark that
+a bounded search (matching real RWTS's `RDADR` scan) can't converge?
+
+**New test added and wired into the suite**:
+`tests/test_disk2_controller_head_desync_after_overshoot.c` -- builds
+a full realistic 16-sector track (track 34, the clamp boundary, same
+layout as the real Zork/DOS 3.3 disks), drives the head to the clamp
+via 200 real overshoot phase-steps, then tests sync-mark convergence
+from SIX different arbitrary starting `d->head` positions (0, 137,
+1000, 3333, 5000, 6601 -- spanning the full track), each bounded by one
+full track's worth of nibbles (the natural real-hardware search bound,
+since Beneath Apple DOS's `RDADR` routine has no smaller internal
+timeout of its own -- the 48-retry count is the OUTER bound, not a
+per-attempt nibble limit).
+
+**Result: this test ALSO PASSES on unmodified `disk2_controller.c`.**
+Sync-mark convergence took between 14 and 400 nibbles across all six
+starting positions -- trivially fast, nowhere near the ~6600-nibble
+full-track bound. Hypothesis #1 is disproven: `d->head`'s position
+after a realistic overshoot sequence does NOT prevent a real RWTS-style
+sync search from converging quickly.
+
+**Wired into the suite as a permanent regression guard**
+(`test_disk2_controller_head_desync_after_overshoot`). Full suite
+verified green (`make test`, exit 0, zero `FAIL:` lines).
+
+**Both specific, concrete hypotheses from this session's disk-swap
+investigation are now disproven by real RED tests.** This is a
+significant, honest finding in its own right: `disk2_controller.c`'s
+read pipeline -- clamping, address-field decode, sync-mark search --
+all behave correctly at every isolated level tested, matching real
+Disk II hardware behavior. Continuing to guess at more specific
+mechanisms without new evidence would repeat the over-extension
+pattern from earlier in this project's history.
+
+**A real reframing worth surfacing, from re-examining this session's
+own earlier live-boot trace data (commit `d388a1e`)**: the final state
+of that trace showed `motor=0` (motor OFF) at the very end, after
+33,287 real disk-read accesses and a long sequence of real seek
+activity -- this is consistent with real DOS 3.3's own `HNDLERR`/
+`DRVERR` error path (Beneath Apple DOS, `$BE04-$BE0A`: "Load A-reg with
+$40 (drive error)... Goto HNDLERR") actually COMPLETING, not an
+infinite hang. If real RWTS's bounded 48-retry-times-4-reseek ladder
+genuinely ran its full course and gave up cleanly with a real DRVERR,
+then the disk-swap scenario may not be "broken" at all -- it may
+simply take longer (many real bounded retries) than any test harness's
+cycle budget allowed to observe the actual (correct, real,
+period-accurate) `DRVERR` failure message on screen. This reframes the
+open question from "why does this hang forever" to "does this
+correctly resolve to a real DRVERR within its documented bounded retry
+count, and are we just not running the harness long enough to see it."
+
+**Independent cross-validation from Woz's reinette-II-plus native
+build (separate 6502 core + separate Disk][ nibble implementation,
+reported this session)**: booting the REAL, unmodified `Zork_I.dsk`
+(via its OWN boot sector, not the DOS-3.3-bootstrap approach) on
+reinette also gets stuck at just the Monitor cold-start banner
+("APPLE ]["), never progressing to real Zork boot text, while showing
+sustained real CPU activity (~17%, not deadlocked) for 45+ real
+seconds. This is a DIFFERENT investigation (Zork's own boot sector,
+not the DOS-3.3-CATALOG disk-swap scenario), but is useful
+corroborating evidence that Zork I's real disk data is genuinely
+difficult for naive/non-cycle-perfect nibble emulation generally --
+consistent with, though not proof of, this session's disk-swap
+findings being a genuinely hard, real timing-sensitive problem rather
+than a simple, easily-spotted logic bug in one specific project.
+
+**Recommended next step for whoever continues this**: before writing
+any more hypothesis-specific unit tests, re-run the original
+`main_qemu_dos33boot.c`-style live-boot CATALOG scenario with a MUCH
+larger cycle budget (10x-100x the ~200,000,000 used so far) and check
+whether it actually reaches a real `DRVERR`/error message on screen
+rather than staying stuck at `PC=$FD1D` forever -- this directly tests
+the reframing above and would definitively resolve whether there is
+a real bug left to fix at all, or whether the scenario just needs
+patience (and possibly a demo-harness-side timeout/retry-limit
+increase, not a `disk2_controller.c` code fix).
+
+**Honest status**: two specific hypotheses disproven this session via
+real TDD; the disk-swap CATALOG/BRUN demo remains NOT re-verified
+end-to-end; the actual nature of the remaining "bug" (if a bug at all,
+vs. a slow-but-correct DRVERR) is still genuinely open.
