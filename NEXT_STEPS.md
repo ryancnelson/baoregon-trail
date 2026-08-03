@@ -2391,3 +2391,6 @@ never committed. Work done entirely from `/tmp/baoregon-trail-clone`,
 an independent clone -- did not touch the shared
 `~/devel/baoregon-trail` working directory, per the standing
 instruction.
+
+<!-- fable-ralph-loop check-in 2026-08-03 02:39:36 -->
+**Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 635 PASS / 0 FAIL (exit 0). Commits in last ~25min: 6.
