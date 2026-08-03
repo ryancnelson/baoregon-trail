@@ -1071,3 +1071,6 @@ hypothesis was already tested and ruled out; worth checking
 specifically, since those are the two remaining pieces of read-timing
 state not yet verified as correctly independent of which disk is
 loaded.
+
+<!-- fable-ralph-loop check-in 2026-08-02 22:38:21 -->
+**Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 631 PASS / 0 FAIL (exit 0). Commits in last ~25min: 3.
