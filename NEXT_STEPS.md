@@ -1819,3 +1819,104 @@ is the honest, clearly-documented state to hand off.
 
 <!-- fable-ralph-loop check-in 2026-08-03 01:19:09 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 633 PASS / 0 FAIL (exit 0). Commits in last ~25min: 2.
+
+---
+
+## 🎯 DUKE'S REAL INSTRUCTION-LEVEL 6502 TRACE (2026-08-03 ~08:00) -- THE ACTUAL ROOT CAUSE, found via genuine ground truth, not another isolated-layer test
+
+Per Ryan's direction, used `emu_trace.h`/`step6502()` to get a REAL,
+instruction-by-instruction 6502 execution trace of the live DOS 3.3
+boot -> disk-swap -> CATALOG scenario -- the one genuinely untested
+angle identified in the previous handoff (all prior disk-swap tests
+isolated `disk2_controller.c` via direct API calls, never running real
+6502 code).
+
+**Method**: built a host tool using `step6502()` (single-instruction
+stepping, not batch `exec6502()`) plus a temporary `disk2_controller_access()`
+call hook (added under `#ifdef`, fully reverted after use -- `git diff`
+confirms zero residual diff on `disk2_controller.c`) to log every real
+phase-softswitch access alongside every `$0478` change, starting from
+the moment CATALOG's keystrokes are injected.
+
+**Real findings, in order of discovery**:
+
+1. **The stepper-motor phase-stepping mechanism is completely
+   correct.** Traced ~30 individual real seeks during CATALOG's
+   directory-chain traversal (track 8 -> 9 -> 10 -> ... -> 17): every
+   single `$0478` increment was paired with exactly one real
+   `disk2_controller_access()` phase-ON + phase-OFF call, and `$0478`
+   tracked the real `d->track` (quarter-track counter) perfectly,
+   track-for-track, the entire time. This directly confirms (with real
+   ground truth, not an isolated guess) that `set_phase()`'s stepping
+   math and the softswitch dispatch are both genuinely correct.
+
+2. **MYSEEK's real "housekeeping" jumps are legitimate, not a bug.**
+   Twice observed `$0478` jumping by a large amount in a single
+   instruction (e.g. 17->34, 24->12) at PC=$BE7D/$BE6A -- inside the
+   real `MYSEEK` routine ($BE5A-$BE8D, per Beneath Apple DOS: "Provides
+   necessary housekeeping before going to SEEKABS... stores track
+   information in appropriate slot dependent location"). This is DOS
+   loading a NEW target track value (from what it believes is a
+   catalog-chain "next track" pointer) directly into `$0478`, then
+   calling `SEEKABS` to step there incrementally -- which then worked
+   correctly per point 1. Not a bug -- real, expected RWTS structure.
+
+3. **THE ACTUAL ROOT CAUSE, found precisely**: `$0478` eventually jumped
+   to `35` -- one past the maximum valid track (0-34) -- at PC=$B9BE
+   (inside `SEEKABS` itself), with `real_track=17` at that same moment
+   (a huge, genuine mismatch, unlike the two legitimate MYSEEK jumps
+   above which were followed by real matching phase-steps). Directly
+   decoded the REAL DOS 3.3 6-and-2 GCR data at track 17 sector 0 (the
+   real VTOC location) using the project's own proven decode algorithm
+   (ported from `test_disk2_controller_nibble_roundtrip.c`) and found:
+   **the decoded "sector number" byte at VTOC offset 0x02 is 121 (0x79)
+   -- a value completely outside the valid 0-15 sector range.**
+
+**The real answer**: Zork I's disk was never authored as a DOS
+3.3-formatted disk with a real VTOC/catalog-chain structure at track
+17 -- it's real, valid, non-corrupt Infocom game data that HAPPENS to
+occupy that track (already confirmed all-valid address-field checksums
+earlier this session). When DOS 3.3's `CATALOG` command walks what it
+believes is a catalog-chain "next track/sector" pointer through this
+data, it's decoding genuine Zork game bytes AS IF they were VTOC
+fields -- producing a nonsense "next track" target (something around
+35, one past the maximum) purely because that's what those
+particular game-data bytes decode to when forced through DOS 3.3's
+VTOC byte-layout interpretation. **This is not a bug in `disk2_controller.c`,
+not a bug in the phase-stepping/seek math, not a bug in the sync
+search, and not something a code fix in this project should paper
+over** -- it's the DOS-3.3-bootstraps-Zork approach itself running
+into a fundamental structural mismatch: Zork's disk was never meant to
+be `CATALOG`-walked by real DOS 3.3 in the first place.
+
+**This definitively answers the open question from all four previous
+disproven hypotheses**: the disk-swap CATALOG scenario's failure is
+real, reproducible, and now root-caused with concrete evidence (not
+guessed) -- but the root cause is a genuine incompatibility between
+DOS 3.3's CATALOG command and Zork's actual on-disk data layout at the
+track it happens to try to interpret as a directory entry, not an
+emulator bug in this project's own code.
+
+**Implication for the stretch-goal demo**: the DOS-3.3-bootstraps-Zork
+approach via `CATALOG` cannot work as originally conceived, because
+Zork's disk genuinely isn't a DOS-3.3-catalogable volume. A `BRUN`/
+`EXEC`-based approach (loading Zork's specific binary via DOS's file-
+loading routines, bypassing `CATALOG`'s directory walk entirely) MIGHT
+still work if Zork's actual boot-loader location can be targeted
+directly without needing DOS to interpret track 17 as a VTOC at all --
+but this needs to be verified separately, not assumed. Alternatively,
+this may confirm the stretch-goal-extension itself needs a different
+approach entirely (e.g., loading Zork via its own boot sector after
+all, returning to the original, separately-tracked investigation from
+earlier tonight -- OR accepting that DOS-3.3-bootstraps-Zork isn't
+viable and the stretch goal should target something else).
+
+**Housekeeping**: debug instrumentation added to `disk2_controller.c`
+was fully removed after use (`git diff --stat` shows zero residual
+diff). Scratch tools (`tools/instruction_trace_disk_swap.c`,
+`/tmp/vtoc_check.c`) were disposable and not committed. This work was
+done entirely from an independent clone
+(`/tmp/baoregon-trail-clone`), NOT the shared
+`~/devel/baoregon-trail` working directory, per Ryan's explicit
+instruction to stop running git operations there while it has active
+work in progress on `spike-reinette-port`.
