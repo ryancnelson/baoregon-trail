@@ -1074,3 +1074,85 @@ loaded.
 
 <!-- fable-ralph-loop check-in 2026-08-02 22:38:21 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 631 PASS / 0 FAIL (exit 0). Commits in last ~25min: 3.
+
+---
+
+## 🎯 DUKE'S RWTS TRACE (2026-08-02 ~23:20) -- REAL root cause found: DOS's own zero-page track-shadow variable ($0478) desyncs from the emulator's actual head position after a disk swap
+
+Per Ryan's direction, added temporary per-access instrumentation
+directly into `disk2_controller.c` (`disk2_controller_access()` and
+`nibble_shift()`, gated behind a `#ifdef DISK2_DEBUG_TRACE_ACCESS` that
+was fully removed afterward -- confirmed `git diff --stat` shows zero
+diff on `disk2_controller.c` now) to trace exactly what happens during
+CATALOG's disk read against the swapped-in 4am-cracked Zork disk.
+
+**First correction to my own earlier report**: the previous three-disk
+test's per-chunk (every 20,000 cycles) state snapshots made the disk
+read look completely stuck (`head=3750` unchanged across dozens of
+samples) -- that was a **sampling artifact**, not the real bug. With
+real per-access tracing, the actual reads are working correctly:
+`head` genuinely advances byte-by-byte (3750→3751→3752→... verified via
+60+ real `nibble_shift()` calls), `is_uninit` correctly flips to 0 after
+the first access, and `ctl->latch` picks up real non-zero track data.
+**disk2_controller.c's own read mechanism is NOT broken.**
+
+**The real bug, found via direct memory trace**: at the point CATALOG
+gives up (final state: `PC=$FD1D` stuck in the RDKEY-wait loop,
+`drive[0].track=139` -- i.e. **clamped at the maximum possible
+quarter-track value**, `35*4-1`), directly read the real Apple II
+zero-page byte `$0478` (the track-shadow variable DOS's own RWTS keeps
+to track where it *believes* the head is) and compared it against our
+emulator's actual head position:
+
+```
+Real DOS 3.3 track-shadow byte $0478: 0x66 (102) -- real emulator drive0.track>>2 (whole track): 34
+```
+
+**`$0478` reads 102, while the emulator's real current track is 34** --
+a huge, nonsensical mismatch (valid Apple II tracks are 0-34, so 102 is
+outside the entire valid range). This confirms the earlier
+shadow-variable-desync hypothesis directly, with a real number, not a
+guess: DOS's RWTS is tracking a completely different (and invalid)
+belief about where the head is than where it actually is post-swap.
+This explains the full symptom chain: RWTS keeps re-seeking based on
+its own (wrong) internal track belief, which combined with our
+emulator's real quarter-track clamping logic (`set_phase()`'s
+`if (d->track >= DISK2_MAX_TRACKS*4) d->track = DISK2_MAX_TRACKS*4-1`)
+eventually pins the real head at the maximum track (139/4=34, the
+disk's actual last track) while RWTS's own internal belief (102) never
+converges with reality, so its own track-verification (checking the
+just-read address field's track number against what IT expects) never
+matches, triggering endless retry.
+
+**Precisely scoped next step for whoever continues this**: `$0478` is
+NOT a value `disk2_controller_load_nibble_disk()` or anything in
+`disk2_controller.c`/`apple2_mem.c` writes -- it's purely DOS's own
+in-RAM RWTS state, populated during the ORIGINAL DOS 3.3 boot and never
+touched again by our disk-swap. On real Apple II hardware, this isn't
+usually a problem because DOS re-seeks to track 0 (or wherever it needs
+to go) using ITS OWN belief plus real physical stepper-motor feedback
+that's genuinely consistent with the physical head -- but our swap
+silently changes what's on the disk under a head position DOS still
+{correctly, for the OLD disk} believes is accurate for whatever it last
+did. On real hardware, swapping a floppy mid-session without
+re-seeking (e.g. via `PR#6`/`IN#6` or an explicit re-initialization)
+would have exactly this same failure mode -- **this may not be a bug
+in our emulator at all, but a fundamentally correct reproduction of
+what real DOS 3.3 does when you swap disks without prompting it to
+re-verify**. Real DOS 3.3 users historically triggered a controlled
+disk-swap via specific commands (or by simply typing a command like
+`CATALOG` again after physically swapping, which is exactly what we
+did) -- worth checking real historical Apple II documentation/emulator
+behavior for what's actually supposed to happen here before assuming
+this needs an emulator-side fix at all. If a real fix IS warranted, the
+most direct one would be having `disk2_controller_load_nibble_disk()`
+(or a new explicit "disk swap" API) reset the emulator's
+`d->track`/`d->head` to a value that matches what DOS's real RWTS
+would expect after a *legitimate* real-world swap-and-retry sequence --
+but this needs real Apple II reference-documentation research first,
+not more guessing.
+
+**Housekeeping**: all debug instrumentation removed from
+`disk2_controller.c` (confirmed clean, `git diff --stat` shows zero
+diff), scratch trace harness (`tools/dos33_zork_rwts_trace.c`) and
+generated build-scratch headers removed after use, not committed.
