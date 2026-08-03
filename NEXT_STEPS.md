@@ -1995,3 +1995,6 @@ and returning to debugging Zork's own boot sector directly against
 implementation to find the actual discrepancy. This is a different,
 more tractable investigation than anything attempted in the
 DOS-3.3-bootstrap thread tonight.
+
+<!-- fable-ralph-loop check-in 2026-08-03 01:59:22 -->
+**Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 633 PASS / 0 FAIL (exit 0). Commits in last ~25min: 2.
