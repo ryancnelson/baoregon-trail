@@ -1998,3 +1998,120 @@ DOS-3.3-bootstrap thread tonight.
 
 <!-- fable-ralph-loop check-in 2026-08-03 01:59:22 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 633 PASS / 0 FAIL (exit 0). Commits in last ~25min: 2.
+
+---
+
+## 🎯 DUKE'S REINETTE-VS-OURS BOOT COMPARISON (2026-08-03 ~08:35) -- real progress found; a test-harness bug, not an emulator bug, was hiding it
+
+Per Ryan's direction, compared our `disk2_controller.c`/`nibble_shift()`
+against reinette-II-plus's disk model (`third_party/reinette-II-plus/
+reinetteII+.c`, on `origin/spike-reinette-port`, inspected read-only via
+`git show` from an independent clone -- did not touch the shared
+working directory or its checked-out branch) to find why our
+implementation appeared to get stuck on Zork's own real boot sector
+while reinette's doesn't.
+
+**Structural differences catalogued** (for completeness, most turned
+out NOT to be the cause):
+1. Reinette's `$C0EC` access has zero elapsed-cycle gating -- every
+   access unconditionally advances one nibble and returns it, never
+   clearing bit 7. Ours gates on real elapsed 6502 cycles
+   (`NIBBLE_CYCLES=32`) and only sets/clears bit 7 when a genuinely new
+   nibble arrives. **Already ruled out earlier this session** (see the
+   ~16:00 entry): substituting reinette's exact no-timing model into an
+   isolated copy of `disk2_controller.c` produced the same result.
+2. Reinette's `stepMotor()` tracks phase history three generations
+   back (`phases`/`phasesB`/`phasesBB`) vs. our `set_phase()`'s
+   one-generation `PHASE_DELTA` table -- architecturally different but
+   not yet directly implicated.
+3. Reinette reads the real, fixed-size `.nib` file format directly
+   (every track padded to exactly `0x1A00`=6656 bytes, including
+   trailing gap-fill bytes) and wraps at that fixed boundary for every
+   track uniformly. Our `disk2_controller.c` uses each track's real,
+   *trimmed* length (6632 for track 0, 6602 for all others, matching
+   `tools/dsk_to_nib.py`'s real GCR gap-size-aware encoding) --
+   confirmed both are internally consistent with their own respective
+   disk representations, not an actual bug in either.
+4. Reinette's softswitch catch-all returns `ticks % 0xFF` (floating
+   noise) for unhandled reads; ours returns the stale `ctl->latch` for
+   non-`$C0EC` even-offset reads. Not conclusively implicated either
+   way.
+
+**The real, decisive test**: built a dual-tap host harness
+(`tools/reinette_vs_ours_boot_compare.c`, disposable, not committed)
+running our REAL `disk2_controller.c` (via the normal `apple2_mem.c`
+bus dispatch, completely unmodified) through `step6502()` one real
+instruction at a time, snooping every `LDA $C08C,X`/`STA $C08C,X`
+instruction that resolves to `$C0E0-$C0EF` and mirroring the same
+softswitch accesses into a faithful, verbatim port of reinette's
+`stepMotor()`/disk-read model running in lockstep, to find the exact
+first point their real byte streams diverge.
+
+**Critical methodology finding (own test bug, caught and fixed
+mid-investigation)**: the first version of this harness called
+`read6502(target)` a SECOND time after `step6502()` had already
+executed the real `LDA $C08C,X` instruction (which itself performs the
+one real, legitimate bus access internally) -- an extra, harness-
+injected access to `$C0EC` that consumed a second nibble-shift cycle
+immediately after the real one, always observing the already-bit-7-
+cleared stale latch value. This produced a completely misleading
+"stuck forever at `$C65E`" result (PC never advancing past the very
+first D5-sync-byte poll, across 8,000,000 real instructions) that
+looked exactly like a real, severe emulator bug but was entirely an
+artifact of the test harness double-reading the bus. **Fixed by
+reading the CPU's own accumulator (`a`) after `step6502()` instead of
+re-touching the bus** -- the real instruction already loaded the
+correct value there; no second access needed. This is a real,
+concrete lesson for anyone writing future host comparison/trace
+harnesses against this codebase: never re-issue a `read6502()` call to
+an address whose real access already happened as a side effect of
+`step6502()`/`exec6502()` -- the disk controller (and likely other
+stateful softswitches) are NOT idempotent on repeated reads.
+
+**After the fix, real, substantial, previously-hidden progress
+appeared**: PC advanced from `$C600` all the way through real track
+seeks 0→1→2→3→4→5→6→7→9→10 (each transition matching reinette's
+model exactly, track-for-track, confirmed via periodic checkpoints
+over 46,000,000 real instructions), meaning our controller's read
+pipeline, phase-stepping, and bit-7 timing gate are all genuinely
+correct through a real, non-trivial multi-track boot sequence -- far
+beyond the single-track first-sync-byte point this investigation
+previously believed was completely stuck.
+
+**The genuinely new, real stuck point**: around instruction 46-48M,
+`our_track` regresses from 10 back to 7 and then **never changes
+again** through the remaining ~12,000,000 instructions tested; `$C0EC`
+access count also freezes completely at that same point (575,350,
+unchanging). Unlike the disproven "single tight 2-address spin loop"
+hypotheses from the DOS-3.3-bootstrap investigation, PC here cycles
+through several DIFFERENT addresses (`$18C9`, `$17F4`, `$09AF`,
+`$11ED`, `$1BA5`), meaning real CPU execution is continuing -- it's
+just no longer touching the disk hardware at all. This is consistent
+with either (a) a real error/retry path that gave up on further disk
+reads, or (b) genuinely running Zork's OWN loaded game code past the
+point where it still needs `$C0EC` (most of a game's code, once
+loaded into RAM, wouldn't touch disk hardware at all) -- screen memory
+at this point still shows no real text (two stray punctuation bytes
+only), so the game hasn't yet reached its normal "WEST OF HOUSE"
+banner in this particular test's cycle budget, but this is genuinely
+different territory than anything characterized before.
+
+**Housekeeping**: `git diff` confirms zero residual changes to
+`src/disk2_controller.c` (only real code touched was the harness file
+itself, disposable, deleted after use, never committed). Work done
+entirely from `/tmp/baoregon-trail-clone`, an independent clone --
+`origin/spike-reinette-port` was inspected read-only via `git show`
+(single-blob fetch, no branch checkout), never touching the shared
+`~/devel/baoregon-trail` working directory or disturbing its own
+checked-out branch state, per the standing instruction.
+
+**Recommended next step**: run this same comparison harness (or a
+cleaner, committed version of it) for a much larger instruction budget
+(100M+) to see whether the track-7 freeze is truly permanent or
+whether it eventually resumes -- and disassemble the real PCs seen
+during the freeze (`$18C9`, `$17F4`, `$09AF`, `$11ED`, `$1BA5`) against
+the actual loaded Zork boot-loader code at those addresses to
+determine which of the two hypotheses above (real error path vs.
+genuinely running loaded game code past its disk-dependent portion) is
+correct -- this is a much more promising, concretely-bounded lead than
+anything found in tonight's now-closed DOS-3.3-bootstrap investigation.
