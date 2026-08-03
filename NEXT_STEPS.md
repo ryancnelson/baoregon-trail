@@ -2747,3 +2747,6 @@ fresh clone (given the same local `apple2-asoft-auto.rom` +
 `loderunner_4amcrack.dsk` source files, consistent with how every
 other disk/ROM asset in this project works), with a real committed
 entry point, build script, and live-gameplay screenshot evidence.
+
+<!-- fable-ralph-loop check-in 2026-08-03 03:39:56 -->
+**Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 635 PASS / 0 FAIL (exit 0). Commits in last ~25min: 2.
