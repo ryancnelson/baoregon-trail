@@ -1923,3 +1923,75 @@ work in progress on `spike-reinette-port`.
 
 <!-- fable-ralph-loop check-in 2026-08-03 01:39:16 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 633 PASS / 0 FAIL (exit 0). Commits in last ~25min: 3.
+
+---
+
+## 🎯 DUKE'S BRUN/EXEC FEASIBILITY VERDICT (2026-08-03 ~08:15) -- confirmed dead end, both by documentation and by empirical test
+
+Per Ryan's direction, investigated whether BRUN/EXEC could bypass the
+`CATALOG`/VTOC incompatibility just found (previous entry: Zork's disk
+was never a real DOS-3.3-formatted volume; `CATALOG`'s directory-chain
+walk decodes real Zork game bytes as VTOC fields and produces garbage).
+
+**Documentary evidence** (Beneath Apple DOS, DOS 3.3's own real
+disassembly, Chapter 8):
+- `A35D-A38D BLOAD command handler`: **"Open the file, ignoring its
+  type."** -- literally the first step.
+- `A38E-A396 BRUN command handler`: **"Call BLOAD command handler to
+  load file into memory."** -- BRUN is BLOAD plus a jump to the loaded
+  address; it inherits BLOAD's OPEN-based lookup entirely.
+- `A5C6-A5DC EXEC command handler`: **"Open the file (A2A3)."** -- EXEC
+  independently also starts with the same OPEN call.
+- The File Manager's `OPEN` call (call type 01) requires "Address of
+  file name" as input and works by resolving a name to a Track/Sector
+  List via the VTOC/catalog chain -- there is no lower-level DOS
+  routine that loads a named file by raw track/sector without this
+  lookup (the only track/sector-number-only interface is RWTS itself,
+  which has no filename concept and requires the caller to already
+  know the physical location -- defeating the purpose of BRUN/EXEC).
+
+**Empirical confirmation**: built a real host test booting DOS 3.3,
+swapping to Zork's disk, and typing `BRUN ZORK1` (best-guess filename,
+since `CATALOG` never got far enough to show the real one). Result:
+**identical failure signature to the CATALOG investigation** --
+`$0478` ran away to 102 (same value observed in the original CATALOG
+trace) while the real controller track stayed correctly clamped at 34.
+This is real, concrete, reproducible confirmation -- not just a
+documentation-based prediction -- that BRUN's internal OPEN call hits
+the exact same VTOC-walk incompatibility `CATALOG` does.
+
+**Verdict: BRUN/EXEC is a genuine, confirmed dead end for the
+DOS-3.3-bootstraps-Zork approach.** It does not, and structurally
+cannot, bypass the incompatibility, because both commands fundamentally
+route through the same filename-based OPEN call that requires
+interpreting Zork's real (non-DOS-3.3) disk data as VTOC/catalog-chain
+structure. This closes out the DOS-3.3-bootstrap avenue entirely, not
+just the `CATALOG`-specific symptom.
+
+**Important context for whoever picks this up next**: Woz/Bunnie
+separately corrected an earlier cross-check finding (originally
+reported as Zork's OWN boot sector being "too hard for any naive
+nibblizer," based on testing the wrong file -- the original,
+still-copy-protected `~/Downloads/Zork_I.dsk` instead of this
+project's actual working file, `tools/zork1_4amcrack.dsk`). Retested
+against the correct file and got **a real, clean, full boot to genuine
+Zork I game text** ("WEST OF HOUSE", full Infocom banner) via
+reinette-II-plus's independent 6502/Disk][ implementation -- verified
+via live memory reads, stable across repeated samples. This reverses
+the earlier assumption and points to **a real, likely-fixable bug in
+this project's own `nibble_shift()`/`disk2_controller.c`** for the
+ORIGINAL (pre-DOS-3.3-bootstrap) Zork-boots-directly-via-its-own-boot-sector
+approach, since a much simpler independent implementation (zero
+elapsed-cycle timing gating) boots the same real disk data fine.
+
+**Recommendation**: given BRUN/EXEC is now confirmed dead, and the
+original direct-boot approach has real new evidence pointing at a
+plausibly fixable bug in our own code (not an inherent disk-format
+limitation), the most promising path for the stretch-goal demo is
+almost certainly **abandoning the DOS-3.3-bootstrap detour entirely
+and returning to debugging Zork's own boot sector directly against
+`tools/zork1_4amcrack.dsk`** -- comparing our `nibble_shift()`/
+`disk2_controller.c` behavior against reinette's much simpler, working
+implementation to find the actual discrepancy. This is a different,
+more tractable investigation than anything attempted in the
+DOS-3.3-bootstrap thread tonight.
