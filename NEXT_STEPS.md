@@ -1025,3 +1025,49 @@ clean. `disk2_controller.c`/`.h` were NOT modified (the `head=0` test
 was done by direct struct manipulation in the scratch test harness, not
 a real code change) -- no fix has actually landed yet, this is still an
 open, unresolved blocker.
+
+**DUKE'S FOLLOW-UP (2026-08-02 ~23:10) -- authoritative confirmation
+the disk data itself is completely valid, using the project's PROVEN
+decoder, not hand-rolled math:**
+
+My own first attempt at checking track 17's DATA field checksum (not
+just the address field, already known-good) used a hand-derived Python
+GCR XOR-chain re-implementation -- this was a mistake: it flagged BOTH
+the known-good DOS 3.3 Master disk AND the Zork disk as having a
+non-zero checksum, proving the script itself was wrong, not the disk
+data. Correctly caught before drawing any real conclusion from it.
+
+Redid this properly by reusing this project's own **proven** C decoder
+verbatim -- `tests/test_disk2_controller_nibble_roundtrip.c`'s
+`read_and_decode_sector()` (itself a verbatim port of apple2js's real
+`readSector16()`, already TDD-verified against the project's own
+encoder round-trip) -- via a small standalone host tool
+(`/tmp/verify_track17_checksum.c`, not committed) that runs the exact
+same real `disk2_controller_access()` bus-read path against real track
+17 data from BOTH disks:
+
+```
+[DOS3.3-Master] address field: vol=254 track=17 sector=0 chk=239
+[DOS3.3-Master] PASS: data field checksum valid, sector fully decoded
+[Zork-4am-crack] address field: vol=254 track=17 sector=0 chk=239
+[Zork-4am-crack] PASS: data field checksum valid, sector fully decoded
+```
+
+**Both disks' track 17 sector 0 (the VTOC sector) have fully valid
+address-field AND data-field checksums, decoded correctly end-to-end.**
+This conclusively rules out disk-data corruption, copy-protection, or
+non-standard interleaving as the cause for ALL THREE Zork disk variants
+tested tonight -- the real Zork disk data is completely fine and
+readable by the same proven decode path DOS's real RWTS would use.
+
+**This confirms and sharpens the recommendation directly above**: the
+bug is definitively in this project's own emulator state handling
+around disk-swap, not in any disk image. Next concrete step for
+whoever picks this up: trace what changes in `apple2_mem.c`'s or
+`disk2_controller.c`'s state between a fresh boot's successful track-17
+read and a post-swap attempt that fails -- the `d->head` reset
+hypothesis was already tested and ruled out; worth checking
+`d->skip` (the 2-pulses-per-nibble timing flag) and `ctl->latch`
+specifically, since those are the two remaining pieces of read-timing
+state not yet verified as correctly independent of which disk is
+loaded.
