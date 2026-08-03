@@ -23,7 +23,7 @@ CFLAGS  = -march=$(MARCH) -mabi=$(MABI) -std=c99 -Wall -Wextra -Os \
           -ffreestanding -fno-builtin -nostartfiles -g
 ASFLAGS = -march=$(MARCH) -mabi=$(MABI)
 LDFLAGS = -march=$(MARCH) -mabi=$(MABI) -nostartfiles -nostdlib \
-          -T linker.ld -Wl,-Map=$(BUILD_DIR)/baoregon.map -lgcc
+          -T linker.ld -Wl,-Map=$(BUILD_DIR)/baoregon.map
 
 SRC_DIR   = src
 BUILD_DIR = build-riscv
@@ -57,7 +57,7 @@ OBJECTS = $(patsubst $(SRC_DIR)/%.S,$(BUILD_DIR)/%.o,\
 ELF = $(BUILD_DIR)/baoregon.elf
 BIN = $(BUILD_DIR)/baoregon.bin
 
-.PHONY: all riscv-check clean-riscv
+.PHONY: all riscv-check clean-riscv reinette-qemu
 
 all: $(BIN)
 	@echo "--- Section sizes (linker.ld placement) ---"
@@ -88,3 +88,59 @@ riscv-check: $(ELF)
 
 clean-riscv:
 	rm -rf $(BUILD_DIR)
+
+# ---------------------------------------------------------------------
+# reinette-II-plus port spike (branch spike-reinette-port only): a
+# separate QEMU-only demo target, NOT part of the Baochip-1x bring-up
+# above (uses linker-qemu.ld + a live ramfb display, matching the
+# existing main_qemu_dos33boot.c/main_qemu_zork1boot.c pattern, not
+# linker.ld's ReRAM/SRAM partitioning). See NEXT_STEPS_REINETTE_SPIKE.md.
+# ---------------------------------------------------------------------
+REINETTE_BUILD_DIR = build-reinette-qemu
+REINETTE_ELF = $(REINETTE_BUILD_DIR)/baoregon-reinette.elf
+
+REINETTE_SOURCES = \
+    $(SRC_DIR)/crt0.S \
+    $(SRC_DIR)/main_qemu_reinette.c \
+    $(SRC_DIR)/reinette/puce6502_riscv.c \
+    $(SRC_DIR)/reinette/reinette_core.c \
+    $(SRC_DIR)/reinette/reinette_shim.c \
+    $(SRC_DIR)/bunnie_audio.c \
+    $(SRC_DIR)/video_apple2.c \
+    $(SRC_DIR)/lores_apple2.c \
+    $(SRC_DIR)/text_apple2.c \
+    $(SRC_DIR)/bio_display.c \
+    $(SRC_DIR)/emu_trace.c \
+    tools/ramfb_display.c
+
+REINETTE_OBJECTS = $(patsubst $(SRC_DIR)/%.S,$(REINETTE_BUILD_DIR)/%.o,\
+    $(patsubst $(SRC_DIR)/%.c,$(REINETTE_BUILD_DIR)/%.o,\
+    $(patsubst tools/%.c,$(REINETTE_BUILD_DIR)/%.o,$(REINETTE_SOURCES))))
+
+REINETTE_CFLAGS = $(CFLAGS) -Isrc -Isrc/reinette
+
+reinette-qemu: $(REINETTE_ELF)
+	@echo "--- reinette-qemu section sizes ---"
+	@$(SIZE) $(REINETTE_ELF)
+
+$(REINETTE_ELF): $(REINETTE_OBJECTS) linker-qemu.ld
+	@mkdir -p $(REINETTE_BUILD_DIR)
+	$(CC) -march=$(MARCH) -mabi=$(MABI) -nostartfiles -nostdlib \
+	    -T linker-qemu.ld -Wl,-Map=$(REINETTE_BUILD_DIR)/reinette.map -lgcc \
+	    -o $@ $(REINETTE_OBJECTS)
+
+$(REINETTE_BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(REINETTE_CFLAGS) -c -o $@ $<
+
+$(REINETTE_BUILD_DIR)/%.o: $(SRC_DIR)/reinette/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(REINETTE_CFLAGS) -c -o $@ $<
+
+$(REINETTE_BUILD_DIR)/%.o: $(SRC_DIR)/%.S
+	@mkdir -p $(dir $@)
+	$(CC) $(REINETTE_CFLAGS) $(ASFLAGS) -c -o $@ $<
+
+$(REINETTE_BUILD_DIR)/%.o: tools/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(REINETTE_CFLAGS) -c -o $@ $<
