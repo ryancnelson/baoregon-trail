@@ -948,3 +948,6 @@ real-disk-format quirks instead).
 **Housekeeping**: scratch harness and generated ROM header not
 committed (pure debugging tools, no standalone value) -- removed after
 use, working tree clean.
+
+<!-- fable-ralph-loop check-in 2026-08-02 22:18:14 -->
+**Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 631 PASS / 0 FAIL (exit 0). Commits in last ~25min: 3.
