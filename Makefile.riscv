@@ -23,7 +23,7 @@ CFLAGS  = -march=$(MARCH) -mabi=$(MABI) -std=c99 -Wall -Wextra -Os \
           -ffreestanding -fno-builtin -nostartfiles -g
 ASFLAGS = -march=$(MARCH) -mabi=$(MABI)
 LDFLAGS = -march=$(MARCH) -mabi=$(MABI) -nostartfiles -nostdlib \
-          -T linker.ld -Wl,-Map=$(BUILD_DIR)/baoregon.map
+          -T linker.ld -Wl,-Map=$(BUILD_DIR)/baoregon.map -lgcc
 
 SRC_DIR   = src
 BUILD_DIR = build-riscv
