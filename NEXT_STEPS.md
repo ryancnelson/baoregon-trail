@@ -875,3 +875,76 @@ lower-priority issue. Standing by for direction on which path to take.
 
 <!-- fable-ralph-loop check-in 2026-08-02 21:58:07 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 631 PASS / 0 FAIL (exit 0). Commits in last ~25min: 5.
+
+---
+
+## 🎯 DUKE'S DISK-SWAP/CATALOG ATTEMPT (2026-08-02 ~22:15) -- real progress, real new blocker found
+
+Independently verified fable-5/Woz's `apple2-asoft-auto.rom` finding
+(commit `723a00c`) first: fresh host-side reproduction of the real DOS
+3.3 Master boot against this ROM genuinely produces readable banner
+text ("DOS VERSION 3.3 08/25/80" / "APPLE II PLUS OR ROMCARD SYSTEM
+MASTER" / "(LOADING INTEGER INTO LANGUAGE CARD)") -- confirmed real,
+not just trusting the report.
+
+Built a host-side harness (scratch, not committed -- reused only real
+project code: `apple2_mem.c`/`cpu6502.c`/`disk2_controller.c`/
+`uart_keyboard_bridge.c`'s `apple2_mem_inject_key()` path) to attempt
+the full pivot plan:
+
+1. **Boot real DOS 3.3 Master with `apple2-asoft-auto.rom`**: reached a
+   genuine stable `]` Applesoft prompt (confirmed via screen-text
+   parse), but only after ~200M cycles, not 50M -- the real Master disk
+   pauses mid-boot at a real "DISK VOLUME 254" + keyboard-wait prompt
+   (confirmed as a real, expected Apple II Monitor ROM `RDKEY` loop at
+   `$FD1B-$FD1F`, not a bug) that needs an explicit keypress to
+   continue. Real budget for a full boot-to-prompt: comfortably over
+   150-200M cycles plus one injected RETURN.
+2. **Disk swap**: called `disk2_controller_load_nibble_disk()` again
+   with Zork I's real nibble data, same drive/slot, with NO
+   `apple2_mem_reset()`/`reset6502()` call in between -- exactly the
+   "swap floppy without resetting the machine" behavior the pivot plan
+   asked for. Mechanically this works fine (no crash, CPU state fully
+   preserved).
+3. **Typed `CATALOG` via `apple2_mem_inject_key()`**: DOS accepts the
+   command, but then hits the SAME "DISK VOLUME 254" + RDKEY-wait
+   pattern repeatedly -- sent RETURN each time it recurred (438 times
+   over 100M cycles) and it never converges to an actual file listing,
+   just keeps re-printing empty `]` prompts.
+
+**Real root-cause finding, not a guess**: independently decoded the
+GCR address fields on both disks' track 17 (where DOS 3.3's VTOC always
+lives) directly from `src/zork1_nib_disk_data.h` and
+`src/dos33_master_nib_disk_data.h` -- **both disks report the exact
+same volume number, 254** (`vol=0xFE`, checksum-verified valid on
+both). This rules out my first hypothesis (a volume-mismatch safety
+gate) -- Zork's disk really is laid out with standard DOS
+3.3-compatible track/sector/address-field structure at track 17
+(historically accurate: Infocom shipped Zork on real DOS 3.3-formatted
+media with a custom boot loader, not a fully custom disk format), and
+the volume number is not the trigger. The repeating "DISK VOLUME 254"
++ RDKEY-wait is real DOS 3.3's **generic I/O-error retry prompt**
+(happens on any RWTS read failure, not specifically volume checks) --
+meaning something else is genuinely failing when DOS's own RWTS tries
+to read a sector on the swapped-in Zork disk (track 17's VTOC sector
+itself, or whatever sector CATALOG reads next after that). Did not
+chase further into decoding the actual GCR data-field content this
+session (real work, but a new, deep sub-investigation) -- flagging
+this as the next concrete step for whoever picks this up:
+
+**Next step, precisely scoped**: decode track 17's DATA field (not just
+the address field, already confirmed valid) on both disks and diff
+them, to find whether DOS's real RWTS sector-read path chokes on
+something structurally different in Zork's VTOC data specifically (a
+plausible historical explanation: Infocom disks commonly used
+non-standard sector interleaving or intentionally scrambled/protected
+sectors beyond track 0's boot area, which would make perfect sense as
+copy protection but would also break DOS's own file manager against
+that specific disk -- worth checking against a real Zork I technical
+reference before assuming it's an emulator bug this time, given
+tonight's repeated pattern of real bugs turning out to be
+real-disk-format quirks instead).
+
+**Housekeeping**: scratch harness and generated ROM header not
+committed (pure debugging tools, no standalone value) -- removed after
+use, working tree clean.
