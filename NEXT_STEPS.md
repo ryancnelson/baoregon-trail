@@ -2527,3 +2527,127 @@ test, used, and deleted; zero residual changes to `src/disk2_controller.c`
 
 <!-- fable-ralph-loop check-in 2026-08-03 02:59:43 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 635 PASS / 0 FAIL (exit 0). Commits in last ~25min: 3.
+
+---
+
+## 🎯 BUNNIE'S WOZ DISK FORMAT SCOPING (2026-08-03 ~03:05) -- exploratory investigation, not full implementation
+
+Per Ryan's direction, investigated what real WOZ (.woz) format support
+would require: is it spec'd/documented locally, would it meaningfully
+help this project, and a rough scope estimate.
+
+### (1) Is WOZ documented/spec'd, locally or otherwise?
+
+**A real, substantial WOZ1/WOZ2 chunk parser already exists in this
+repo**: `src/woz_disk.c`/`.h` (127/56 lines), with real test coverage
+(`tests/test_woz_disk.c`, 2 tests, both passing). It parses the real
+WOZ file structure correctly: magic header validation (`WOZ1`/`WOZ2` +
+the standard `0xFF 0x0D 0x0A 0x7F` corruption-detection bytes), `INFO`
+chunk (version/disk_type/write_protected/synchronized/cleaned_read),
+`TMAP` (quarter-track-to-track-entry map), and `TRKS` (both WOZ1's
+fixed 6656-byte-per-track layout and WOZ2's block-offset-based layout),
+plus a `woz_read_bit()` accessor for raw bitstream access. The header
+comment cites the real spec source ("WOZ 1.0/2.0 format specification,
+Applesauce FD / A2-WOZ1/A2-WOZ2"). **No new external research was
+needed** -- this parser is already a correct, working implementation of
+the real, publicly-documented format (I did not re-verify every chunk
+type against the live Applesauce spec text, but the chunk IDs, magic
+bytes, and structure match real, known WOZ format conventions and the
+existing test's hand-constructed minimal image round-trips correctly).
+
+### (2) Would it meaningfully help THIS project?
+
+**Real, confirmed answer: no, not for anything encountered so far.**
+Checked what disk files this project actually uses for its 6-game
+roadmap (Oregon Trail, Taipan!, Lode Runner, Choplifter, Castle
+Wolfenstein, DOS 3.3 Master) and tonight's Zork/Lode Runner
+investigations: `tools/*.dsk` (`zork1_plain.dsk`, `zork1_dualboothelper.dsk`,
+`zork1_4amcrack.dsk`, `loderunner_4amcrack.dsk`) -- **all real `.dsk`
+files, all already 4am-preservationist CRACKS (protection removed)**,
+not `.woz` images. This session's own two major investigations (Zork's
+real stall -- confirmed a Z-machine interpreter execution question, not
+a disk-format issue; Lode Runner -- confirmed working end-to-end via
+the existing `.dsk`->`.nib` pipeline plus the real motor-spindown fix)
+were BOTH resolved using the existing nibble-based pipeline, with **zero
+WOZ-format involvement at any point**. WOZ format's real value-add is
+preserving exact flux-transition timing for disks with active
+copy-protection schemes that depend on non-standard sync patterns or
+precise bit timing (the earlier, corrected reinette cross-check found
+exactly this kind of disk -- the original, protected `~/Downloads/
+Zork_I.dsk` with its nonstandard `D5 AA BC` sync marker -- but explicitly
+established that is NOT the disk this project actually targets; the
+4am-crack versions deliberately strip that protection back to standard
+RWTS-compatible nibble encoding specifically so tools like this
+project's own `.nib`-based pipeline can boot them). **Conclusion: WOZ
+support would be a genuine "nice to have" for broader compatibility
+(e.g. if the project ever wanted to support ORIGINAL, uncracked disk
+images rather than preservationist cracks) but does not solve, or even
+touch, any of tonight's actual open questions or the current 6-game
+roadmap's real requirements.**
+
+### (3) Rough scope estimate
+
+The parser (`woz_disk.c`) is real, done, and tested -- but it is
+**completely unintegrated**: confirmed via `search_files` that no other
+`.c` file in `src/` references `woz_disk.h`/`woz_parse_image`/
+`woz_read_bit` at all. Wiring it into actual disk emulation would
+require:
+
+- **A genuinely different read/write model, not a small adapter.**
+  This project's `disk2_controller.c`/`nibble_shift()` operates on
+  whole BYTES (one nibble per real, timed access) via
+  `disk2_nibble_track_t` (byte arrays + lengths). WOZ's real format is
+  fundamentally BIT-level (`woz_read_bit()`'s own signature), matching
+  real Disk II hardware's actual shift-register behavior more precisely
+  than a byte-oriented model can. The real reference implementation
+  this project already ports from (`whscullin/apple2js`) reflects this:
+  its `WozDiskDriver.ts` (238 lines, inspected this session) is a
+  COMPLETE, SEPARATE per-cycle Logic State Sequencer bit-simulator, not
+  a variant of `NibbleDiskDriver.ts` -- different clock/state machine,
+  different softswitch dispatch, real MC3470-hardware-quirk emulation
+  ("more than 2 zero bits in a row can't be read reliably... freaks
+  out, returns 0/1 with equal probability").
+- **The real building blocks for this already exist in
+  `disk2_controller.c`, unused.** Confirmed: `SEQUENCER_ROM_16[256]`
+  (the real Logic State Sequencer ROM table, ported verbatim from
+  `disk2.ts`'s `SEQUENCER_ROM_16`, ALREADY present in this file with a
+  correct, cited header comment -- currently dead code, the exact
+  `-Wunused-const-variable` warning seen throughout tonight's builds)
+  and `PHASE_DELTA[4][4]` (already used by the existing byte-level
+  `set_phase()`, and would be reusable as-is for a bit-level driver
+  too). This means a real bit-level WOZ driver is NOT starting from
+  zero -- the sequencer ROM table, the one genuinely hardware-specific
+  piece of data it needs, is already correctly ported and sitting
+  ready.
+- **Estimated real scope**: a new `woz_disk_driver.c` (or equivalent)
+  implementing the real per-cycle LSS state machine (roughly matching
+  `WozDiskDriver.ts`'s 238 lines, likely 150-250 lines of C given this
+  project's freestanding/no-libc conventions), wired as an alternate
+  disk-backend path alongside (not replacing) the existing nibble path
+  in `apple2_mem_set_disk_controller_mode()`'s dispatch, real RED-first
+  TDD tests exercising known WOZ track bit patterns against expected
+  latch/head behavior (`tests/test_woz_disk.c` already covers the
+  PARSER; a new test file would be needed for the DRIVER/LSS logic),
+  plus a `.woz`-loading path parallel to `tools/dsk_to_nib.py`. This is
+  a real, multi-day-scale feature (not a quick add), but meaningfully
+  smaller than starting from nothing, since the parser and the ROM
+  table are both already done and correct.
+
+### Recommendation
+
+**Do not prioritize this now.** No currently-open bug, investigation,
+or roadmap item (Zork's interpreter-execution mystery, Lode Runner's
+now-confirmed-working boot, or any of the 6-game cartridge-expansion
+disks) actually needs WOZ -- they're all real `.dsk`/nibble-compatible
+already. Revisit if/when the project wants to support ORIGINAL,
+uncracked disk images (a genuinely different goal than "boot these 6
+specific games," which the existing pipeline already serves). If/when
+that need arises, the real building blocks (parser + sequencer ROM
+table) are already in place, meaningfully reducing the future
+implementation's scope.
+
+**No source changes made** -- this was scoping/research only, per the
+task's own framing. Full host suite unaffected (no files touched).
+
+<!-- fable-ralph-loop check-in 2026-08-03 02:59:43 -->
+**Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 635 PASS / 0 FAIL (exit 0). Commits in last ~25min: 3.
