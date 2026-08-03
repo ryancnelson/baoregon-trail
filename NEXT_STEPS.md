@@ -1227,3 +1227,99 @@ after use, not committed -- working tree clean.
 
 <!-- fable-ralph-loop check-in 2026-08-02 22:58:28 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 631 PASS / 0 FAIL (exit 0). Commits in last ~25min: 5.
+
+---
+
+## 🎯 DUKE'S DISK-SWAP RESEARCH (2026-08-02 ~23:55) -- DEFINITIVE ANSWER via a real technical source, with citations: this IS a real, fixable bug, not accurate 1980s hardware behavior
+
+Per Ryan's direction, researched whether real Apple II hardware would
+also hang/fail on an unprompted mid-session disk swap, using a real,
+authoritative source rather than guessing.
+
+**Source**: *Beneath Apple DOS* (Worth & Lechner), the canonical
+technical reference documenting DOS 3.3's actual disassembled RWTS
+source. Full-text PDF fetched from archive.org
+(`https://archive.org/details/beneathappledos5e1up`,
+`Beneath_Apple_DOS_5E_1Up_text.pdf`) and OCR-extracted locally via
+`pdftotext` for direct, citable full-text search (not summarized from
+memory or a secondary source).
+
+**Direct textual evidence found** (from the extracted text, chapter
+8's RWTS disassembly section):
+
+1. **`$478` is documented, in the book's own words, as RWTS's `SEEKABS`
+   routine's *software*-tracked current-track variable** -- explicitly
+   listed as both an *input* ("`$478`: Current track") and an *output*
+   ("`$2A` and `$478`: Final track") of `SEEKABS` ($B9A0-$B9FF). It is
+   NOT read from any physical position sensor -- real Disk II hardware
+   has no absolute-position feedback at all except a single optical
+   track-0 sensor, used only during the boot PROM's own
+   "recalibrate the disk arm by pulling it back to track 0 (the
+   'clacketty-clack' noise)" sequence (documented separately for the
+   boot ROM at `$C600`, not the general RWTS read path).
+
+2. **RWTS is documented to self-correct exactly this kind of mismatch**:
+   the `RDRIGHT` routine ($BDED-$BE03) explicitly "**Verifies on correct
+   track. If not[,] set correct track via `SETTRK` subroutine at `$BE95`
+   and decrement reseek count.**" -- i.e., real DOS 3.3, upon reading an
+   address field with a DIFFERENT track number than `$478` currently
+   believes, **overwrites its own `$478` belief with the real value it
+   just found on the disk**, then retries with a bounded reseek. This is
+   precisely the self-healing mechanism a real disk-swap would rely on.
+
+3. **Retries are bounded, not infinite**: the outer read loop
+   ($BDBC-$BDEC) "Initialize[s] maximum retries at 48"; the reseek path
+   allows "4" reseeks per recalibration cycle before recalibrating the
+   arm to track 0 again and trying the whole sequence over. A real,
+   documented, finite retry ladder -- not an infinite loop.
+
+**Conclusion, with real evidence, not a guess**: on real 1980s Apple II
+hardware, swapping a floppy mid-session and re-issuing a command like
+`CATALOG` **would legitimately succeed** (after some visible retry
+delay/clacking) precisely because RWTS's own `RDRIGHT`/`SETTRK` logic
+resynchronizes its `$478` belief from the real address fields it reads
+off the new disk, bounded by finite retry counts, with recalibration-
+to-track-0 as an escape hatch if things get badly desynced. **This
+means our emulator's infinite hang is a real bug in this project's own
+code, not an accurate reproduction of period-correct hardware
+behavior.**
+
+**Where the real bug most likely is, given this evidence**: `RDRIGHT`'s
+self-correction (`SETTRK`) depends on being able to *successfully read
+at least one real address field* after a seek attempt lands somewhere
+near the right track, so it can compare the found-track byte against
+its `$478` belief and correct itself. Our earlier RWTS trace
+(commit `d388a1e`) found `$478` reading `102` -- a value outside the
+entire valid `0-34` track range, which real RWTS's own `SETTRK`
+mechanism should never be able to produce (a real address field's
+track byte is always a real disk's actual encoded track number, 0-34).
+Since our own `disk2_controller.c` genuinely reads real, valid track
+data at the point of failure (confirmed in the same trace: `head`
+advances correctly, real non-garbage nibble bytes come back), the most
+likely real bug is in how many quarter-track *phase-step deltas*
+`disk2_controller.c`'s `set_phase()` reports back to RWTS's own
+seek-distance math across a swap boundary -- i.e., RWTS computes its
+*next* desired track using `$478`'s value from BEFORE the swap (stale,
+but not wrong per se) plus a seek delta based on what IT thinks
+happened, and if our controller's real quarter-track accounting (e.g.
+clamping behavior in `set_phase()`) doesn't match what a real physical
+stepper motor would have done in the same situation, RWTS's own
+internal arithmetic could produce an out-of-range `$478` that a real
+drive's physical limits would have prevented.
+
+**Recommended concrete next step for whoever picks this up**: trace
+`set_phase()`'s calls specifically during the post-swap re-seek
+sequence (not just the final resting `$478` value) to see exactly
+which phase transitions produce the runaway `102`, and compare against
+what a real 4-phase Disk II stepper motor's physical range (0-79
+half-tracks / 0-34 whole tracks, hard-clamped by both direction stops)
+would have actually done in the same sequence -- this is a real,
+fixable emulator bug in the phase-stepping/seek-distance math, not a
+period-accurate hardware limitation, and should be fixed in
+`disk2_controller.c` once pinpointed (not worked around in the
+demo/test harness).
+
+**Housekeeping**: `/tmp/beneath_apple_dos.pdf` and
+`/tmp/beneath_apple_dos.txt` are local scratch research artifacts (not
+committed, not part of the repo) -- kept at those paths in case this
+needs re-checking without re-downloading, but not durable/tracked.
