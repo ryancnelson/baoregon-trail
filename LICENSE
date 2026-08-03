@@ -52,6 +52,19 @@ purposes only:
   character glyph rendering, see `src/text_apple2.c`). Not covered by
   the MIT license above.
 
+- **`build-scratch/alt_rom_asoft_auto.h`** (and its companion
+  `.bin`) -- a C byte-array / raw binary embedding of the real Apple
+  II+ Autostart ROM (`apple2-asoft-auto.rom`, genuine Applesoft BASIC +
+  Autostart Monitor, verified authentic via chunk-by-chunk SHA1 against
+  MAME's own apple2p romset in `tools/test_alt_rom_scratch.py`). Same
+  copyright status as `roms/*.zip` / `src/charrom_342_0133_a.h` above
+  (Apple Computer, Inc. firmware) -- included only for development/
+  testing purposes (`tools/dos33boot_altrom_scratch.c`,
+  `tools/disk_swap_cycle_budget_test.c` -- both need a real, working
+  Applesoft ROM to reach a genuine "DOS VERSION 3.3" boot banner, which
+  the project's own Monitor-only `src/apple2e_system_rom.h` cannot
+  produce). Not covered by the MIT license above.
+
 - **`tools/assets/oregon_trail_title.png`** -- a screenshot of the
   original 1985 *The Oregon Trail* (MECC) Apple II title screen. Screenshots
   of this game are widely archived at [archive.org](https://archive.org)'s

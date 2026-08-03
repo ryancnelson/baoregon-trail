@@ -1499,6 +1499,97 @@ vs. a slow-but-correct DRVERR) is still genuinely open.
 
 ---
 
+## 🎯 BUNNIE'S MULTI-BILLION-CYCLE RE-TEST (2026-08-03 ~00:45) -- Duke's DRVERR-completion reframing is DISPROVEN; a real bug remains open
+
+Per Ryan's direction, directly tested the "just needs more patience"
+reframing above (the `motor=0`-at-end-of-trace observation, hypothesized
+to mean real RWTS's bounded 48-retry ladder was simply still running its
+course when prior test harnesses ran out of cycle budget).
+
+**Real test harness built**: `tools/disk_swap_cycle_budget_test.c`
+(new, committed -- genuinely reusable scratch tool, not disposable).
+Same real project code path as every prior investigation in this
+section, using the SAME confirmed-working ROM/disk combination this
+file's own "FABLE HANDOFF" section documents (`apple2-asoft-auto.rom`
+via `tools/test_alt_rom_scratch.py`'s verified-authentic composite, NOT
+`src/apple2e_system_rom.h` -- that Monitor-only ROM has no Applesoft and
+was confirmed NOT to reach the same boot banner during this session's
+initial harness draft, a real dead-end ruled out before the actual test
+below):
+  1. Boot DOS 3.3 Master to a genuine stable `]` prompt (~220,000,000
+     cycles, with one `apple2_mem_inject_key()` RETURN injected mid-boot
+     for the real, documented "DISK VOLUME 254" RDKEY-wait pause).
+     Confirmed via real screen-memory read, byte-for-byte matching this
+     file's own earlier "FABLE HANDOFF" report: "DOS VERSION 3.3
+     08/25/80" / "APPLE II PLUS OR ROMCARD SYSTEM MASTER" / "(LOADING
+     INTEGER INTO LANGUAGE CARD)" / a real `]` prompt.
+  2. `disk2_controller_load_nibble_disk()` swaps drive 0 to Zork I
+     (`tools/zork1_4amcrack.dsk`, Ryan's priority pick, freshly
+     nibblized this run via `tools/dsk_to_nib.py`) with NO
+     `apple2_mem_reset()`/`reset6502()` in between -- the real
+     disk-swap-without-reset scenario.
+  3. `apple2_mem_inject_key()` types `CATALOG` + RETURN.
+  4. Run a MUCH larger post-swap cycle budget and report the exact
+     final PC/register/disk-controller state plus a full real
+     screen-memory dump.
+
+**Real results, two independent runs**:
+  - **2,000,000,000 cycles** (10x Duke's suggested minimum multiplier
+    over the ~200M baseline): `PC=$FD1D` at cycle 0 of the post-swap
+    phase, and **still exactly `PC=$FD1D`** at every 200M-cycle
+    checkpoint all the way to the full 2B -- `drive0.track=32`,
+    `drive0.head=3750`, `motor_on=0` **identical and unchanging** across
+    all 10 checkpoints. Real wall-clock time: 6 seconds.
+  - **20,000,000,000 cycles** (Duke's suggested upper bound, 100x the
+    ~200M baseline -- a first attempt at this run silently truncated to
+    ~2.82 billion cycles due to a real `uint32_t` overflow bug in this
+    tool's own cycle counter, caught by comparing the logged final
+    cycle count against the requested one; fixed to `uint64_t` and
+    re-run at the FULL requested 20,000,000,000 cycles, confirmed via
+    the corrected log showing the exact requested count): **same exact
+    final state** -- `PC=$FD1D`, `drive0.track=32`, `drive0.head=3750`,
+    `motor_on=0`. Real wall-clock time: 55 seconds.
+
+**Screen memory in both runs**: byte-for-byte identical to the
+pre-swap DOS 3.3 boot banner ("DOS VERSION 3.3 08/25/80" / "APPLE II
+PLUS OR ROMCARD SYSTEM MASTER" / "(LOADING INTEGER INTO LANGUAGE
+CARD)" / `]` prompt) -- **no new CATALOG output, no DRVERR/error
+message, no change whatsoever** from the state immediately after the
+disk swap.
+
+**This conclusively disproves the DRVERR-completion reframing.** A
+genuinely completing bounded-retry DRVERR path would require the disk
+motor to spin back on (to attempt real reads against the newly-swapped
+Zork tracks) and real PC/register churn as RWTS works through its
+retry ladder before giving up. Neither happens, at any cycle count
+tested up to the full 20 billion (100x Duke's suggested upper bound
+over the ~200M baseline). `motor_on=0` for the ENTIRE
+post-swap run means DOS's own RWTS never even attempts a fresh read
+against the swapped-in disk at all -- it's not slowly working through
+retries, it's simply not trying.
+
+**Conclusion for whoever continues this**: there IS a real, still-open
+bug in the disk-swap scenario. It is NOT a cycle-budget/patience issue
+-- do not re-test the "just needs more cycles" theory again, it has now
+been tested at 2 billion and the FULL 20 billion cycles (versus the
+~200M baseline) with byte-identical, zero-progress results both times.
+The real open
+question is why `PC=$FD1D` (the CATALOG command's own RDKEY-wait,
+i.e. genuinely stuck waiting for keyboard input, not mid-RWTS-retry at
+all) with `motor_on=0` right after the swap+CATALOG+RETURN injection --
+this suggests CATALOG's own keyboard-input-wait code path may be
+getting hit before or instead of RWTS ever engaging the disk motor for
+the swapped-in image, which is a different failure mode than either of
+the two previously-disproven hypotheses (head-desync, sync-mark
+convergence) and worth investigating directly (e.g.: does DOS's CATALOG
+command consume the injected keystrokes correctly, or is there a
+buffering/timing issue between `apple2_mem_inject_key()` and DOS's own
+input-processing loop that causes it to never actually see "CATALOG" as
+a real command line at all?).
+
+<!-- fable-ralph-loop check-in 2026-08-03 00:18:53 -->
+**Fable's automated check-in:** POSSIBLY STALLED (no commits in ~25min). Test suite: 633 PASS / 0 FAIL (exit 0). Commits in last ~25min: 0.
+
 ## 📋 DUKE'S COMPREHENSIVE HANDOFF SUMMARY (2026-08-03 ~07:05) -- disk-swap/RWTS investigation, stopping point for tonight
 
 **Update**: Bunnie ran the exact large-cycle-budget test recommended
