@@ -2928,3 +2928,6 @@ genuine determinism, not a fluke.
 Makefile.riscv riscv-check`, exit 0). All four `run_*_qemu.sh` scripts
 build clean (`--build-only`). No source (`.c`/`.h`) changes this
 session -- documentation, tooling, and verification only.
+
+<!-- fable-ralph-loop check-in 2026-08-03 04:00:04 -->
+**Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 635 PASS / 0 FAIL (exit 0). Commits in last ~25min: 3.
