@@ -784,3 +784,39 @@ description if `/tmp` has been cleared.
 
 <!-- fable-ralph-loop check-in 2026-08-02 21:37:52 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 631 PASS / 0 FAIL (exit 0). Commits in last ~25min: 1.
+
+---
+
+## 🎯 NEW PIVOT (2026-08-02 ~21:40, Ryan's direct direction): boot Zork I via DOS 3.3's file system instead of its own boot sector
+
+Zork I's own boot-sector desync (the address-field-search "~53% miss
+rate" thread) is now understood to not be a controller bug at all --
+Woz's reference-model work closed that lead out. Rather than keep
+digging on the real remaining unknown there (post-sync-match logic),
+**Ryan proposed a smarter pivot that sidesteps the entire bug class**:
+
+DOS 3.3 already boots successfully through the composed system
+(confirmed, byte-verified this session). Use DOS 3.3 as the bootstrap
+instead of Zork's own boot sector:
+1. Boot DOS 3.3 (the already-working code path).
+2. Simulate a disk swap: unmount the DOS 3.3 disk image, mount the
+   Zork I disk image in its place (same drive/slot), without resetting
+   the machine -- exactly what real Apple II users did constantly.
+3. Drive DOS 3.3's own `CATALOG` routine to list Zork's files (proves
+   DOS's sector-read path works against the Zork disk's real filesystem
+   structure) -- first checkpoint, should produce a real, verifiable
+   file listing.
+4. `BRUN`/`EXEC` the main Zork binary via DOS's own file-loading
+   routines (RWTS-via-DOS's file-system layer), **not** Zork's own
+   boot-sector code.
+
+New short-term demo goal: **"boot the Zork floppy via DOS"** (not via
+Zork's own boot sector). This is a genuinely clean idea -- DOS's
+sector-read path is architecturally separate from and already proven
+distinct from Zork's own boot-sector code, so it should never trip the
+same unresolved bug.
+
+Dispatched to Duke (owns the most context on `disk2_controller.c` and
+Zork's real disk layout from tonight's investigation). Real checkpoint
+to look for: a genuine `CATALOG` listing showing Zork I's actual
+filenames, verified via memory dump or screenshot -- not a claim.
