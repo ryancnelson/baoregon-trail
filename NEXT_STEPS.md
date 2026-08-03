@@ -775,3 +775,6 @@ description if `/tmp` has been cleared.
 
 <!-- fable-ralph-loop check-in 2026-08-02 20:37:33 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 631 PASS / 0 FAIL (exit 0). Commits in last ~25min: 1.
+
+<!-- fable-ralph-loop check-in 2026-08-02 20:57:39 -->
+**Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 631 PASS / 0 FAIL (exit 0). Commits in last ~25min: 1.
