@@ -1230,6 +1230,98 @@ after use, not committed -- working tree clean.
 
 ---
 
+## 🎯 BUNNIE'S LODE RUNNER RE-TEST WITH REAL apple2-asoft-auto.rom (2026-08-03 ~01:25) -- progresses PAST the harness BRK-vector artifact into real code, but hits a NEW, genuine, non-harness stall
+
+Per Ryan's direction, retested Duke's Lode Runner prep with the real
+`apple2-asoft-auto.rom` (the same verified-authentic Apple II+
+Autostart ROM used for the DOS 3.3 Master boot work, genuine BRK/IRQ
+vector table) instead of the minimal all-`0x60` stub ROM, to see if
+Lode Runner's boot code progresses past `$6060` into genuine gameplay
+code.
+
+**Real test harness built**: `tools/loderunner_altrom_boot.c` (new,
+committed -- genuinely reusable). Loads `tools/loderunner_4amcrack.dsk`
+(nibblized fresh via `tools/dsk_to_nib.py`), boots via the real Disk II
+boot PROM at `$C600` (same calling convention as every other boot
+harness in this project: A=X=0x60), using `apple2-asoft-auto.rom` via
+`build-scratch/alt_rom_asoft_auto.h`.
+
+**Real result -- progresses further than the stub-ROM test, then hits
+a genuinely different, real stall**:
+  - Confirmed via instruction-level trace (single-`exec6502(1)`-step
+    loop, not just periodic sampling) that the boot PROM at `$C600`
+    executes correctly: real `$FF58` (IORST) call, real `$FCA8` (WAIT)
+    delay loop genuinely consuming ~627,000 cycles (the real ROM has
+    working code there, unlike the stub), real GCR sync/address-field
+    decode through `$C65E-$C6DA` (matches Duke's original disk-read
+    observations).
+  - **Never reaches `$6060` at all this time** -- the real ROM's boot
+    PROM code diverges from the stub-ROM path before that point,
+    jumping instead to `$0801` (a different RAM load address) then
+    into real ROM code at `$F87B`/`$F881` (Applesoft/Monitor entry
+    points), then executing a substantial real zero-page
+    unpacker/bootstrap sequence (`$0800-$0899`, then `$0000-$0044`)
+    that performs real GCR sync-byte comparisons (`CMP #$D5`,
+    `CMP #$AA` -- genuine Apple II disk sync-byte values, not
+    arbitrary). This is REAL forward progress past Duke's original
+    stall point, confirming the harness-artifact fix has an effect.
+  - **New stall found, confirmed via instruction-level trace, not
+    guessed**: at cycle 1,251,362, the code (now executing at `$00D2`
+    in zero page) calls into the real ROM's `$FE89` (SETKBD) and
+    `$FE93` (SETVID) -- legitimate real Monitor ROM keyboard/video
+    re-initialization calls, consistent with a boot loader finishing
+    its work and preparing to hand off to the actual program/title
+    screen. Immediately after returning from these calls, at PC=`$00D5`,
+    **the disk motor turns OFF** (`ctl->motor_on` flips `1→0`,
+    confirmed via direct controller-state inspection at the exact
+    cycle). The code at `$00D2-$00D9` disassembles to a real
+    `LDA $C0E8` / `LDA $C0EC` / `BPL $00D5` sequence -- a genuine Disk
+    II nibble-read polling loop (matches `nibble_shift()`'s own
+    documented bit-7-set-on-shift-in cadence). With the motor off,
+    `nibble_shift()` (per its own real code) always returns latch=0
+    (bit 7 clear), so this `BPL` branch is taken forever -- a real,
+    permanent spin, not a timing/budget artifact.
+  - **Confirmed with a real, large cycle budget, not assumed**: ran to
+    5,000,000,000 cycles (using the `disk_swap_cycle_budget_test.c`-style
+    uint64_t cycle counter to avoid the earlier overflow bug class) --
+    `PC=$00D8`, `motor_on=0` **completely unchanged** from cycle
+    ~1,251,362 all the way to the full 5 billion. Real wall-clock time:
+    15 seconds. Screen memory (Page 1, `$0400`) remains **completely
+    blank** the entire run -- no title screen, no text, nothing.
+
+**Honest assessment**: this is a REAL, DIFFERENT bug from Duke's
+original BRK-vector harness artifact -- confirmed progress past that
+specific issue, but a new genuine stall found. The motor-off timing
+here looks like it could be either (a) a real `disk2_controller.c`
+motor-state bug specific to this exact access pattern (worth comparing
+against the DOS 3.3/Zork investigation's own motor-toggle-during-read
+findings above), or (b) Lode Runner's own crack code intentionally
+turning the motor off as part of a real multi-phase load sequence that
+this project's emulator doesn't yet correctly resume from (e.g. if real
+hardware expects a subsequent access to `$C0E9` (motor-on) to happen
+via a code path this trace didn't yet reach, or if a soft-switch access
+this trace passed through should have kept the motor on but didn't).
+**Not yet root-caused to one specific line of `disk2_controller.c` or
+one specific 4am-crack instruction** -- this needs either a real 6502
+disassembly of the exact `$0000-$00FF` bootstrap code (per-instruction,
+not just spot-checked bytes) or a comparison against a known-good
+reference emulator's own execution trace at this exact point, neither
+of which was done yet given time constraints this session.
+
+**No screenshot/title-screen proof obtained** -- per this task's own
+"don't overclaim without a screenshot or memory dump" instruction, this
+is reported as a genuine partial-progress + new-blocker finding, NOT a
+completed boot. Screen memory dump (real, direct read, not assumed)
+confirms zero visible content at any point in this run.
+
+**Housekeeping**: scratch fine-grained trace harnesses used for this
+investigation (`/tmp/loderunner_finetrace*.c`, `/tmp/loderunner_disasm*.c`,
+`/tmp/loderunner_motor_trace*.c`) were `/tmp`-scoped throwaway tools,
+removed after use, not committed -- only the reusable
+`tools/loderunner_altrom_boot.c` harness itself is committed.
+
+---
+
 ## 🎯 DUKE'S DISK-SWAP RESEARCH (2026-08-02 ~23:55) -- DEFINITIVE ANSWER via a real technical source, with citations: this IS a real, fixable bug, not accurate 1980s hardware behavior
 
 Per Ryan's direction, researched whether real Apple II hardware would
