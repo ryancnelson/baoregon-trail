@@ -1724,3 +1724,6 @@ proving the controller's read pipeline is correct at the layers tested
 whoever continues from repeating already-disproven hypotheses. The
 disk-swap CATALOG/BRUN stretch-goal demo itself remains unresolved and
 is the honest, clearly-documented state to hand off.
+
+<!-- fable-ralph-loop check-in 2026-08-03 01:19:09 -->
+**Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 633 PASS / 0 FAIL (exit 0). Commits in last ~25min: 2.
