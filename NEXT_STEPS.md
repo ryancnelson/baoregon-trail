@@ -2654,3 +2654,96 @@ task's own framing. Full host suite unaffected (no files touched).
 
 <!-- fable-ralph-loop check-in 2026-08-03 03:19:49 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 635 PASS / 0 FAIL (exit 0). Commits in last ~25min: 2.
+
+---
+
+## 🎯 DUKE'S LODE RUNNER STRETCH-GOAL-EXTENSION DEMO (2026-08-03 ~10:15) -- real QEMU boot + live gameplay screenshot, second working demo alongside DOS 3.3
+
+Per Ryan's direction to polish tonight's confirmed Lode Runner win into
+a durable, first-class demo (matching `main_qemu_dos33boot.c`/
+`main_qemu_zork1boot.c`'s pattern), rather than leaving it as scratch
+tools in `tools/`.
+
+**Real blocker found and fixed**: the project's own committed, real
+Apple IIe ROM (`src/apple2e_system_rom.h`, used successfully by the
+DOS33/Zork boot targets) genuinely crashes on Lode Runner's boot
+sector -- confirmed via real host-side instruction tracing, not
+assumption: Lode Runner's boot code (loaded and running from RAM,
+entered directly at `$C600`) calls into the ROM's own `$C3EB`
+subroutine at `$E33E`, then executes `JMP ($03ED)` (indirect) at
+`$E3D9` expecting that subroutine to have set up a real vector there.
+It never does in our emulation (`$03ED/$03EE` = `0x00/0x00`), so
+execution jumps to `$0000` within ~2300 cycles -- well before any disk
+read even happens. This is NOT a `disk2_controller.c` bug (confirmed:
+the crash is 100% ROM/CPU-layer, before the disk controller is
+touched at all) -- it's a genuine incompatibility between Lode
+Runner's boot-sector code and the real Apple IIe Monitor-only ROM's
+reset/vector-table conventions.
+
+**Real fix, not a workaround**: tonight's earlier confirmation
+(`88a54e0`) used `apple2-asoft-auto.rom` (the real Apple II+ Autostart
+ROM) via `build-scratch/alt_rom_asoft_auto.h` -- a *scratch-only*,
+gitignored-equivalent header, not reproducible from a fresh clone.
+Traced its real source to `~/devel/retrobios/bios/Apple/Apple
+II/apple2-asoft-auto.rom` (a real local file, already used by
+`tools/test_alt_rom_scratch.py`'s own SHA1-verified extraction) and
+promoted it to a **first-class, committed, reproducible asset**:
+`tools/extract_apple2_autostart_rom.py` (mirrors
+`tools/extract_apple2e_system_rom.py`'s rigor -- same 6-chunk SHA1
+verification against MAME's real apple2p romset) generates
+`src/apple2_autostart_rom.h`, now committed alongside the ROM `.zip`s
+and other ROM headers per the existing `LICENSE` convention. Verified
+directly: this real ROM, used **unpatched** (no COUT/monitor-entry
+stubs needed -- real Apple II+ hardware has no ROM at `$C000-$CFFF`
+at all, matching the ROM's own zero-filled region there), boots Lode
+Runner cleanly through the exact same host-side HGR-dump test that
+originally confirmed success (`nonzero_bytes=7680/7680, all_same=0`).
+
+**New first-class QEMU target**: `src/main_qemu_loderunner.c` (mirrors
+`main_qemu_zork1boot.c`'s structure exactly -- `emu_trace`, UART
+keyboard bridge, `bio_display`/`ramfb` live frame pushing, 1-billion-
+cycle initial boot budget matching the host confirmation's real
+threshold, then an interactive loop), embedding
+`src/loderunner_nib_disk_data.h` (generated from
+`tools/loderunner_4amcrack.dsk` via the project's own
+`tools/dsk_to_nib.py` + `tools/gen_nib_disk_header.py`, same real
+pipeline as every other boot target). New `tools/run_loderunner_qemu.sh`
+build/run script (mirrors `tools/run_ramfb_qemu_test.sh`'s real
+cross-compile pattern: `riscv64-elf-gcc -march=rv32imac -mabi=ilp32`,
+`linker-qemu.ld`) -- supports `--build-only` and `--cocoa` (real
+windowed display) modes.
+
+**Real, live QEMU verification, not just the host harness**: built via
+the new script, ran under real `qemu-system-riscv32 -M virt -bios none
+-device ramfb`, confirmed via the real serial `emu_trace` heartbeat
+log that execution proceeds correctly through real, varied PC
+addresses (matching the same game-loop pattern the host test showed)
+for 300M+ real RISC-V cycles with zero crash/stall, `ramfb initialized`
+succeeding cleanly.
+
+**Real screenshot captured and independently verified**: launched with
+`-display cocoa`, captured via Hammerspoon (`hs.window` targeting the
+real `qemu-system-riscv32` process specifically -- an earlier attempt
+accidentally snapshotted a stale Preview.app window with "qemu" in its
+filename instead of the live QEMU window; caught and corrected before
+treating it as evidence). `vision_analyze` on the corrected screenshot,
+without being told what game this was, independently identified:
+"platforms... ladders (made of parallel lines with rungs)... character
+sprite... vintage 2D platform/climbing game... similar to *Lode
+Runner*" -- exactly matching the earlier, independent HGR-dump
+confirmation from tonight's original investigation. Saved durably to
+`docs/screenshot_loderunner_qemu_gameplay.png` (not `/tmp`).
+
+**Verification**: full host suite green (`make test`, exit 0, zero
+`FAIL:`) and RISC-V cross-compile placement check green (`make -f
+Makefile.riscv riscv-check`, exit 0) both before and after. `LICENSE`
+updated to document the promoted ROM asset's copyright status
+alongside the existing `roms/*.zip`/`charrom`/`alt_rom_asoft_auto`
+entries it supersedes.
+
+**Result**: Lode Runner is now a second, real, durable,
+stretch-goal-extension demo alongside DOS 3.3 -- reproducible from a
+fresh clone (given the same local `apple2-asoft-auto.rom` +
+`loderunner_4amcrack.dsk` source files, consistent with how every
+other disk/ROM asset in this project works), with a real committed
+entry point, build script, and live-gameplay screenshot evidence.

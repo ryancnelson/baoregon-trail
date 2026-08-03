@@ -11,15 +11,10 @@
 #include "../src/apple2_mem.h"
 #include "../src/cpu6502.h"
 #include "../src/disk2_controller.h"
-#include "../build-scratch/alt_rom_asoft_auto.h"
-
-#define SYSTEM_ROM_SIZE 16384
-static uint8_t g_system_rom[SYSTEM_ROM_SIZE];
+#include "../src/apple2_autostart_rom.h"
 
 static void init_system_rom(void) {
-    for (int i = 0; i < SYSTEM_ROM_SIZE; i++) {
-        g_system_rom[i] = g_alt_rom_asoft_auto[i];
-    }
+    apple2_mem_load_system_rom(g_apple2_autostart_rom);
 }
 
 static int load_nib_tracks(const char *dir, disk2_nibble_track_t tracks[DISK2_MAX_TRACKS]) {
@@ -57,7 +52,6 @@ int main(int argc, char **argv) {
     apple2_mem_reset();
     reset6502();
     init_system_rom();
-    apple2_mem_load_system_rom(g_system_rom);
     apple2_mem_set_disk_controller_mode(APPLE2_MEM_DISK_CONTROLLER_DISK2);
     disk2_controller_t *ctl = apple2_mem_get_disk2_controller();
     disk2_controller_load_nibble_disk(ctl, 0, tracks, 0);

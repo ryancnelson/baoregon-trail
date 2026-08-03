@@ -52,18 +52,22 @@ purposes only:
   character glyph rendering, see `src/text_apple2.c`). Not covered by
   the MIT license above.
 
-- **`build-scratch/alt_rom_asoft_auto.h`** (and its companion
-  `.bin`) -- a C byte-array / raw binary embedding of the real Apple
-  II+ Autostart ROM (`apple2-asoft-auto.rom`, genuine Applesoft BASIC +
-  Autostart Monitor, verified authentic via chunk-by-chunk SHA1 against
-  MAME's own apple2p romset in `tools/test_alt_rom_scratch.py`). Same
-  copyright status as `roms/*.zip` / `src/charrom_342_0133_a.h` above
-  (Apple Computer, Inc. firmware) -- included only for development/
-  testing purposes (`tools/dos33boot_altrom_scratch.c`,
-  `tools/disk_swap_cycle_budget_test.c` -- both need a real, working
-  Applesoft ROM to reach a genuine "DOS VERSION 3.3" boot banner, which
-  the project's own Monitor-only `src/apple2e_system_rom.h` cannot
-  produce). Not covered by the MIT license above.
+- **`src/apple2_autostart_rom.h`** (promoted from the earlier
+  scratch-only `build-scratch/alt_rom_asoft_auto.h`/`.bin`) -- a C
+  byte-array embedding of the real Apple II+ Autostart ROM
+  (`apple2-asoft-auto.rom`, genuine Applesoft BASIC + Autostart
+  Monitor, verified authentic via chunk-by-chunk SHA1 against MAME's
+  own apple2p romset in `tools/extract_apple2_autostart_rom.py`, the
+  same verification `tools/test_alt_rom_scratch.py` originally used).
+  Same copyright status as `roms/*.zip` / `src/charrom_342_0133_a.h`
+  above (Apple Computer, Inc. firmware) -- included only for
+  development/testing purposes. Required by `src/main_qemu_loderunner.c`
+  specifically: the project's own Monitor-only `src/apple2e_system_rom.h`
+  (used successfully by the DOS33/Zork boot targets) crashes on Lode
+  Runner's real boot-sector code, which makes a real `JMP` (indirect)
+  through a low-memory vector only the real Autostart ROM's own
+  reset/vector-table conventions satisfy (see NEXT_STEPS.md for the
+  full diagnosis). Not covered by the MIT license above.
 
 - **`tools/assets/oregon_trail_title.png`** -- a screenshot of the
   original 1985 *The Oregon Trail* (MECC) Apple II title screen. Screenshots
