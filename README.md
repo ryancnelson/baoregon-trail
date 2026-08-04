@@ -8,6 +8,15 @@
 
 > **Goal:** get **The Oregon Trail** running natively on the **Baochip-1x** open-silicon RISC-V SoC for the DEF CON 34 badge. We're not there yet — this is a work in progress.
 
+> 🧩 **We're stuck on a real puzzle and could use outside eyes:** Zork I's
+> Z-machine interpreter boots and runs genuine, correct code from disk —
+> but never prints anything to the screen, and we've ruled out every
+> obvious cause (disk-read bugs, CPU bugs, retry loops, keyboard-input
+> blocking, timing-model issues). Full writeup, what we've ruled out, and
+> what we haven't tried yet: **[Issue #1](../../issues/1)**. If you know
+> Zork's Apple II internals or 6502 Z-machine interpreters, we'd love
+> your take.
+
 ---
 
 ## 🌲 Overview
@@ -76,36 +85,55 @@ Nothing here has run on real Baochip-1x silicon yet — hardware is
 expected soon. What follows is what's actually been built and tested so
 far, host-native and under QEMU only.
 
-581 tests passing (host-native C test suite, `make test`), including a
+635 tests passing (host-native C test suite, `make test`), including a
 full pass of the industry-standard **Klaus Dormann 6502 functional test
 suite** against our own from-scratch CPU core.
 
-**What's actually been tested so far:**
-- 6502 CPU core: passes the Klaus Dormann reference suite (~30.6M
-  simulated instructions) — a good sign, not a guarantee it's bug-free
-- Apple II memory map + soft-switch dispatch: tested against real DOS 3.3
-  boot sequences
-- Hi-Res video decode + NTSC color-artifact rendering: tested, and
-  exercised end-to-end by converting and rendering a real 1985 Apple II
-  title screen (see screenshot below) — on the host, not on target
-  hardware
-- RISC-V cross-compile for the Baochip-1x target (rv32imac/ilp32): builds
-  clean, correct memory placement (verified via
-  `tools/check_linker_placement.py`) — untested on real hardware
-- Runs as compiled RISC-V machine code under **QEMU's generic `virt`
-  machine** (`-M virt`): confirmed via live CPU register inspection
-  (non-zero PC/SP, not stuck at reset) and a byte-exact memory dump of
-  the emulated Apple II screen after execution. QEMU's `virt` machine
-  does not model Baochip-1x's actual peripherals (ReRAM, BIO
-  coprocessors, display) — this only verifies the core emulator logic
-  runs correctly as RISC-V code, not that it works on the real chip
+### ✅ Real wins, verified live on QEMU's `ramfb` display
+
+**Apple DOS 3.3 boots and shows its real banner text**, live, on the
+emulated RISC-V target under QEMU:
+
+![DOS 3.3 boot banner, live on QEMU ramfb](docs/screenshot_dos33_boot_text_fixed_zoomed.png)
+
+**Lode Runner boots into real, playable-looking Hi-Res graphics** — an
+actual 4am-preservationist-cracked disk image, verified twice
+independently via `vision_analyze` *without being told what the game
+was* (it correctly identified ladders, brick platforms, and a character
+sprite matching Lode Runner from the pixels alone):
+
+![Lode Runner gameplay, live on QEMU ramfb](docs/screenshot_loderunner_qemu_gameplay.png)
+
+Both of the above are running as compiled RISC-V machine code under
+**QEMU's generic `virt` machine** (`-M virt`), through our own
+from-scratch 6502 CPU core, Apple II memory map, Disk ][ nibble/GCR
+controller, and `ramfb` display driver — confirmed via live screen
+memory reads and screenshots, not assumptions. QEMU's `virt` machine
+doesn't model Baochip-1x's actual peripherals (ReRAM, BIO coprocessors,
+real display), so this verifies the emulator logic itself is correct,
+not that it works on the real chip yet.
+
+There's also a separate, independent reference implementation
+([reinette-II-plus](https://github.com/ArthurFerreira2/reinette-II-plus),
+vendored MIT-licensed) cross-compiled to RISC-V and booted under QEMU
+for cross-checking our own emulator's correctness — see
+`NEXT_STEPS.md`'s status summary for details.
+
+### 🧩 Open puzzle: Zork I
+
+Zork I's real Z-machine interpreter boots and runs genuine, correct
+6502 code from disk, but never prints anything to the screen within any
+cycle budget tested so far. We've ruled out disk-read bugs, CPU bugs,
+retry loops, and keyboard-input blocking with real evidence — see
+**[Issue #1](../../issues/1)** for the full writeup and an open call
+for ideas.
 
 **What's still ahead, and still unverified:** real Baochip-1x hardware
 bring-up — BIO Core display-DMA firmware, real button/display wiring,
 and confirming the memory map/timing assumptions above actually hold on
 silicon. The software side is further along than the hardware
-integration; treat everything above as "looks right in simulation," not
-"works on the badge."
+integration; treat everything above as "looks right in simulation, and
+now boots real 1980s software," not "works on the badge."
 
 ### Screenshot
 
