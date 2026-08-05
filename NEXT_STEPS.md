@@ -3390,3 +3390,6 @@ session -- documentation, tooling, and verification only.
 
 <!-- fable-ralph-loop check-in 2026-08-05 07:19:24 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 635 PASS / 0 FAIL (exit 0). Commits in last ~25min: 1.
+
+<!-- fable-ralph-loop check-in 2026-08-05 07:39:31 -->
+**Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 635 PASS / 0 FAIL (exit 0). Commits in last ~25min: 1.
