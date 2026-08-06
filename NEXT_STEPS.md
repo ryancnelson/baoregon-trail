@@ -3904,3 +3904,36 @@ migration when someone picks it up: `linker.ld`,
 `linker-qemu.ld`'s explanatory comment (QEMU's own RAM base,
 `0x80000000`, is unaffected and correct). Full host suite/RISC-V
 cross-compile unaffected (no `.c`/`.h`/`.ld` files touched).
+
+---
+
+## 🚩 UNRESOLVED CONFLICT (2026-08-03, Woz) -- 10B-cycle Zork test result appears to contradict Duke's track-7 progress finding; flagged, NOT reconciled this session
+
+See `NEXT_STEPS_ZORK_10B_CYCLE_CONFLICT.md` for the full writeup. Short
+version: ran a disposable host harness against Zork I's real boot
+sector for 10,000,000,000 cycles (20x the largest prior test in this
+thread) and observed every logged PC value staying within
+`$254F-$2603` for the entire run -- but that harness's PC logging was
+gated on screen-memory-checksum changes only, not unconditional
+periodic sampling, which is a real limitation given Duke's separate
+finding (earlier in this file) that the interpreter runs long stretches
+of real code without touching screen memory at all.
+
+This result, taken at face value, conflicts with Duke's
+already-documented finding that the boot progresses through real track
+seeks 0-10 and then executes genuine, non-repeating interpreter code
+past track 7. This session hit repeated compaction cycles specifically
+trying to reconcile the two findings, which creates real accuracy risk
+per this tool's own degraded-context warning -- rather than keep
+digging and risk a confidently-wrong "resolution," both results are
+recorded here honestly as-is, with the conflict explicit, for a
+fresh-context session to re-verify.
+
+**Concrete next step**: rerun a single test harness with
+UNCONDITIONAL periodic PC sampling (not gated on screen-memory
+changes) at fine granularity (e.g. every 10M cycles) over a 500M-1B
+cycle budget, using the same ROM/disk setup as Duke's comparison
+harness, to determine definitively whether the boot ever leaves
+`$254F-$2603`. Do not assume either prior result is correct without
+this direct re-verification.
+
