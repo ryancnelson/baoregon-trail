@@ -82,6 +82,21 @@ dependency" plan is directly supported by this path.
   See "DUKE'S REINETTE-VS-OURS BOOT COMPARISON" and the two entries after
   it for full detail.
 
+### 📋 Queued (dispatched 2026-08-06 ~14:11, not yet landed)
+
+- **Renode platform for the real Baochip-1x.** Tracked durably as
+  [GitHub issue #2](https://github.com/ryancnelson/baoregon-trail/issues/2)
+  -- see that issue for full scope. Short version: build a Renode
+  platform for the *real* Baochip-1x (the existing `xous-core` Renode
+  support in `utralib/renode/renode.svd` is Precursor-only, wrong chip
+  entirely), scoped to screen/GPIO-buttons/possibly USB-UART or
+  WiFi-Bluetooth *if verified as real SoC peripherals* -- explicitly
+  NOT full BIO-coprocessor emulation (already covered by `bio-sim` at
+  higher fidelity). Bar is a real, visible MVP demo (console output at
+  minimum), not just scoping docs, plus verified macOS Apple Silicon
+  setup instructions and a README update once something works.
+  Dispatched to Duke (lead) with Bunnie/Woz available to split work.
+
 ### 🚫 Explicitly ruled out / abandoned (see cited entries below for full evidence)
 
 - **DOS-3.3-bootstraps-Zork approach** (booting Zork I via a DOS 3.3
@@ -3996,3 +4011,55 @@ old, wrong addresses.
 
 <!-- fable-ralph-loop check-in 2026-08-06 14:11:38 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 635 PASS / 0 FAIL (exit 0). Commits in last ~25min: 1.
+
+## 🎯 RYAN'S DIRECTIVE: RENODE PLATFORM FOR REAL BAOCHIP-1X (2026-08-06 ~14:11) -- dispatched to Duke, tracked as GitHub issue #2
+
+Per Ryan's direction, following up on the memory-map fix and the
+bare-metal-vs-Xous investigation above: the existing `xous-core`
+Renode support (`utralib/renode/renode.svd`, `emulation/soc/
+betrusted-soc.repl`, etc.) targets the **older Precursor chip**, not
+Baochip-1x -- confirmed by inspection, its peripherals live at
+Precursor's addresses (`0xF0000000` REBOOT, `0xF0001000` timer, etc.),
+nothing matching the real Baochip-1x addresses this project's own
+memory-map fix found (`0x60000000` ReRAM, `0x50124000` BIO_BDMA, etc.).
+So there's no ready-made Baochip-1x Renode platform anywhere to boot
+against.
+
+**Why this is worth doing** (same "before hardware arrives" logic as
+the memory-map fix and `bio-sim` check above): Renode does real
+register-level peripheral emulation at the real addresses. Unlike
+QEMU's generic `virt` machine, it would have caught the SRAM/ReRAM-
+controller address collision bug (the `144dd81` fix above)
+automatically at runtime -- a genuinely better safety net than the
+manual 3-source cross-check that was needed to find it this time.
+
+**Scope** (full detail in
+[GitHub issue #2](https://github.com/ryancnelson/baoregon-trail/issues/2),
+kept as the canonical durable spec):
+
+1. Run Renode's `svd2repl` against the real `bao1x_peri.svd` to
+   generate a base platform -- expect many `// Unrecognized
+   peripheral` stubs, same as Precursor's own `betrusted-soc.repl` has.
+2. Minimal `.resc` to boot this project's bare-metal ELF at the
+   corrected `0x60000000` instead of Xous's kernel-loading script.
+3. **Real, visible MVP demo required** -- at minimum console/UART
+   output, ideally something on the modeled screen. Not just scoping
+   docs.
+4. Real macOS Apple Silicon setup instructions, verified against
+   Renode's actual current support status, not assumed.
+5. README update once something real works.
+
+**Explicitly in scope**: screen/display, GPIO buttons, possibly USB
+UART or WiFi/Bluetooth *only if verified as real Baochip-1x SoC
+peripherals* (not badge-board add-ons, not BIO-routed).
+**Explicitly out of scope**: full BIO-coprocessor behavioral emulation
+inside Renode -- bigger, more speculative than register/memory
+mapping, and already covered at higher fidelity by the existing
+`bio-sim` Verilator RTL simulator (`bio-sim-tests/`). Don't reinvent
+that here.
+
+**Status**: dispatched to Duke as lead (freshest context from the
+memory-map work), Bunnie/Woz available to split work if needed. Not
+yet started as of this entry -- checking `.file-locks/` before this
+edit landed found it empty, so no conflicting in-progress work on this
+file at dispatch time.
