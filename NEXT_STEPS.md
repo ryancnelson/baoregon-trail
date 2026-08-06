@@ -3651,3 +3651,65 @@ session -- documentation, tooling, and verification only.
 
 <!-- fable-ralph-loop check-in 2026-08-06 12:30:57 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 635 PASS / 0 FAIL (exit 0). Commits in last ~25min: 1.
+
+---
+
+## 🎯 DUKE'S BIO-SIM REAL-WORLD CHECK (2026-08-03 ~11:15) -- real, working RTL simulation of the Baochip-1x BIO coprocessor, confirmed end-to-end before hardware arrives
+
+Per Ryan's DEF CON 34 badge-page info drop, took a real, concrete look
+at `github.com/baochip/bio-sim` (open-source Verilator RTL simulation
+of the real BIO coprocessor) since it's directly relevant to this
+project's own `bunnie_audio.c`/`bio_display.c` BIO-core plans and is
+usable right now, before physical Baochip-1x hardware arrives.
+
+**Real, verified result: it works, end-to-end, in this environment.**
+Cloned fresh (`/tmp/bio-sim-check`, not part of this repo -- a separate
+upstream project, not vendored here). `verilator` (5.050) was already
+installed; the only real blocker was a missing `lz4` link path for
+FST waveform tracing (`brew` had it installed but not on the default
+search path) -- fixed by passing explicit `-I`/`-L` flags to the
+project's own `make build`. The full RTL (real PicoRV32-derived BIO
+core + BDMA + AXI-Lite crossbar, `~10 MB` of SystemVerilog/Verilog
+sources across 127 modules) compiled clean via Verilator, and
+`build/bio_sim configs/smoke.jsonc` ran a real self-test against a
+live register read: `sfr_cfginfo @0x04 = 0x10000408 (expect
+0x10000408) -> PASS`.
+
+**Full pipeline confirmed, not just the simulator shell**: the
+project's own C-to-BIO-assembly toolchain (Zig + a Rust-asm generator,
+`sw/clang2rustasm.py`) needed `ziglang` (installed cleanly via a
+throwaway venv -- this profile's system Python is PEP-668-locked, same
+as this repo's own toolchain notes). Built the real `sw/blink/main.c`
+example (`zig build -Dmodule=blink` -> real 10-instruction, 40-byte
+RISC-V machine code, `blink.bin`), loaded it into the RTL sim via
+`configs/blink.jsonc`, and watched genuine, correctly-timed GPIO
+toggling in the simulator's own monitor output (`gpio_out[21]: 0 -> 1`
+/ `1 -> 0`, oscillating at a consistent real cycle interval) -- a real
+LED-blink program, compiled from real C, executing correctly on a
+cycle-accurate simulation of the actual silicon's BIO coprocessor.
+
+**Why this matters for this project specifically**: whoever picks up
+BIO-core display/audio work (per `bunnie_audio.c`/`bio_display.c`'s
+existing host-side-only implementations) can now write real BIO
+assembly/C, compile it with this exact toolchain, and verify it
+against a real, open-source RTL simulation of the actual target
+silicon -- catching real hardware-timing/register-map bugs before
+physical Baochip-1x boards arrive, rather than discovering them during
+hardware bring-up. The `sw/README.md`'s documented erratum (two real
+PicoRV32 decoder bugs -- "phantom rs1"/"phantom rs2", both
+transparently patched by the C-to-asm toolchain but real footguns for
+anyone hand-writing BIO assembly) are directly relevant if this
+project ever hand-codes BIO routines instead of going through the C
+path.
+
+**Scope note**: this was a real-world feasibility check per Ryan's
+"worth a look if anyone has free cycles" framing, not a permanent
+integration -- `bio-sim` is a separate upstream repo (`baochip/bio-sim`),
+not vendored into this repo, and no source files in this repo were
+touched. If/when this project's own BIO-core work needs real hardware-
+timing verification, the concrete next step is: clone `bio-sim`
+alongside this repo (or as a submodule, per whoever picks this up's
+preference), install `ziglang` via a venv (`python3 -m venv
+<dir> && <dir>/bin/pip install ziglang`, works around PEP 668), and
+`brew install lz4` + point Verilator's build at its include/lib paths
+if FST tracing is wanted.
