@@ -3862,3 +3862,45 @@ touched).
 
 <!-- fable-ralph-loop check-in 2026-08-06 13:11:15 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 635 PASS / 0 FAIL (exit 0). Commits in last ~25min: 2.
+
+---
+
+## 🎯 DUKE'S REAL MEMORY-MAP DIFF (2026-08-06 ~13:15) -- ReRAM/SRAM base addresses are wrong, real conflict found
+
+Per Ryan's go-ahead to start real hardware-prep work now, diffed this
+project's assumed memory map (`linker.ld`: ReRAM @ `0x20000000`, SRAM
+@ `0x40000000`) against the REAL Baochip-1x chip's actual documented
+addresses, cross-checked across three independent, authoritative
+sources (the real `baochip/baochip-1x` LiteX SoC source, the real
+`ci.betrusted.io/bao1x-cpu/` CPU bus docs, and the real Xous OS's own
+generated `bao1x.rs` hardware header) -- all three agree exactly.
+
+**Real finding: our base addresses are wrong (sizes are correct).**
+Real ReRAM is at `0x60000000` (we assumed `0x20000000`); real SRAM is
+at `0x61000000` (we assumed `0x40000000`). Both are exactly 4 MiB /
+2 MiB as we assumed -- just at different base addresses. **This is a
+real conflict, not just a wrong number**: our assumed SRAM base
+(`0x40000000`) is the real start of the chip's AXI-lite *peripheral*
+bus, and the very first real peripheral living at that exact address
+is the ReRAM Controller's own hardware control/status registers --
+meaning our current linker script would place the emulator's entire
+64 KB Apple II RAM on top of live ReRAM-controller MMIO on real
+silicon. Neither QEMU nor host-native testing would ever have caught
+this (neither models real peripheral MMIO there), so this is exactly
+the class of bug worth finding now rather than during hardware
+bring-up.
+
+**Full findings, real peripheral map (56 peripherals cross-referenced,
+BIO-core register addresses relevant to `bunnie_audio.c`/
+`bio_display.c` plans, files needing the base-address fix, and a
+scoped-but-not-yet-executed migration plan): see the new
+[`docs/baochip-1x-memory-map-findings.md`](docs/baochip-1x-memory-map-findings.md).**
+
+**No source changes made this pass** -- this was a real diff/scoping
+investigation per the task's own framing (findings-doc first, fix as
+its own dedicated pass). Files that will need the base-address
+migration when someone picks it up: `linker.ld`,
+`src/cartridge_layout.h`, `src/rram_driver.h`, and
+`linker-qemu.ld`'s explanatory comment (QEMU's own RAM base,
+`0x80000000`, is unaffected and correct). Full host suite/RISC-V
+cross-compile unaffected (no `.c`/`.h`/`.ld` files touched).
