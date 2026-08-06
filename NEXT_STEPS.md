@@ -3713,3 +3713,6 @@ preference), install `ziglang` via a venv (`python3 -m venv
 <dir> && <dir>/bin/pip install ziglang`, works around PEP 668), and
 `brew install lz4` + point Verilator's build at its include/lib paths
 if FST tracing is wanted.
+
+<!-- fable-ralph-loop check-in 2026-08-06 12:51:08 -->
+**Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 635 PASS / 0 FAIL (exit 0). Commits in last ~25min: 2.
