@@ -1,12 +1,15 @@
 # Baochip-1x Real Memory Map vs. Our Assumptions — Findings (2026-08-06)
 
-**Status: real, verified, hardware-prep finding. Not yet acted on in
-source (`linker.ld`/`cartridge_layout.h`/`rram_driver.h` still use the
-OLD, WRONG base addresses as of this writing) -- this doc is the
-record of what's wrong and exactly what needs to change, so whoever
-picks up the actual fix (real base-address migration, ideally its own
-dedicated PR with a full `make test` + RISC-V rebuild pass) has a
-precise, sourced spec to work from.**
+## Fix status: LANDED (2026-08-06)
+
+The base-address migration described below has been implemented and
+verified -- see NEXT_STEPS.md's "DUKE'S REAL MEMORY-MAP FIX LANDED"
+entry for the full verification record (`make test` green,
+`riscv-check` green, and the real linked ELF's `.text`/`.rodata`/
+`.data`/`.bss`/`.stack` sections directly confirmed via `readelf` to
+land at the corrected `0x60000000`/`0x61000000` addresses). The
+"Suggested next step" section below is kept for historical record of
+what was scoped; it is no longer an open TODO.
 
 ## Real, authoritative sources checked
 

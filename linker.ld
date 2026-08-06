@@ -4,7 +4,7 @@
  * Two physical memories per PROJECT_GOALS.md Milestone 3 / BRAINSTORM.md /
  * README.md's block diagram:
  *
- *   ReRAM (XIP execution, non-volatile): 4.0 MiB @ 0x20000000
+ *   ReRAM (XIP execution, non-volatile): 4.0 MiB @ 0x60000000
  *     - code executes directly in place (XIP) -- no copy-to-RAM step for
  *       .text, unlike a typical embedded target. This is why .text lives
  *       in ReRAM's LMA *and* VMA (see section placement below).
@@ -12,14 +12,33 @@
  *       12 KiB Apple IIe Autostart ROM, 140 KiB OregonTrail.dsk, leaving
  *       ~3.8 MiB free for additional game .dsk images (BRAINSTORM.md
  *       section 5's cartridge offset table).
+ *     - Base address corrected 2026-08-06 (was 0x20000000): real
+ *       Baochip-1x silicon puts ReRAM at 0x60000000, cross-verified
+ *       against the real baochip/baochip-1x LiteX SoC source
+ *       (verilate/bao_common.py's axi_mem_map), the real
+ *       ci.betrusted.io/bao1x-cpu/ CPU bus docs, and Xous's own
+ *       generated bao1x.rs hardware header (all three agree exactly) --
+ *       see docs/baochip-1x-memory-map-findings.md for the full writeup.
+ *       Size (4 MiB) was already correct; only the base was wrong.
  *
- *   SRAM (volatile, fast): 2.0 MiB @ 0x40000000
+ *   SRAM (volatile, fast): 2.0 MiB @ 0x61000000
  *     - .data's *runtime* copy, .bss, and the emulator's working state
  *       live here -- notably apple2_mem.c's 64 KB emulated Apple II RAM
  *       (g_ram[]), the Hi-Res/BIO framebuffers, and the C stack.
  *     - .data's *load* image (initial values) lives in ReRAM (LMA) and
  *       crt0 copies it to SRAM (VMA) at boot -- standard split
  *       LMA/VMA pattern for XIP targets with a separate writable RAM.
+ *     - Base address corrected 2026-08-06 (was 0x40000000): the OLD
+ *       base was actually a real, live peripheral-register address on
+ *       the real chip -- 0x40000000-0x5FFFFFFF is the real AXI-lite
+ *       peripheral bus, and the very first peripheral at that exact
+ *       address is the ReRAM Controller's own hardware control/status
+ *       registers (HW_RRC_MEM in Xous's header). The old linker script
+ *       would have placed our emulated Apple II RAM directly on top of
+ *       live ReRAM-controller MMIO on real silicon -- invisible in
+ *       QEMU/host-native testing, only caught by directly diffing
+ *       against real chip documentation. See
+ *       docs/baochip-1x-memory-map-findings.md.
  *
  * Target ABI: rv32imac / ilp32 (riscv64-elf-gcc -march=rv32imac -mabi=ilp32,
  * confirmed working with Homebrew's riscv64-elf-gcc, which supports rv32
@@ -30,11 +49,11 @@ MEMORY
 {
     /* 4.0 MiB ReRAM, XIP execution. Code + read-only data + embedded .dsk
      * game images all live here and are executed/read directly in place. */
-    RERAM (rx) : ORIGIN = 0x20000000, LENGTH = 4M
+    RERAM (rx) : ORIGIN = 0x60000000, LENGTH = 4M
 
     /* 2.0 MiB SRAM. Writable working state: apple2_mem.c's 64 KB emulated
      * RAM, BIO framebuffers, .data's runtime copy, .bss, and the stack. */
-    SRAM  (rwx) : ORIGIN = 0x40000000, LENGTH = 2M
+    SRAM  (rwx) : ORIGIN = 0x61000000, LENGTH = 2M
 }
 
 /* Stack grows down from the top of SRAM. Sized generously (16 KiB) for
@@ -61,7 +80,7 @@ SECTIONS
 
     /* Embedded game .dsk byte arrays (tools/embed_disk.py output), per
      * BRAINSTORM.md section 5's ReRAM offset table (src/cartridge_layout.h
-     * for the verified slot addresses -- CARTRIDGE_RERAM_BASE == 0x20280000,
+     * for the verified slot addresses -- CARTRIDGE_RERAM_BASE == 0x60280000,
      * 2.5 MiB into ReRAM, corrected 2026-07-31 per Discord #c-side hardware
      * findings: leave ample headroom below that boundary for .text/.rodata
      * program code growth). Kept in its own output section (rather than

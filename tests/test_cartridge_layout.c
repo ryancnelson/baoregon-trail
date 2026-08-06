@@ -45,11 +45,13 @@ static void test_partition_base_is_exactly_2_5_mib_past_reram_origin(void) {
           "test_partition_base_is_exactly_2_5_mib_past_reram_origin: base == origin + 2.5MiB");
 
     /* Explicitly confirm this is NOT the buggy address from
-     * BRAINSTORM.md's original (uncorrected) example. */
-    CHECK(CARTRIDGE_RERAM_BASE != 0x20080000u,
-          "test_partition_base_is_exactly_2_5_mib_past_reram_origin: is not the old buggy 0x20080000 value");
-    CHECK(CARTRIDGE_RERAM_BASE == 0x20280000u,
-          "test_partition_base_is_exactly_2_5_mib_past_reram_origin: matches corrected 0x20280000");
+     * BRAINSTORM.md's original (uncorrected) example (adjusted for the
+     * 2026-08-06 ReRAM base-address correction, 0x20000000 -> 0x60000000
+     * -- see docs/baochip-1x-memory-map-findings.md). */
+    CHECK(CARTRIDGE_RERAM_BASE != 0x60080000u,
+          "test_partition_base_is_exactly_2_5_mib_past_reram_origin: is not the old buggy +0x80000 value");
+    CHECK(CARTRIDGE_RERAM_BASE == 0x60280000u,
+          "test_partition_base_is_exactly_2_5_mib_past_reram_origin: matches corrected 0x60280000");
 }
 
 static void test_slot_size_matches_dos33_disk_image_size(void) {

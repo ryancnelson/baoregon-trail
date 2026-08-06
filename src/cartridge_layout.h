@@ -17,11 +17,21 @@
  * (0x20080000)" -- that address is a math error: 0x20080000 is
  * 0x20000000 + 0x80000, and 0x80000 is only 512 KiB, not 2.5 MiB.
  * 2.5 MiB = 2.5 * 1024 * 1024 = 0x280000 bytes, so the corrected base
- * address is 0x20000000 + 0x280000 = CARTRIDGE_RERAM_BASE below. Caught
- * while wiring this table up against linker.ld's real 4 MiB ReRAM
- * region (0x20000000-0x203FFFFF, tools/check_linker_placement.py) --
- * verify the fixed arithmetic against real constants, not by eyeballing
- * a doc's hex literal.
+ * address is CARTRIDGE_RERAM_ORIGIN + 0x280000 = CARTRIDGE_RERAM_BASE
+ * below. Caught while wiring this table up against linker.ld's real
+ * 4 MiB ReRAM region (tools/check_linker_placement.py) -- verify the
+ * fixed arithmetic against real constants, not by eyeballing a doc's
+ * hex literal.
+ *
+ * ReRAM base address corrected 2026-08-06 (was 0x20000000): real
+ * Baochip-1x silicon puts ReRAM at 0x60000000, cross-verified against
+ * the real baochip/baochip-1x LiteX SoC source, the real
+ * ci.betrusted.io/bao1x-cpu/ CPU bus docs, and Xous's own generated
+ * bao1x.rs hardware header (all three agree exactly) -- see
+ * docs/baochip-1x-memory-map-findings.md for the full writeup. The old
+ * 0x20000000 base was never a real address on actual silicon; this
+ * table's *offset* into ReRAM (2.5 MiB) is unaffected by the base
+ * correction.
  *
  * Each slot is a full 140 KiB DOS 3.3 disk image (DOS33_DISK_IMAGE_SIZE,
  * disk_sector_layout.h), addressed as an absolute ReRAM byte address
@@ -31,7 +41,7 @@
  * selection flow).
  */
 
-#define CARTRIDGE_RERAM_ORIGIN 0x20000000u
+#define CARTRIDGE_RERAM_ORIGIN 0x60000000u
 #define CARTRIDGE_RERAM_SIZE   0x00400000u /* 4.0 MiB, matches linker.ld's RERAM region */
 
 /* 2.5 MiB into ReRAM -- see correction note above. */

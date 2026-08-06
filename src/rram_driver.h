@@ -29,9 +29,13 @@
  * usable ReRAM disk-image partition region should start around 2.5 MiB
  * into ReRAM to leave ample headroom for .text/.rodata program code
  * growth. See disk_sector_layout.h / BRAINSTORM.md section 5 for the
- * corrected offset -- BRAINSTORM.md's original example address
- * (0x20080000) was only 512 KiB in, not 2.5 MiB; the corrected offset is
- * 0x20280000 (0x20000000 + 0x280000, where 0x280000 == 2.5 MiB).
+ * corrected offset -- BRAINSTORM.md's original example address was only
+ * 512 KiB in, not 2.5 MiB; the corrected offset is CARTRIDGE_RERAM_ORIGIN
+ * + 0x280000 (0x280000 == 2.5 MiB). ReRAM base address corrected
+ * 2026-08-06: real Baochip-1x silicon puts ReRAM at 0x60000000, not
+ * 0x20000000 -- see cartridge_layout.h / docs/baochip-1x-memory-map-findings.md
+ * for the full writeup; this partition's *offset* into ReRAM (2.5 MiB)
+ * is unaffected by the base correction.
  */
 
 #define RRAM_PAGE_SIZE 32u

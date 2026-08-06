@@ -129,7 +129,7 @@ A custom retro boot splash screen allows using the 3 physical badge buttons (`PR
 
 #### C. ReRAM Driver Guidance:
 * **Unaligned Access & Readback**: ReRAM drivers require unaligned access handling and readback verification after sector writes.
-* **Safe Partition Boundary**: Keep usable ReRAM disk partition space around 2.5 MB (`0x20280000`) to guarantee ample headroom for `.text`/`.rodata` program code. (Corrected 2026-07-31: an earlier draft of this note wrote `0x20080000`, which is only 512 KB past ReRAM's origin, not 2.5 MB. 2.5 MiB = 0x280000 bytes, so the correct address is `0x20000000 + 0x280000 = 0x20280000` -- see `src/cartridge_layout.h` / `tests/test_cartridge_layout.c` for the verified constant and regression test.)
+* **Safe Partition Boundary**: Keep usable ReRAM disk partition space around 2.5 MB (`0x60280000`) to guarantee ample headroom for `.text`/`.rodata` program code. (Corrected 2026-07-31: an earlier draft of this note wrote `0x20080000`, which is only 512 KB past ReRAM's origin, not 2.5 MB. 2.5 MiB = 0x280000 bytes, so the correct *offset* is ReRAM-origin + 0x280000 -- see `src/cartridge_layout.h` / `tests/test_cartridge_layout.c` for the verified constant and regression test. Base address corrected again 2026-08-06: real Baochip-1x silicon puts ReRAM at `0x60000000`, not `0x20000000` -- see `docs/baochip-1x-memory-map-findings.md` -- so the real partition boundary is `0x60280000`, not `0x20280000`; only the base changed, the 2.5 MiB offset math above is unaffected.)
 
 #### D. Silicon Peripheral Notes (ADC & SDIO):
 * **ADC**: Max input reference is 1.208V bandgap (requires 2.2k/1k voltage divider for 3.3V inputs; source impedance <= 3.2k). Enable ADC after analog block init + stabilization delay.

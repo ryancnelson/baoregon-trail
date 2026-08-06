@@ -18,9 +18,9 @@ import subprocess
 import sys
 import os
 
-RERAM_START = 0x20000000
+RERAM_START = 0x60000000
 RERAM_END = RERAM_START + 4 * 1024 * 1024  # 4.0 MiB
-SRAM_START = 0x40000000
+SRAM_START = 0x61000000
 SRAM_END = SRAM_START + 2 * 1024 * 1024  # 2.0 MiB
 
 # Which physical memory each named ELF section must fall entirely within.
@@ -67,7 +67,7 @@ def _parse_readelf_output(output: str) -> dict:
     """Parse the section header table from `readelf -S -W` output.
 
     Typical row (wide format):
-      [ 1] .text  PROGBITS  20000000  001000  000123  00  AX  0  0  4
+      [ 1] .text  PROGBITS  60000000  001000  000123  00  AX  0  0  4
     Columns: [Nr] Name Type Addr Off Size ES Flg Lk Inf Al
     """
     sections = {}

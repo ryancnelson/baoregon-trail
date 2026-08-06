@@ -44,7 +44,7 @@ Build a bare-metal, high-performance Apple II emulator for the **Baochip-1x** si
 * [ ] Boot DOS 3.3 / ProDOS to Applesoft BASIC prompt in host simulator.
 
 ### Milestone 3: Dabao SDK & Hardware Integration
-* [ ] Write RISC-V linker script for Baochip-1x (Code/ReRAM @ `0x20000000`, Data/SRAM @ `0x40000000`).
+* [ ] Write RISC-V linker script for Baochip-1x (Code/ReRAM @ `0x60000000`, Data/SRAM @ `0x61000000` -- corrected 2026-08-06 from an earlier wrong `0x20000000`/`0x40000000` assumption; see `docs/baochip-1x-memory-map-findings.md`).
 * [ ] Cross-compile with `riscv32-unknown-elf-gcc` (`-march=rv32imac -mabi=ilp32`).
 * [ ] Validate execution on Dabao evaluation board / hardware simulator.
 

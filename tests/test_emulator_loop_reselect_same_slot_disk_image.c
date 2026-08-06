@@ -63,7 +63,7 @@ int main(void) {
 
     /* Note: deliberately NOT exercising the $C0E0/$C0E1/$C0EC softswitch
      * read pipeline here -- cartridge_slots[].reram_addr is a real
-     * hardware ReRAM address (e.g. 0x20280000), not backed by actual
+     * hardware ReRAM address (e.g. 0x60280000), not backed by actual
      * host memory in this test process. Dereferencing it via
      * read6502($C0EC) would segfault on host (confirmed by trying it:
      * a genuine host-testing limitation, not a bug -- see

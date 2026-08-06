@@ -3937,3 +3937,53 @@ harness, to determine definitively whether the boot ever leaves
 `$254F-$2603`. Do not assume either prior result is correct without
 this direct re-verification.
 
+---
+
+## 🎯 DUKE'S REAL MEMORY-MAP FIX LANDED (2026-08-06 ~13:30) -- ReRAM/SRAM base-address migration, verified on real cross-compiled ELF
+
+Implemented the base-address migration scoped in
+`docs/baochip-1x-memory-map-findings.md`: ReRAM `0x20000000` ->
+`0x60000000`, SRAM `0x40000000` -> `0x61000000` (sizes unchanged, 4
+MiB / 2 MiB).
+
+**Grep-driven verification found two files the original scoping pass
+missed**: `tools/check_linker_placement.py` (its own hardcoded
+`RERAM_START`/`SRAM_START` constants -- this is the exact tool
+`riscv-check` runs to verify ELF section placement, so it needed the
+fix too or it would have "passed" against the wrong addresses) and
+`PROJECT_GOALS.md` (a stale Milestone 3 checklist item). Also caught
+and fixed two more subtle spots: a hardcoded absolute literal
+(`0x20280000`) in `tests/test_cartridge_layout.c`'s own assertions
+(had to become `0x60280000u` -- this is exactly the kind of hidden
+dependency that would have made the test suite "pass" against a
+newly-wrong value if missed) and a stale doc-comment example address
+in `tests/test_emulator_loop_reselect_same_slot_disk_image.c`.
+
+**Files changed**: `linker.ld` (the actual `MEMORY` block + doc
+comments), `tools/check_linker_placement.py` (`RERAM_START`/
+`SRAM_START` + a docstring example), `src/cartridge_layout.h`
+(`CARTRIDGE_RERAM_ORIGIN`), `src/rram_driver.h` (doc comment),
+`linker-qemu.ld` (explanatory comment only -- QEMU's own RAM base,
+`0x80000000`, is real and unaffected), `PROJECT_GOALS.md`,
+`BRAINSTORM.md`, `tests/test_cartridge_layout.c`,
+`tests/test_emulator_loop_reselect_same_slot_disk_image.c`.
+
+**Real, verified results**:
+- `make test`: exit 0, zero `FAIL:`, including the cartridge-layout
+  tests' updated address assertions passing against the new value
+  (`CARTRIDGE_RERAM_BASE == 0x60280000u`).
+- `make -f Makefile.riscv riscv-check`: exit 0, `PASS: all 5 present
+  section(s) correctly placed`.
+- **Directly confirmed via `readelf -S -W` on the real cross-compiled
+  ELF** (not just "the check passed" -- inspected the actual linked
+  addresses): `.text`/`.rodata` now link at `0x60000000`+ (real
+  ReRAM), `.data`/`.bss`/`.stack` at `0x61000000`+ (real SRAM) --
+  genuinely different addresses than before this fix, not a no-op.
+
+Final grep sweep (`0x20000000`/`0x40000000`/`0x20080000`/`0x20280000`
+across `*.c`/`*.h`/`*.ld`/`*.py`) confirms every remaining hit is
+historical/explanatory prose correctly describing what the OLD wrong
+value used to be (e.g. "Base address corrected 2026-08-06 (was
+0x20000000)") -- no live code or test assertion still depends on the
+old, wrong addresses.
+
