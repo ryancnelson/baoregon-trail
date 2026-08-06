@@ -3993,3 +3993,6 @@ old, wrong addresses.
 
 <!-- fable-ralph-loop check-in 2026-08-06 13:51:31 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 635 PASS / 0 FAIL (exit 0). Commits in last ~25min: 2.
+
+<!-- fable-ralph-loop check-in 2026-08-06 14:11:38 -->
+**Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 635 PASS / 0 FAIL (exit 0). Commits in last ~25min: 1.
