@@ -160,3 +160,48 @@ See `tools/README_oregon_trail.md` for the full pipeline writeup, including
 a real bug found and fixed (source/destination memory overlap corrupting
 the rendered image).
 
+## 🖥️ Running under an emulator (QEMU / Renode)
+
+Two independent ways to run the real cross-compiled RISC-V build
+without physical Baochip-1x hardware:
+
+### QEMU (`virt` machine -- real RISC-V execution, no register-level hardware fault detection)
+
+QEMU's generic `virt` machine runs the real cross-compiled ELF on a
+real RISC-V core, with a `ramfb` display and UART -- this is how the
+Lode Runner, DOS 3.3, and Zork boot investigations in `NEXT_STEPS.md`
+were verified. It does **not** model Baochip-1x's real memory map at
+all (`linker-qemu.ld` deliberately uses `virt`'s own RAM at
+`0x80000000`, not the real chip's addresses) -- see
+`tools/run_loderunner_qemu.sh`, `tools/run_dos33boot_qemu.sh`,
+`tools/run_zork1boot_qemu.sh`, `tools/run_disk2boot_qemu.sh` for
+working, reproducible build+run scripts.
+
+### Renode (real Baochip-1x memory map + peripheral registers)
+
+`renode/` has a real, working Renode platform for the **actual**
+Baochip-1x SoC (not xous-core's existing Precursor-only Renode
+support) -- built from the real chip's own SVD via xous-core's
+`svd2repl` tool, using the real, corrected ReRAM/SRAM addresses from
+`docs/baochip-1x-memory-map-findings.md` (`0x60000000`/`0x61000000`).
+This gives register-level peripheral fault detection QEMU's generic
+`virt` machine can't provide -- e.g. it would have caught the
+SRAM/ReRAM-controller address collision bug (fixed in `144dd81`)
+automatically at runtime.
+
+```bash
+# macOS Apple Silicon setup -- see renode/MACOS_ARM_SETUP.md for the
+# full verified writeup (current status: works, real arm64-native build)
+brew tap renode/tap && brew install renode/tap/renode
+
+# Build + run the real MVP demo (real emulator_loop.c running at the
+# real 0x60000000 ReRAM entry point, with real console output via a
+# modeled DUART peripheral)
+bash renode/build_and_run_demo.sh
+```
+
+See `renode/README.md` for the full scope writeup (which real
+peripherals are modeled and why, which are confirmed NOT real
+Baochip-1x SoC peripherals at all, and the two real SVD compatibility
+fixes needed for `svd2repl` to accept the chip's real SVD file).
+

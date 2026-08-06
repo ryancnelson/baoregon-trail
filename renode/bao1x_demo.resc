@@ -1,0 +1,28 @@
+# bao1x_demo.resc -- minimum-viable Renode script for the REAL
+# Baochip-1x platform (renode/bao1x.repl), booting
+# build-renode/baoregon-renode-demo.elf at the real, corrected ReRAM
+# base address (0x60000000 -- see docs/baochip-1x-memory-map-findings.md
+# and commit 144dd81), instead of Xous's kernel.
+#
+# Usage (from the repo root):
+#   renode renode/bao1x_demo.resc
+#
+# Real console output appears directly in Renode's monitor window via
+# the duart PythonPeripheral model's stdout write (see
+# renode/duart_console.repl) -- confirmed real, live "heartbeat: frame=N"
+# lines incrementing continuously (baoregon-trail issue #2's MVP-demo
+# bar: real, visible output, not just scoping).
+#
+# This just starts emulation and leaves it running -- for a bounded,
+# scripted verification run (e.g. in CI or a quick smoke test), wrap
+# the whole invocation in a shell `timeout`, e.g.:
+#   timeout 10 renode --console --disable-xwt renode/bao1x_demo.resc
+
+using sysbus
+
+mach create "bao1x"
+machine LoadPlatformDescription @renode/bao1x.repl
+
+sysbus LoadELF @build-renode/baoregon-renode-demo.elf
+
+start

@@ -1,0 +1,37 @@
+// duart_console.repl -- minimal Renode PythonPeripheral model of the
+// real Baochip-1x DUART (Debug UART) peripheral.
+//
+// Real hardware registers (bao1x_peri.svd, base 0x40042000,
+// rtl/modules/core/rtl/duart.sv):
+//   SFR_TXD @ 0x0000 -- write: transmit one byte (low 8 bits)
+//   SFR_CR  @ 0x0004 -- control register (not modeled: no real
+//                        baud-rate/enable-gating behavior needed for a
+//                        minimal console demo -- reads back 0)
+//   SFR_SR  @ 0x0008 -- status register (bit 0: busy/ready). Modeled as
+//                        always-ready (0) since DUART's real hardware is
+//                        a bit-banged/software-loop UART with no FIFO;
+//                        Renode's Python peripheral write handler runs
+//                        synchronously, so "ready" is always true from
+//                        the guest's point of view.
+//
+// This is NOT a byte-accurate hardware timing model (no baud-rate
+// delay, no real transmit-busy window) -- it's the minimum needed to
+// get real, visible console output out of guest code that writes to
+// SFR_TXD, which is exactly what src/emu_trace.c's `uart_puts()`-style
+// helpers do on the real chip (see docs/baochip-1x-memory-map-findings.md
+// for DUART's confirmed real base address).
+duart: Python.PythonPeripheral @ sysbus 0x40042000
+    size: 0x1000
+    initable: true
+    script: '''
+if request.IsInit:
+    pass
+if request.IsRead:
+    # SFR_CR and SFR_SR both read back 0 (not gating anything, always ready)
+    request.Value = 0
+if request.IsWrite:
+    if request.Offset == 0x0000:
+        import sys
+        sys.stdout.write(chr(request.Value & 0xFF))
+        sys.stdout.flush()
+'''
