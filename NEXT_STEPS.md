@@ -44,6 +44,23 @@ detail/citations, but start here.
   session (Step 9 and surrounding entries below); not restated here in
   detail since nothing about them is currently in question.
 
+### 🏗️ Real hardware bring-up architecture (decided, 2026-08-03)
+
+**Boot our emulator as a genuinely bare-metal image via Xous's own
+`baremetal` build target, NOT as a Xous userspace app.** This is a real,
+confirmed answer (not a guess) from reading xous-core's actual source --
+see "BUNNIE'S BARE-METAL-VS-XOUS COEXISTENCE INVESTIGATION" at the
+bottom of this file for full citations and reasoning. Short version: the
+real DEF CON 34 badge firmware update already ships THREE separate
+files (`loader.uf2`, `xous.uf2`, `swap.uf2`) precisely because the
+bootloader (`boot1`) is a genuinely separate stage that can load either
+a full Xous kernel image OR a completely independent, `no_std`/`no_main`
+bare-metal image (`riscv32imac-unknown-none-elf` target, its own
+reserved `BAREMETAL_START` flash region) -- this is a real, first-class,
+already-existing xous-core build target (`cargo xtask baremetal-bao1x`),
+not something we'd have to invent. Our README's "100% on-chip, zero OS
+dependency" plan is directly supported by this path.
+
 ### 🐛 Genuinely still open
 
 - **Zork I's own boot-sector text-output mystery.** `disk2_controller.c`
@@ -3716,3 +3733,129 @@ if FST tracing is wanted.
 
 <!-- fable-ralph-loop check-in 2026-08-06 12:51:08 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 635 PASS / 0 FAIL (exit 0). Commits in last ~25min: 2.
+
+---
+
+## 🎯 BUNNIE'S BARE-METAL-VS-XOUS COEXISTENCE INVESTIGATION (2026-08-03) -- real, cited answer: our emulator should be a genuinely bare-metal image, not a Xous app
+
+Per Ryan's direction, investigated the real architectural question
+flagged from the DEF CON 34 badge page review: does our project's
+"100% on-chip, zero-OS-dependency" bare-metal plan (README.md,
+PROJECT_GOALS.md) actually fit onto real badge hardware, given the
+badge's stock firmware runs Xous (a real Rust microkernel OS)?
+
+### (1) Does the badge's bootloader require Xous specifically?
+
+**No -- confirmed, not assumed.** The badge page's own update
+instructions (`defcon.org/34b/`) list THREE separate firmware files in
+every release: `loader.uf2`, `xous.uf2`, `swap.uf2`. `xous-core`'s own
+top-level README documents its real directory structure, including:
+
+> **baremetal**: Baremetal target - runs after the boot chain, for
+> developers that don't want Xous but can still use Xous' `no-std`
+> features
+
+and lists FOUR real, first-class build commands, not just one:
+`cargo xtask app-image` (Precursor), `cargo xtask dabao` (Dabao, full
+Xous kernel), `cargo xtask baosec` (Baosec, full Xous kernel + swap),
+and **`cargo xtask baremetal-bao1x`** (genuinely OS-less). `README-
+baochip.md` confirms this explicitly under "Applications":
+
+> Three application targets are supported by Xous... **`baremetal` is
+> an unsecured, bare-iron environment. It is `no-std`, but comes with
+> `alloc` pre-initialized and a USB serial console.** `dabao` is a
+> Xous environment... `baosec` is a Xous environment...
+
+Read the actual `baremetal/src/main.rs` source directly: real
+`#![no_std]`/`#![no_main]`, a real freestanding `#[export_name =
+"rust_entry"]` entry point, no Xous kernel/syscall dependency at
+runtime (the `xous = "0.9.70"` crate in `baremetal/Cargo.toml` is a
+build-time API/type-definitions dependency, not a runtime kernel
+requirement -- confirmed by the target triple, see below). Checked
+`xtask/src/main.rs`'s real build-target dispatch: the `baremetal-bao1x`
+target compiles to **`riscv32imac-unknown-none-elf`** (the bare `none`
+OS-ABI target) via `target_baremetal_bao1x()`, genuinely distinct from
+Xous userspace apps' **`riscv32imac-unknown-xous-elf`** target (used
+by `dc34-vault`/`dc34-console`'s own real build instructions, confirmed
+directly from `dc34-vault`'s README). The bare-metal target even has
+its own dedicated, non-overlapping flash region: a real
+`bao1x_api::BAREMETAL_START` linker-origin constant, set via
+`update_flash_origin("baremetal/src/platform/bao1x/link.x", ...)` in
+the build script -- this is genuine, deliberate memory-map coexistence,
+not a hack layered on top of Xous.
+
+**Conclusion**: the badge's `boot1` bootloader stage is explicitly
+designed to load either kind of image. Xous is the STOCK choice for
+the badge's own conference-mode/token-mode apps (`dc34-vault`,
+`dc34-console`), not a hard requirement of the boot chain itself.
+
+### (2) Is "developer mode + secret erasure" a bare-metal-specific
+   restriction, or does it apply to any custom code (including a
+   would-be Xous userspace app)?
+
+**It applies equally to BOTH paths -- this does not favor the Xous-app
+route.** Read `README-baochip.md`'s full "Security Model" section: the
+one-way developer-mode/secret-erasure trigger fires based on whether
+the loaded image's embedded key-manifest signature matches Baochip's
+own reference keys -- **not** based on whether the image happens to be
+a bare-metal binary or a signed-for-Xous userspace app. Any image built
+with the (publicly documented, anyone-can-use) developer key trips the
+same one-way secret-erasure mechanism, full stop, regardless of which
+`cargo xtask` target produced it. So this factor is a wash between the
+two options -- it doesn't argue for building our emulator as a Xous app
+to "avoid" developer mode; there is no such avoidance available to a
+hobbyist/non-Baochip-signing-key project either way.
+
+### (3) Real, concrete recommendation
+
+**Build and ship as a genuinely bare-metal image via `cargo xtask
+baremetal-bao1x` (or the project's own from-scratch RISC-V build,
+loaded via the same `boot1`-mass-storage-UF2 mechanism), NOT as a Xous
+userspace app.** Reasoning:
+
+- This directly matches this project's own stated architecture
+  (README.md: "100% on-chip... zero external SD cards"; PROJECT_GOALS.md:
+  "We will NOT depend on heavy OS kernels; execution will target the
+  bare-metal Dabao SDK / minimal runtime for maximum speed and lowest
+  memory overhead") -- no architectural pivot needed, this was already
+  the right call, now confirmed feasible on the real hardware/firmware
+  stack rather than assumed.
+- A Xous userspace app (`dabao`/`baosec` targets) would add real,
+  unwanted overhead this project explicitly doesn't want: message-
+  passing IPC to talk to display/audio driver *services* running in
+  separate Xous processes, rather than this project's own direct-
+  register-access `bio_display.c`/`bunnie_audio.c` model; virtual-
+  memory/process-isolation overhead irrelevant to a single-purpose
+  emulator; and dependency on Xous's own release cadence/API stability
+  for anything display/audio-related.
+- The bare-metal path gets a real, dedicated flash region
+  (`BAREMETAL_START`) and is loaded via the exact same `boot1`
+  mass-storage-UF2 mechanism already documented for regular firmware
+  updates -- no exotic flashing process to build tooling for.
+- Developer-mode/secret-erasure is unavoidable either way (see (2)),
+  so it isn't a reason to prefer the Xous-app path.
+- Real trade-off, honestly noted: the bare-metal `baremetal` crate
+  still links against a few Xous-adjacent support crates for hardware
+  bring-up (`bao1x-hal`, `utralib`, `xous-bio-bdma`) -- these are
+  driver/register-abstraction libraries, not the kernel itself, and
+  this project would likely want to either vendor equivalents or use
+  them as reference (matching this project's existing MIT-cited-port
+  approach with `apple2js`/`reinette-II-plus`) rather than genuinely
+  reinventing register-level SoC bring-up from a blank page.
+
+**Real next step for whoever picks up hardware bring-up**: clone
+`xous-core`, build the `baremetal-bao1x` target as a smoke test (`cargo
+xtask baremetal-bao1x`) to confirm the toolchain/UF2 flow works
+end-to-end on a real or simulated board BEFORE attempting to port this
+project's own 6502/Apple II emulator into that environment -- this
+mirrors the same "verify the harness before building on top of it"
+discipline this project already applies elsewhere (e.g. tonight's QEMU
+`ramfb` and BIO-sim investigations).
+
+**No source changes made** -- this was an architecture-scoping
+investigation per the task's own framing, sourced entirely from real,
+directly-read upstream documentation and source (`defcon.org/34b/`,
+`bunnie/dc34-vault`, `betrusted-io/xous-core`'s actual README files and
+`baremetal/src/main.rs`/`xtask/src/main.rs` source, not secondhand
+summaries or assumptions). Full host suite unaffected (no files
+touched).
