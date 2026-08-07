@@ -4276,3 +4276,85 @@ file at dispatch time.
 
 <!-- fable-ralph-loop check-in 2026-08-07 14:00:34 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 635 PASS / 0 FAIL (exit 0). Commits in last ~25min: 1.
+
+---
+
+## 🎯 BUNNIE'S FULL-PLATFORM RE-VERIFICATION (2026-08-07 ~14:10) -- clean-slate rebuild, all 3 landed peripheral models confirmed working, one real timing-tuning finding (not a regression)
+
+Per Ryan's direction, independently re-verified all three already-
+landed Renode peripheral models (DUART/MVP demo, IOX GPIO, UDMA_SPIM_0
+display) from a completely clean rebuild, to catch any regression
+before Duke's USB UART work (issue #2) piles on top.
+
+**Steps 1-3 (clean rebuild + host/RISC-V suites)**: `rm -rf build
+build-riscv build-renode build-renode-iox`, then fresh `make test`
+(exit 0, zero `FAIL:`) and `make -f Makefile.riscv riscv-check`
+(`PASS: all 5 present section(s) correctly placed`) -- both genuinely
+clean, no regressions.
+
+**Step 4 (DUART/MVP demo) -- real finding, NOT a regression**: rebuilt
+`build-renode/baoregon-renode-demo.elf` fresh via `bash renode/
+build_and_run_demo.sh --build-only`. Running the task's own suggested
+`timeout 15 renode --console --disable-xwt renode/bao1x_demo.resc`
+produced ZERO heartbeat lines -- initially looked like a real
+regression. Root-caused via direct PC inspection
+(`sysbus.cpu PC` after staged `emulation RunFor` calls): the emulator
+IS genuinely executing (PC moves from the reset vector into real,
+deep `text_apple2_render_frame` code, confirming the splash-menu
+render loop runs every frame as designed -- `g_in_splash_menu` gates
+`exec6502()` off by default until a button press, which is correct,
+pre-existing, unrelated-to-this-demo behavior, not new). The actual
+issue: **15-20 real wall-clock seconds under a plain `timeout` is not
+remotely enough SIMULATED time** for Renode's cycle-by-cycle RISC-V
+interpretation to reach 256 real frames of the splash-menu render
+loop (confirmed: 1-2 virtual seconds via `emulation RunFor` also
+produced zero heartbeats; **30 virtual seconds** produced 14 real,
+correctly-incrementing heartbeat lines, `frame=0x200` through
+`0x0E00`, `total_cycles=0x00000000` throughout -- expected, since
+`exec6502()` is still gated off in the splash menu, matching the
+`7c4684b` original commit's own log excerpt exactly). **This is a
+real, useful timing-tuning finding for whoever re-runs this demo
+next, not a code regression** -- `renode/bao1x_demo.resc`'s own
+comment (and this task's own suggested `timeout 15`) undersells the
+real simulated-vs-wall-clock time ratio; a `RunFor "30"`-based
+invocation (or a longer `timeout`, e.g. 60-120s) is what actually
+demonstrates the live heartbeat, not a bare `timeout 15`.
+
+**Step 5 (IOX GPIO) -- confirmed working, no regression**: rebuilt
+`build-renode-iox/iox_test.elf` fresh per `renode/README.md`'s exact
+documented 3-command build sequence. Ran `renode/
+bao1x_iox_gpio_test.resc` -- real output: `Initial PB0x00000003
+state: LOW`, then, after the script's simulated register write,
+`TRANSITION: PB0x00000003 LOW -> HIGH (real SFR_GPIOIN_SRGI1 register
+read)` -- exact match to the documented working round-trip.
+
+**Step 6 (UDMA_SPIM_0 display) -- confirmed working, no regression**:
+ran `renode/bao1x_udma_spim_test.resc` fresh (no rebuild needed, pure
+register-poke test). Real output: `SPI_CAPTURED=[68L, 51L, 34L, 17L,
+221L, 204L, 187L, 170L] CS=False` -- byte-for-byte identical to
+`renode/README.md`'s documented expected output (`[68, 51, 34, 17,
+221, 204, 187, 170]`; the `L` suffix is just this Renode/IronPython
+version's long-int repr, cosmetic, not a data difference).
+
+**Overall verdict: zero real regressions found across all three
+landed peripheral models.** All three confirmed independently, from a
+genuinely clean rebuild, with byte-level/behavior-level matches to
+each model's own documented expected output. Scratch verification
+`.resc` files used for the PC-inspection root-causing on Step 4
+(`bao1x_demo_verify_scratch.resc`, `bao1x_demo_debug_scratch.resc`)
+were `/tmp`-equivalent throwaway diagnostics, removed after use, not
+committed. Did not touch `renode/bao1x.repl`, `renode/README.md`, or
+any of Duke's in-progress USB UART files (`renode/udc_usb.repl`,
+`renode/bao1x_udc_usb_test.resc`, `src/main_renode_udc_test.c`) --
+confirmed via `.file-locks/` before starting and `git status
+--short` throughout that these remained untouched by this
+verification pass.
+
+**Recommendation for `renode/bao1x_demo.resc` and its own doc
+comment**: worth a follow-up (not done here, out of scope for a
+verification-only pass) to update the comment's suggested `timeout
+10`/`timeout 15` wall-clock invocation to either a longer duration
+(60-120s) or, better, an explicit `emulation RunFor "30"`-based
+scripted variant matching the IOX/SPIM tests' own deterministic
+pattern -- so a future quick re-check doesn't have the same initial
+false-alarm experience this session did.
