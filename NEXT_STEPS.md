@@ -4358,3 +4358,6 @@ verification-only pass) to update the comment's suggested `timeout
 scripted variant matching the IOX/SPIM tests' own deterministic
 pattern -- so a future quick re-check doesn't have the same initial
 false-alarm experience this session did.
+
+<!-- fable-ralph-loop check-in 2026-08-07 14:20:42 -->
+**Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 635 PASS / 0 FAIL (exit 0). Commits in last ~25min: 3.
