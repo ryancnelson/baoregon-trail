@@ -68,6 +68,9 @@ a button.)
 - `iox_gpio.repl` -- a real `Python.PythonPeripheral` model of the
   actual Baochip-1x IOX (GPIO/pin-crossbar) peripheral (`0x5012f000`).
   See "IOX GPIO behavioral model" below.
+- `udc_usb.repl` -- a real `Python.PythonPeripheral` model of the
+  actual Baochip-1x UDC (USB Device Controller) peripheral
+  (`0x50200000`). See "UDC USB behavioral model" below.
 - `bao1x_demo.resc` -- loads `bao1x.repl` + our real cross-compiled ELF
   (`build-renode/baoregon-renode-demo.elf`, built from
   `src/main_renode_demo.c` via `linker.ld`, the same real, corrected
@@ -77,6 +80,10 @@ a button.)
   pokes a real input register mid-run to simulate a button press,
   confirms the firmware observes the transition). See "IOX GPIO
   behavioral model" below.
+- `bao1x_udc_usb_test.resc` -- real, verified handshake test for the
+  UDC USB model (loads `src/main_renode_udc_test.c`'s ELF, exercises
+  the real soft-reset and command-issue register handshakes). See "UDC
+  USB behavioral model" below.
 
 ## Scope (per issue #2)
 
@@ -104,14 +111,19 @@ the real SVD + Xous's own generated hardware header
   device"; the real display is driven by bit-banging a proprietary
   line-addressed protocol over `UDMA_SPIM_0` + GPIO chip-select via
   `IOX`, which is exactly what these two models together now cover.)
+- `UDC` (`0x50200000`, real base per Xous's own generated header
+  `HW_UDC_MEM = 0x50200000`) -- the real USB Device Controller, a
+  Corigine xHCI-compliant USB3 core (`CORIGINE_USB_BASE = 0x5020_2000`
+  per `libs/bao1x-hal/src/usb/utra.rs`). Absent from the fetched SVD
+  (a real gap between sources, same class of gap already documented
+  for IOX/SPIM) -- hand-mapped from Xous's own header + the real
+  driver source. **Now modeled with a real, working
+  `Python.PythonPeripheral`** -- see "UDC USB behavioral model" below
+  for the full writeup and a real, verified register-handshake
+  round-trip test.
 
 **Confirmed NOT real Baochip-1x SoC peripherals (out of scope, not
 modeled at all)**:
-- **USB**: real (`HW_UDC_MEM = 0x50200000` in Xous's own header) but
-  not present in the fetched SVD at all (a real gap between the two
-  real sources) -- not modeled here; flagged for whoever picks up USB
-  work to source a fuller/newer SVD or add the region by hand from the
-  Xous header's own address.
 - **WiFi/Bluetooth**: confirmed **zero** hits for `wifi`/`bluetooth`/
   `ble` anywhere in Xous's own generated hardware header. These are NOT
   real Baochip-1x SoC peripherals -- if the physical DEF CON badge has
@@ -300,6 +312,128 @@ produces `This action is not available when emulation is already
 started` -- `RunFor` itself implicitly starts the machine, so just
 call `emulation RunFor` directly without a preceding `start`. See
 `bao1x_iox_gpio_test.resc` for the working pattern.
+
+## UDC USB behavioral model
+
+`udc_usb.repl` models the real UDC (USB Device Controller)
+peripheral's register-level read/write semantics, verified against
+the actual driver source (not a generic/assumed USB device model):
+
+- `libs/bao1x-hal/src/usb/utra.rs` -- the real register offset/field
+  definitions (`DEVCAP`, `DEVCONFIG`, `USBCMD`, `USBSTS`, `PORTSC`,
+  `DOORBELL`, `CMDPARA0`/`CMDPARA1`, `CMDCTRL`, etc.), plus the real
+  base addresses: `CORIGINE_USB_BASE = 0x5020_2000`,
+  `CORIGINE_DEV_OFFSET = 0x400` (device registers start there),
+  `CORIGINE_USB_LEN = 0x3000`.
+- `libs/bao1x-hal/src/usb/driver.rs` -- the real driver logic
+  (`reset()`, `issue_command()`, `start()`, `stop()`, `set_addr()`,
+  `knock_doorbell()`, `ep0_send()`, `bulk_xfer()`) that actually
+  touches these registers.
+
+**Real hardware identity**: the UDC is a **Corigine xHCI-compliant
+USB3 device controller core** -- a genuinely different, more complex
+peripheral class than DUART/IOX/UDMA_SPIM_0's simple register-level
+FIFOs/GPIO. Real USB data transfer on this hardware works through
+xHCI-style TRB (Transfer Request Block) command/event rings and
+IFRAM-based shared-memory buffers, not a simple register write path.
+
+**Real address discrepancy found and documented (not silently
+resolved)**: Xous's own generated header
+(`utralib/src/generated/bao1x.rs`) declares
+`HW_UDC_MEM = 0x50200000`, `HW_UDC_MEM_LEN = 65536` (64KB) -- a
+*broader* region starting `0x2000` earlier than `utra.rs`'s
+`CORIGINE_USB_BASE = 0x5020_2000`. Both are real, from real
+generated/hand-written source. `udc_usb.repl` maps the full 64KB
+region at `0x50200000` (matching Xous's own header -- the more
+conservative/inclusive choice for address-collision detection) but
+only implements real register behavior for the offsets `utra.rs`
+actually documents (`0x400 +` register offset).
+
+**What's modeled (real, verified) vs. explicitly out of scope**:
+
+This MVP models the two real, register-level hardware handshakes the
+actual driver busy-waits on, grounded directly in `driver.rs`:
+
+1. **Soft reset** (`driver.rs` `reset()`, lines ~1253-1258): firmware
+   writes `USBCMD_SOFT_RESET=1` (bit 1 of `USBCMD` @ dev offset
+   `0x20`), then busy-waits reading `USBCMD` until that bit reads back
+   0. Real hardware auto-clears this bit once reset completes; the
+   model does the same on the very next read (no real reset latency
+   simulated).
+2. **Command execution** (`driver.rs` `issue_command()`, lines
+   ~1506-1530): firmware writes `CMDPARA0`/`CMDPARA1` (dev offsets
+   `0x70`/`0x74`), then writes `CMDCTRL` (dev offset `0x78`) with
+   `ACTIVE=1` + `TYPE=<cmd>`, then busy-waits reading `CMDCTRL` until
+   `ACTIVE` reads back 0, then checks `STATUS` bits for success/
+   failure. The model completes the command immediately (clears
+   `ACTIVE`, sets `STATUS=0` for success) on the next read -- there is
+   no real xHCI TRB/command-ring/event-ring emulation.
+
+`DEVCAP` (dev offset `0x00`) is modeled as a fixed, real,
+hardware-documented read-only value: `0x20014401`, taken directly from
+`driver.rs`'s own comment showing real silicon's actual readback ("1
+interrupt, 4 phys EPIN, 4 phys EPOUT" configuration) -- this lets
+firmware's real `reset()` sanity printout be exercised faithfully.
+
+**Explicitly NOT modeled** (same "real addressing, not full behavioral
+simulation" precedent as DUART/IOX/UDMA_SPIM_0): USB protocol
+semantics, TRB rings, event rings, endpoint context structures,
+IFRAM-based DMA buffer transfers, `PORTSC`'s real connect/
+speed-negotiation state machine, or interrupts. A full xHCI-compliant
+USB3 device controller is a substantially larger modeling effort than
+DUART/IOX/UDMA_SPIM_0's simple register-level FIFOs -- genuinely out
+of scope for this pass; flagged here for whoever picks up full USB
+enumeration/data-transfer work next.
+
+### Real, verified round-trip test
+
+`src/main_renode_udc_test.c` (a small, dedicated firmware) exercises
+both real handshakes in sequence and reads `DEVCAP`:
+
+1. Reads `DEVCAP`, confirms it matches the real, documented silicon
+   value (`0x20014401`).
+2. Issues the real soft-reset handshake, busy-waits for
+   `USBCMD_SOFT_RESET` to clear (with a timeout guard so a broken
+   model would be caught, not hang forever).
+3. Issues a real `CmdType::SetAddr` command (writes `CMDPARA0`, writes
+   `CMDCTRL` with `ACTIVE=1` + `TYPE=2`), busy-waits for `ACTIVE` to
+   clear, checks `STATUS`.
+
+Real, verified, reproducible output (two independent runs, same
+result both times):
+
+```
+$ timeout 15 renode --console --disable-xwt renode/bao1x_udc_usb_test.resc
+...
+baoregon-trail: UDC USB real register handshake test (issue #2)
+DEVCAP: 0x20014401 (matches real silicon's documented value)
+Issuing soft reset (USBCMD_SOFT_RESET=1)...
+Soft reset completed (USBCMD_SOFT_RESET cleared by hardware)
+Issuing CmdType::SetAddr (addr=5)...
+Command completed (CMDCTRL_ACTIVE cleared), STATUS=0x00000000 (success)
+ALL HANDSHAKES VERIFIED
+```
+
+The firmware's own busy-wait loops genuinely exited (no timeout fired)
+through the real register addresses -- a real, working round-trip for
+the register-level handshakes this model covers, not just "the
+peripheral exists and doesn't crash".
+
+To build `src/main_renode_udc_test.c` yourself:
+
+```bash
+mkdir -p build-renode-udc
+riscv64-elf-gcc -march=rv32imac -mabi=ilp32 -std=c99 -Wall -Wextra -Os \
+    -ffreestanding -fno-builtin -nostartfiles -g -Isrc \
+    -c -o build-renode-udc/crt0.o src/crt0.S
+riscv64-elf-gcc -march=rv32imac -mabi=ilp32 -std=c99 -Wall -Wextra -Os \
+    -ffreestanding -fno-builtin -nostartfiles -g -Isrc \
+    -c -o build-renode-udc/main_renode_udc_test.o src/main_renode_udc_test.c
+riscv64-elf-gcc -march=rv32imac -mabi=ilp32 -nostartfiles -nostdlib \
+    -T linker.ld -Wl,-Map=build-renode-udc/udc_test.map \
+    -o build-renode-udc/udc_test.elf \
+    build-renode-udc/crt0.o build-renode-udc/main_renode_udc_test.o
+```
 
 ## SVD fixes (why `bao1x_peri.svd` differs from the raw upstream file)
 

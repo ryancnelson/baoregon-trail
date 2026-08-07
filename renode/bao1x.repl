@@ -196,9 +196,6 @@ udma_post: Memory.MappedMemory @ sysbus 0x50106000
 sddc_dat: Memory.MappedMemory @ sysbus 0x50140000
     size: 0x00010000
 
-udc: Memory.MappedMemory @ sysbus 0x50200000
-    size: 0x00010000
-
 sram: Memory.MappedMemory @ sysbus 0x61000000
     size: 0x00200000
 
@@ -491,4 +488,117 @@ if request.IsWrite:
         # REG_CMD_CFG: bit 4 = r_cmd_en (start), bit 6 = r_cmd_clr
         if request.Value & 0x10:
             _dispatch_cmd_list()
+'''
+// udc_usb.repl -- minimal Renode PythonPeripheral model of the real
+// Baochip-1x UDC (USB Device Controller) peripheral -- a Corigine
+// xHCI-compliant USB3 device controller core.
+//
+// Real hardware registers/addresses (confirmed via xous-core's
+// libs/bao1x-hal/src/usb/utra.rs + driver.rs -- the real driver, NOT
+// assumed generic USB semantics):
+//
+//   CORIGINE_USB_BASE   = 0x50202000  (real base, per utra.rs)
+//   CORIGINE_DEV_OFFSET = 0x400       (device registers start here)
+//   CORIGINE_USB_LEN    = 0x3000      (12KB region)
+//
+// NOTE on the address discrepancy: Xous's own generated header
+// (utralib/src/generated/bao1x.rs) declares HW_UDC_MEM=0x50200000,
+// HW_UDC_MEM_LEN=65536 (64KB) -- a BROADER region starting 0x2000
+// earlier than utra.rs's CORIGINE_USB_BASE=0x50202000. Both are real,
+// from real generated/hand-written source; the 64KB Xous region likely
+// also covers IFRAM buffer space and/or other UDC-adjacent blocks not
+// broken out in utra.rs. This model maps the full 64KB region at
+// 0x50200000 (matching Xous's own header, the more conservative/
+// inclusive choice for address-collision detection) but only
+// implements REAL register behavior for the offsets utra.rs actually
+// documents (0x400 + register offset below), consistent with the
+// DUART/IOX/SPIM models' own precedent of "real addressing, not full
+// behavioral hardware simulation" for anything not exercised by real
+// driver code.
+//
+// Real register offsets (relative to CORIGINE_DEV_OFFSET=0x400,
+// confirmed in utra.rs):
+//   DEVCAP     @ 0x400+0x00  -- device capabilities (read-only in
+//                               real hardware; real driver's own
+//                               reset() expects to read back
+//                               0x20014401 on real silicon)
+//   DEVCONFIG  @ 0x400+0x10  -- max speed / USB3 disable count
+//   USBCMD     @ 0x400+0x20  -- command register: bit0=RUN_STOP,
+//                               bit1=SOFT_RESET, bit2=INT_ENABLE,
+//                               bit3=SYS_ERR_ENABLE
+//   USBSTS     @ 0x400+0x24  -- status register
+//   PORTSC     @ 0x400+0x30  -- port status/control
+//   DOORBELL   @ 0x400+0x40  -- ring doorbell (real driver:
+//                               knock_doorbell() writes endpoint
+//                               index here to kick off a transfer)
+//   CMDPARA0   @ 0x400+0x70  -- command parameter 0
+//   CMDPARA1   @ 0x400+0x74  -- command parameter 1
+//   CMDCTRL    @ 0x400+0x78  -- command control: bit0=ACTIVE,
+//                               bits[7:4]=TYPE, bits[19:16]=STATUS
+//
+// MVP scope (per baoregon-trail issue #2): models the two real,
+// register-level hardware handshakes the actual driver
+// (libs/bao1x-hal/src/usb/driver.rs) performs and busy-waits on:
+//
+//   1. Soft reset (driver.rs reset(), lines ~1253-1258): firmware
+//      writes USBCMD_SOFT_RESET=1, then busy-waits reading USBCMD
+//      until that bit reads back 0 again. Real hardware auto-clears
+//      this bit once reset completes; this model does the same
+//      (auto-clears on the very next read, since there's no real
+//      reset latency to simulate).
+//   2. Command execution (driver.rs issue_command(), lines
+//      ~1506-1530): firmware writes CMDPARA0/CMDPARA1, then writes
+//      CMDCTRL with ACTIVE=1 + TYPE=<cmd>, then busy-waits reading
+//      CMDCTRL until ACTIVE reads back 0, then checks STATUS bits
+//      for success/failure. Real hardware processes the command
+//      asynchronously; this model completes it immediately (clears
+//      ACTIVE, sets STATUS=0 for success) on the next read -- there
+//      is no real xHCI TRB/command-ring/event-ring emulation here.
+//
+// DEVCAP is modeled as a fixed, real, hardware-documented read-only
+// value (0x20014401, from driver.rs's own comment showing real
+// silicon's actual DEVCAP readback) -- this lets firmware's real
+// reset() sequence's own sanity printout ("devcap: 20014401") be
+// exercised faithfully.
+//
+// NOT modeled at all (same "real addressing, not full behavioral
+// simulation" precedent as DUART/IOX/SPIM): USB protocol semantics,
+// TRB (Transfer Request Block) rings, event rings, endpoint context
+// structures, IFRAM-based DMA buffer transfers, PORTSC real
+// connect/speed-negotiation state machine, or interrupts. A full
+// xHCI-compliant USB3 device controller is a substantially larger
+// modeling effort than DUART/IOX/SPIM's simple register-level FIFOs
+// -- out of scope for this MVP pass.
+udc: Python.PythonPeripheral @ sysbus 0x50200000
+    size: 0x10000
+    initable: true
+    script: '''
+if request.IsInit:
+    regs = [0] * (0x10000 // 4)
+    # DEVCAP @ dev offset 0x400 + register offset 0x00 = 0x400
+    # Real, documented value from driver.rs's own comment showing
+    # real silicon's actual readback (1 interrupt, 4 phys EPIN, 4 phys
+    # EPOUT configuration).
+    regs[0x400 // 4] = 0x20014401
+if request.IsRead:
+    idx = request.Offset >> 2
+    request.Value = regs[idx] if idx < len(regs) else 0
+if request.IsWrite:
+    idx = request.Offset >> 2
+    if idx < len(regs):
+        value = request.Value & 0xFFFFFFFF
+        # USBCMD @ dev offset 0x400 + 0x20 = 0x420: auto-clear
+        # SOFT_RESET (bit 1) immediately, matching real hardware's
+        # own "reset completes, bit self-clears" behavior that
+        # driver.rs's reset() busy-waits on.
+        if request.Offset == 0x420:
+            regs[idx] = value & ~0x2
+        # CMDCTRL @ dev offset 0x400 + 0x78 = 0x478: auto-clear
+        # ACTIVE (bit 0) and force STATUS (bits 19:16) to 0 (success),
+        # matching real hardware's own "command completed" behavior
+        # that driver.rs's issue_command() busy-waits on.
+        elif request.Offset == 0x478:
+            regs[idx] = value & ~0x1 & ~0xF0000
+        else:
+            regs[idx] = value
 '''

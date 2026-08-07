@@ -1,0 +1,19 @@
+# bao1x_udc_usb_test.resc -- real, verified handshake test for the UDC
+# USB Device Controller behavioral model (renode/udc_usb.repl), per
+# baoregon-trail issue #2.
+#
+# Loads src/main_renode_udc_test.c's ELF and runs it against the real
+# UDC register handshakes (soft reset, command issue) modeled in
+# udc_usb.repl.
+#
+# Usage (from the repo root):
+#   renode --console --disable-xwt renode/bao1x_udc_usb_test.resc
+
+using sysbus
+
+mach create "bao1x-udc-test"
+machine LoadPlatformDescription @renode/bao1x.repl
+
+sysbus LoadELF @build-renode-udc/udc_test.elf
+
+emulation RunFor "0.05"
