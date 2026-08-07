@@ -4207,3 +4207,6 @@ file at dispatch time.
 
 <!-- fable-ralph-loop check-in 2026-08-07 06:17:30 -->
 **Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 635 PASS / 0 FAIL (exit 0). Commits in last ~25min: 1.
+
+<!-- fable-ralph-loop check-in 2026-08-07 06:37:37 -->
+**Fable's automated check-in:** ON TRACK (commits landing, tests green). Test suite: 635 PASS / 0 FAIL (exit 0). Commits in last ~25min: 1.
