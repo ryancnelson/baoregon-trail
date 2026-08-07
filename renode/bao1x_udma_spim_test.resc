@@ -1,0 +1,31 @@
+using sysbus
+
+mach create "bao1x-spim-test"
+machine LoadPlatformDescription @renode/bao1x.repl
+
+# Build a real TX data buffer at IFRAM0 (0x50000000-0x5001FFFF): two
+# 32-bit words = 8 real bytes to be "shifted out".
+sysbus WriteDoubleWord 0x50000100 0x11223344
+sysbus WriteDoubleWord 0x50000104 0xAABBCCDD
+
+# Point REG_TX_SADDR/SIZE at that buffer.
+sysbus WriteDoubleWord 0x50105010 0x50000100
+sysbus WriteDoubleWord 0x50105014 0x00000008
+
+# Build a command list at IFRAM0 0x50000200:
+#   StartXfer(cs0)   = 1<<28 | 0     = 0x10000000
+#   TxData(len=2)    = 6<<28 | (2-1) = 0x60000001
+#   EndXfer(disabled)= 9<<28 | 0     = 0x90000000
+sysbus WriteDoubleWord 0x50000200 0x10000000
+sysbus WriteDoubleWord 0x50000204 0x60000001
+sysbus WriteDoubleWord 0x50000208 0x90000000
+
+# Point REG_CMD_SADDR/SIZE at the command list (3 words = 12 bytes).
+sysbus WriteDoubleWord 0x50105020 0x50000200
+sysbus WriteDoubleWord 0x50105024 0x0000000C
+
+# Trigger: write REG_CMD_CFG with EN bit (0x10) set.
+sysbus WriteDoubleWord 0x50105028 0x00000010
+
+# Read the debug-only offset 0x38 to dump captured bytes.
+sysbus ReadDoubleWord 0x50105038

@@ -1,0 +1,148 @@
+// udma_spim.repl -- Renode PythonPeripheral model of the real Baochip-1x
+// UDMA_SPIM_0 peripheral, which drives the memory-LCD display over
+// SPI (see services/graphics-server/src/backend/bao1x.rs in xous-core).
+//
+// Real hardware registers (bao1x_peri.svd, base 0x50105000):
+//   REG_RX_SADDR/SIZE/CFG   @ 0x00/0x04/0x08 (Bank::Rx)
+//   REG_TX_SADDR/SIZE/CFG   @ 0x10/0x14/0x18 (Bank::Tx)
+//   REG_CMD_SADDR/SIZE/CFG  @ 0x20/0x24/0x28 (Bank::Custom)
+//   REG_STATUS              @ 0x30
+// CFG register bit 4 = r_*_en (write triggers the DMA), bit 6 = r_*_clr.
+// This exactly matches libs/bao1x-hal/src/udma/mod.rs's generic `Udma`
+// trait (Bank::Rx=0, Bank::Tx=0x10/4, Bank::Custom=0x20/4; DmaReg::
+// Saddr=0, Size=1, Cfg=2; CFG_EN=0b01_0000, CFG_CLEAR=0b100_0000).
+//
+// The real protocol (libs/bao1x-hal/src/udma/spim.rs's `SpimCmd` enum):
+// firmware writes a small list of 32-bit COMMAND WORDS into an IFRAM
+// buffer, points REG_CMD_SADDR/SIZE at it, then sets REG_CMD_CFG's EN
+// bit -- the peripheral fetches and executes each command word in
+// order. Top 4 bits (31:28) are the opcode:
+//   0=Config, 1=StartXfer(cs), 2=SendCmd, 3=SendAddr, 4=Dummy,
+//   5=Wait, 6=TxData, 7=RxData, 8=RepeatNextCmd, 9=EndXfer,
+//   10=EndRepeat, 11=RxCheck, 12=FullDuplex.
+// StartXfer(cs) asserts chip-select (real hardware: also a GPIO
+// bit-bang per bao1x.rs's own doc comment, out of scope here -- IOX
+// GPIO is a separate peripheral already modeled). TxData(mode,
+// words_per_xfer, bits_per_word, endian, len) is the one this model
+// actually implements with real shift-out semantics: it tells the
+// peripheral to fetch `len` words from the TX bank (REG_TX_SADDR/SIZE,
+// already set up by firmware) and shift them out over "SPI" -- this
+// model captures those bytes into `spi_captured` so a test can verify
+// real command/data content and ordering, not just "didn't crash".
+//
+// Scope/limitations (matching IOX/DUART's own documented pattern):
+// models REAL register offsets and REAL command-word decode/dispatch
+// for the commands that matter to a display blit (StartXfer, TxData,
+// EndXfer) with real DMA-fetch-from-memory semantics (genuinely reads
+// the caller's IFRAM buffer via the sysbus, not a fake/inert stub).
+// Does NOT model: Config/SendCmd/SendAddr/Dummy/Wait/RxData/
+// RepeatNextCmd/EndRepeat/RxCheck/FullDuplex (harmlessly no-op'd --
+// logged but not acted on), real SPI clock timing, or the CS-pin GPIO
+// bit-bang side (that's IOX's job, already modeled separately;
+// StartXfer here just tracks an internal `cs_asserted` flag for
+// realism/assertions, it does not touch any real IOX register).
+udma_spim0: Python.PythonPeripheral @ sysbus 0x50105000
+    size: 0x1000
+    initable: true
+    script: '''
+def _dispatch_cmd_list():
+    global cs_asserted, spi_captured
+    machine = self.GetMachine()
+    sysbus_periph = machine.SystemBus
+    remaining = cmd_size
+    addr = cmd_saddr
+    # Command words are 32-bit; cmd_size is documented in bytes per
+    # the SVD's r_cmd_size field (same convention as r_tx_size/
+    # r_rx_size), so iterate 4 bytes at a time.
+    while remaining >= 4:
+        word = sysbus_periph.ReadDoubleWord(addr)
+        opcode = (word >> 28) & 0xF
+        if opcode == 1:
+            # StartXfer(cs) -- assert chip-select
+            cs_asserted = True
+        elif opcode == 6:
+            # TxData(mode, words_per_xfer, bits_per_word, endian, len)
+            # len is encoded as (len - 1) per SpimCmd::TxData's real
+            # Into<u32> impl -- decode the low 16 bits + 1.
+            tx_len_words = (word & 0xFFFF) + 1
+            _shift_out_tx_data(sysbus_periph, tx_len_words)
+        elif opcode == 9:
+            # EndXfer(event) -- de-assert chip-select
+            cs_asserted = False
+        # else: Config/SendCmd/SendAddr/Dummy/Wait/RxData/
+        # RepeatNextCmd/EndRepeat/RxCheck/FullDuplex -- not modeled,
+        # intentionally no-op (see file header "Scope/limitations").
+        addr = addr + 4
+        remaining = remaining - 4
+
+def _shift_out_tx_data(sysbus_periph, num_words):
+    global spi_captured
+    addr = tx_saddr
+    for _ in range(num_words):
+        val = sysbus_periph.ReadDoubleWord(addr)
+        spi_captured.append(val & 0xFF)
+        spi_captured.append((val >> 8) & 0xFF)
+        spi_captured.append((val >> 16) & 0xFF)
+        spi_captured.append((val >> 24) & 0xFF)
+        addr = addr + 4
+
+if request.IsInit:
+    regs = [0] * (0x1000 // 4)
+    tx_saddr = 0
+    tx_size = 0
+    cmd_saddr = 0
+    cmd_size = 0
+    cs_asserted = False
+    spi_captured = []
+
+if request.IsRead:
+    idx = request.Offset >> 2
+    if request.Offset == 0x30:
+        # REG_STATUS: bit meaning is unconfirmed in the SVD's own field
+        # docs (just "status_i", no bit breakdown given) -- model as
+        # always-idle (0), matching this model's synchronous dispatch
+        # (no real busy window, same rationale as duart_console.repl's
+        # SFR_SR).
+        request.Value = 0
+    elif request.Offset == 0x38:
+        # NOT a real hardware register (0x38 is past REG_STATUS,
+        # unused in the real SVD) -- test/debug-only hook so a .resc
+        # test script can verify captured SPI bytes without needing
+        # a full firmware round-trip. Prints spi_captured and returns
+        # its length; real firmware never touches this offset.
+        import sys
+        sys.stdout.write("SPI_CAPTURED=" + repr(spi_captured) + " CS=" + repr(cs_asserted))
+        sys.stdout.flush()
+        request.Value = len(spi_captured)
+    elif idx < len(regs):
+        request.Value = regs[idx]
+    else:
+        request.Value = 0
+
+if request.IsWrite:
+    idx = request.Offset >> 2
+    if idx < len(regs):
+        regs[idx] = request.Value & 0xFFFFFFFF
+
+    if request.Offset == 0x10:
+        # Real driver writes a full 32-bit IFRAM physical address here
+        # (libs/bao1x-hal/src/udma/mod.rs's udma_enqueue():
+        # write_volatile(buf_addr) where buf_addr = buf.as_ptr() as
+        # u32) -- NOT masked to the SVD's documented 12-bit field
+        # width, which appears to only describe the low bits actually
+        # wired up in RTL for a smaller address space than the real
+        # 32-bit pointer firmware supplies. Store the full value so
+        # this model can genuinely dereference it via the sysbus.
+        tx_saddr = request.Value & 0xFFFFFFFF
+    elif request.Offset == 0x14:
+        tx_size = request.Value & 0xFFFF
+    elif request.Offset == 0x20:
+        cmd_saddr = request.Value & 0xFFFFFFFF
+    elif request.Offset == 0x24:
+        cmd_size = request.Value & 0xFFFF
+    elif request.Offset == 0x28:
+        # REG_CMD_CFG: bit 4 = r_cmd_en (start), bit 6 = r_cmd_clr
+        if request.Value & 0x10:
+            _dispatch_cmd_list()
+'''
+

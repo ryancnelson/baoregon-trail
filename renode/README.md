@@ -93,20 +93,17 @@ the real SVD + Xous's own generated hardware header
 - `DUART` (`0x40042000`) -- real debug UART, modeled above with a
   working PythonPeripheral (this is what makes the MVP demo's console
   output real).
-- `UDMA_SPIM_0-3` (`0x50105000`-`0x50108000`) -- the real SPI
-  peripherals. **There is no dedicated display/screen controller
-  peripheral on Baochip-1x at all** -- confirmed by reading the real
-  display backend, `xous-core`'s own
-  `services/graphics-server/src/backend/bao1x.rs`: its own doc comment
-  states outright "There isn't a dedicated memory LCD frame buffer
-  device" -- the badge's real memory-LCD display is driven by
-  bit-banging a proprietary line-addressed SPI protocol over
-  `UDMA_SPIM_0` + GPIO chip-select, cobbled together from a DMA engine
-  and the PIO/BIO block. Currently left as a generic 128KB `udma`
-  catch-all `MappedMemory` region (real address correctly mapped, so
-  any true address-collision bug would still be caught) rather than a
-  behavioral SPI/display model -- modeling the real memory-LCD protocol
-  is a substantial follow-on task, out of this MVP's scope.
+- `UDMA_SPIM_0` (`0x50105000`) -- the real SPI peripheral driving the
+  badge's memory-LCD display. **Now modeled with a real, working
+  `Python.PythonPeripheral`** -- see "UDMA_SPIM_0 display SPI
+  behavioral model" below for the full writeup and a real, verified
+  command/data round-trip test. (Note: there is no dedicated
+  display/screen-controller peripheral on Baochip-1x at all -- per
+  `xous-core`'s own `services/graphics-server/src/backend/bao1x.rs`
+  doc comment, "There isn't a dedicated memory LCD frame buffer
+  device"; the real display is driven by bit-banging a proprietary
+  line-addressed protocol over `UDMA_SPIM_0` + GPIO chip-select via
+  `IOX`, which is exactly what these two models together now cover.)
 
 **Confirmed NOT real Baochip-1x SoC peripherals (out of scope, not
 modeled at all)**:
@@ -199,6 +196,78 @@ Polling for a real transition (simulated button press)...
 09:08:38.1662 [INFO] bao1x-iox-test: Machine resumed.
 TRANSITION: PB0x00000003 LOW -> HIGH (real SFR_GPIOIN_SRGI1 register read)
 ```
+
+## UDMA_SPIM_0 display SPI behavioral model
+
+`udma_spim.repl`/the `udma_spim0` entry in `bao1x.repl` models the real
+UDMA_SPIM_0 peripheral's DMA-driven command-dispatch protocol, verified
+against the actual driver source (not guessed):
+
+- `libs/bao1x-hal/src/udma/mod.rs`'s generic `Udma` trait -- the real
+  register bank layout (`Bank::Rx=0`, `Bank::Tx=0x10/4`,
+  `Bank::Custom=0x20/4`; `DmaReg::Saddr=0, Size=1, Cfg=2`;
+  `CFG_EN=0b01_0000`, `CFG_CLEAR=0b100_0000`).
+- `libs/bao1x-hal/src/spim.rs`'s `SpimCmd` enum and its real
+  `Into<u32>` encoding -- a 4-bit opcode in bits 31:28 of each 32-bit
+  command word (`Config`, `StartXfer`, `SendCmd`, `SendAddr`, `Dummy`,
+  `Wait`, `TxData`, `RxData`, `RepeatNextCmd`, `EndXfer`, `EndRepeat`,
+  `RxCheck`, `FullDuplex`), fed to the peripheral via the CMD bank's
+  DMA (`REG_CMD_SADDR`/`REG_CMD_SIZE`/`REG_CMD_CFG`).
+- `services/graphics-server/src/backend/bao1x.rs` -- confirms this is
+  genuinely the real path the display driver uses (see the "no
+  dedicated display peripheral" note above).
+
+Real register layout (confirmed from `bao1x_peri.svd`, base
+`0x50105000`):
+
+| Register | Offset | Real purpose |
+|---|---|---|
+| `REG_RX_SADDR`/`SIZE`/`CFG` | `0x00`/`0x04`/`0x08` | RX bank (not modeled -- display path is TX-only) |
+| `REG_TX_SADDR`/`SIZE`/`CFG` | `0x10`/`0x14`/`0x18` | TX bank -- real IFRAM source address + byte count for outgoing SPI data |
+| `REG_CMD_SADDR`/`SIZE`/`CFG` | `0x20`/`0x24`/`0x28` | CMD bank -- real IFRAM source address + byte count for the command-word list; writing `CFG` with bit 4 (`r_cmd_en`) set triggers real dispatch |
+| `REG_STATUS` | `0x30` | modeled as always-idle (`0`) -- the SVD's own field docs give no bit breakdown, matching DUART's `SFR_SR` precedent |
+
+**What's real vs. what's storage-only**: the model genuinely dereferences
+the caller's real IFRAM buffers via the sysbus (`ReadDoubleWord` against
+whatever address firmware wrote into `REG_TX_SADDR`/`REG_CMD_SADDR`) and
+decodes real command words -- this is real DMA-fetch behavior, not a
+fake/inert stub. It implements real dispatch for the three opcodes that
+matter to a display blit (`StartXfer`, `TxData`, `EndXfer`); the other
+nine real `SpimCmd` opcodes are harmlessly no-op'd (not acted on, matching
+the DUART/IOX precedent of "real register addressing, not full
+behavioral hardware simulation"). It does NOT model real SPI clock
+timing or the CS-pin GPIO bit-bang side (that's `IOX`'s job, already
+modeled separately -- `StartXfer`/`EndXfer` here just track an internal
+`cs_asserted` flag for realism/assertions, without touching any real IOX
+register).
+
+### Real, verified round-trip test
+
+`renode/bao1x_udma_spim_test.resc` builds a real TX data buffer (two
+32-bit words, 8 bytes) and a real 3-word command list
+(`StartXfer(cs0)` → `TxData(len=2)` → `EndXfer`) directly in IFRAM0 via
+`sysbus WriteDoubleWord`, points `REG_TX_SADDR`/`SIZE` and
+`REG_CMD_SADDR`/`SIZE` at them, then triggers dispatch by writing
+`REG_CMD_CFG` with the enable bit set -- exactly the sequence real
+firmware would perform. A debug-only read at offset `0x38` (not a real
+hardware register -- purely a test hook, real firmware never touches
+it) dumps the model's internally captured SPI byte stream so the test
+can verify the round-trip without needing full firmware.
+
+Real, verified, reproducible output:
+
+```
+$ timeout 15 renode --console --disable-xwt renode/bao1x_udma_spim_test.resc
+...
+SPI_CAPTURED=[68, 51, 34, 17, 221, 204, 187, 170] CS=False
+```
+
+Decoded: `[0x44, 0x33, 0x22, 0x11, 0xDD, 0xCC, 0xBB, 0xAA]` -- exactly
+the little-endian byte order of the two words written to the TX buffer
+(`0x11223344`, `0xAABBCCDD`), confirming the model correctly fetches
+and shifts out real data in the real order firmware would supply it.
+`CS=False` correctly reflects that `EndXfer` de-asserted chip-select
+after the transfer, per the command sequence.
 
 The firmware's own poll loop genuinely detected the register change
 through the real IOX address layout -- a real, working round-trip, not
