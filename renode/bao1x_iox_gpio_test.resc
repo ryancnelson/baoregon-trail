@@ -1,0 +1,31 @@
+# bao1x_iox_gpio_test.resc -- real, verified round-trip test for the
+# IOX GPIO behavioral model (renode/iox_gpio.repl), per baoregon-trail
+# issue #2.
+#
+# Loads src/main_renode_iox_test.c's ELF (polls IOX's real
+# SFR_GPIOIN_SRGI1 input register), runs it briefly to observe the
+# initial LOW state, then directly writes a HIGH bit into the same
+# register via `sysbus WriteDoubleWord` (simulating an external pin
+# transition -- the legitimate stand-in for a real button press, since
+# this model has no real external pin wiring), then runs again to
+# confirm the firmware's own poll loop picks up the transition.
+#
+# Usage (from the repo root):
+#   renode --console --disable-xwt renode/bao1x_iox_gpio_test.resc
+
+using sysbus
+
+mach create "bao1x-iox-test"
+machine LoadPlatformDescription @renode/bao1x.repl
+
+sysbus LoadELF @build-renode-iox/iox_test.elf
+
+emulation RunFor "0.01"
+
+# Real IOX SFR_GPIOIN_SRGI1 register address: base 0x5012f000 + offset
+# 0x17c (port PB input value, per bao1x_peri.svd / iox.rs). Set bit 3
+# (TEST_PIN in main_renode_iox_test.c) HIGH -- this is the simulated
+# "button press".
+sysbus WriteDoubleWord 0x5012f17c 0x00000008
+
+emulation RunFor "0.01"

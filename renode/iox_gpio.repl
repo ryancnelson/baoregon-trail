@@ -1,0 +1,62 @@
+// iox_gpio.repl -- minimal Renode PythonPeripheral model of the real
+// Baochip-1x IOX (GPIO/pin-crossbar) peripheral.
+//
+// Real hardware registers (bao1x_peri.svd, base 0x5012f000,
+// confirmed via xous-core's libs/bao1x-hal/src/iox.rs +
+// libs/bao1x-api/src/iox.rs -- the real driver used by
+// services/bao1x-hal-service/src/servers/keyboard.rs for button
+// reads). IoxPort enum: PA=0, PB=1, PC=2, PD=3, PE=4, PF=5 -- one
+// 32-bit register per port (16 real pins used per port, one bit per
+// pin), 6 ports per register group:
+//
+//   SFR_GPIOOE_CRGOE{0-5}  @ 0x148,0x14c,0x150,0x154,0x158,0x15c
+//     -- direction register (real driver: Iox::set_gpio_dir, one
+//        bit per pin, 1=output/0=input -- IoxDir::Output=1,
+//        IoxDir::Input=0)
+//   SFR_GPIOOUT_CRGO{0-5}  @ 0x130,0x134,0x138,0x13c,0x140,0x144
+//     -- output value register (real driver: Iox::set_gpio_pin /
+//        set_gpio_bank)
+//   SFR_GPIOIN_SRGI{0-5}   @ 0x178,0x17c,0x180,0x184,0x188,0x18c
+//     -- input value register (real driver: Iox::get_gpio_pin /
+//        get_gpio_bank -- this is what firmware reads to see a real
+//        button's current electrical state)
+//   SFR_GPIOPU_CRGPU{0-5}  @ 0x160..0x174 -- pullup enable
+//   SFR_AFSEL_CRAFSEL{0-11} @ 0x0..0x2c -- alternate-function select
+//   SFR_PIOSEL @ 0x200 -- BIO pin-mux select bitmask
+//   SFR_CFG_SCHM/SLEW/DRVSEL_* @ 0x230-0x274 -- Schmitt trigger,
+//     slew rate, drive strength config
+//   SFR_INTCR_CRINT{0-7} @ 0x100-0x11c, SFR_INTFR @ 0x120 --
+//     interrupt config/flags (NOT modeled behaviorally here -- see
+//     "Known limitations" in renode/README.md; reads/writes are
+//     stored but no real edge-detection/IRQ firing happens)
+//
+// MVP scope (per baoregon-trail issue #2): models real GPIO
+// input/output/direction register read/write semantics faithfully
+// enough to let firmware read a simulated button press through the
+// real register layout. Does NOT model: interrupts/edge detection,
+// alternate-function routing side effects, BIO pin muxing side
+// effects, or drive-strength/slew/schmitt-trigger electrical behavior
+// -- all of those registers are present (so writes/reads don't fault)
+// but are simple storage with no behavioral effect.
+//
+// Simulating a button press: real hardware drives SFR_GPIOIN_SRGI{n}
+// bits from actual external pin voltage; this model has no real pin
+// wiring, so the *test* mechanism is to directly poke the SFR_GPIOIN_
+// SRGI{n} register via Renode's `sysbus WriteDoubleWord` monitor
+// command (see renode/bao1x_iox_gpio_test.resc) -- this is a real,
+// legitimate stand-in for "an external pin transitioned", not a
+// firmware code path.
+iox: Python.PythonPeripheral @ sysbus 0x5012f000
+    size: 0x1000
+    initable: true
+    script: '''
+if request.IsInit:
+    regs = [0] * (0x1000 // 4)
+if request.IsRead:
+    idx = request.Offset >> 2
+    request.Value = regs[idx] if idx < len(regs) else 0
+if request.IsWrite:
+    idx = request.Offset >> 2
+    if idx < len(regs):
+        regs[idx] = request.Value & 0xFFFFFFFF
+'''

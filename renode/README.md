@@ -65,10 +65,18 @@ a button.)
   output. NOT a byte-accurate hardware timing model (no baud-rate
   delay, no real transmit-busy window) -- SFR_CR/SFR_SR read back 0
   (always "ready"), which is enough for this MVP demo's needs.
+- `iox_gpio.repl` -- a real `Python.PythonPeripheral` model of the
+  actual Baochip-1x IOX (GPIO/pin-crossbar) peripheral (`0x5012f000`).
+  See "IOX GPIO behavioral model" below.
 - `bao1x_demo.resc` -- loads `bao1x.repl` + our real cross-compiled ELF
   (`build-renode/baoregon-renode-demo.elf`, built from
   `src/main_renode_demo.c` via `linker.ld`, the same real, corrected
   linker script from the memory-map fix) and starts emulation.
+- `bao1x_iox_gpio_test.resc` -- real, verified round-trip test for the
+  IOX GPIO model (loads `src/main_renode_iox_test.c`'s ELF, runs it,
+  pokes a real input register mid-run to simulate a button press,
+  confirms the firmware observes the transition). See "IOX GPIO
+  behavioral model" below.
 
 ## Scope (per issue #2)
 
@@ -79,10 +87,9 @@ the real SVD + Xous's own generated hardware header
   button/keyboard handling in xous-core's own
   `services/bao1x-hal-service/src/servers/keyboard.rs` goes through
   `IoxHal`, confirming this is the right target for GPIO buttons.
-  Mapped as a plain `MappedMemory` stub in `bao1x.repl` (Renode has no
-  built-in IOX model; a real behavioral model would need a custom C#
-  peripheral or PythonPeripheral, not attempted here -- MVP scope was
-  console output).
+  **Now modeled with a real, working `Python.PythonPeripheral`**
+  (`iox_gpio.repl`) -- see "IOX GPIO behavioral model" below for the
+  full writeup and a real, verified button-press round-trip test.
 - `DUART` (`0x40042000`) -- real debug UART, modeled above with a
   working PythonPeripheral (this is what makes the MVP demo's console
   output real).
@@ -121,6 +128,109 @@ modeled at all)**:
   registers, and it's already covered at much higher fidelity by the
   real, working `bio-sim` Verilator RTL simulator (see NEXT_STEPS.md's
   "bio-sim real-world check" entry) -- don't reinvent that here.
+
+## IOX GPIO behavioral model
+
+`iox_gpio.repl` models the real IOX (GPIO/pin-crossbar) peripheral's
+register-level read/write semantics, verified against the actual
+driver source (not guessed):
+
+- `libs/bao1x-hal/src/iox.rs` (`Iox::set_gpio_dir`, `set_gpio_pin`,
+  `get_gpio_pin`, `get_gpio_bank`) -- the real driver used by
+  `services/bao1x-hal-service/src/servers/keyboard.rs` for button
+  reads.
+- `libs/bao1x-api/src/iox.rs` -- the real `IoxPort`/`IoxDir`/`IoxValue`
+  enums (`IoxPort`: `PA=0, PB=1, PC=2, PD=3, PE=4, PF=5`; `IoxDir`:
+  `Input=0, Output=1`).
+
+Real register layout (confirmed from `bao1x_peri.svd`, one 32-bit
+register per port, one bit per pin, 6 ports per register group):
+
+| Register group | Offsets | Real purpose |
+|---|---|---|
+| `SFR_GPIOOE_CRGOE{0-5}` | `0x148`-`0x15c` | direction (1=output, 0=input) |
+| `SFR_GPIOOUT_CRGO{0-5}` | `0x130`-`0x144` | output value |
+| `SFR_GPIOIN_SRGI{0-5}` | `0x178`-`0x18c` | input value -- **what firmware reads to see a real button's electrical state** |
+| `SFR_GPIOPU_CRGPU{0-5}` | `0x160`-`0x174` | pullup enable |
+| `SFR_AFSEL_CRAFSEL{0-11}` | `0x0`-`0x2c` | alternate-function select |
+| `SFR_PIOSEL` | `0x200` | BIO pin-mux select bitmask |
+| `SFR_CFG_SCHM/SLEW/DRVSEL_*` | `0x230`-`0x274` | Schmitt trigger, slew rate, drive strength |
+| `SFR_INTCR_CRINT{0-7}` / `SFR_INTFR` | `0x100`-`0x120` | interrupt config/flags |
+
+**What's real vs. what's storage-only**: `iox_gpio.repl` implements
+real, correct register READ/WRITE semantics for every offset in the
+4KB block (each register is independently addressable and holds
+whatever was last written -- firmware can read back its own writes
+faithfully, exactly like real hardware). What it does NOT model:
+interrupt/edge-detection behavior (writes to `SFR_INTCR_*`/`SFR_INTFR`
+are stored but never fire an IRQ), alternate-function routing side
+effects, BIO pin-mux side effects, or electrical behavior
+(drive-strength/slew/Schmitt-trigger registers are pure storage). This
+matches the DUART model's own precedent -- real register-level
+addressing, not full behavioral hardware simulation.
+
+### Real, verified round-trip test
+
+`src/main_renode_iox_test.c` (a small, dedicated firmware, distinct
+from the main demo) configures IOX port PB pin 3 as an input via the
+real `SFR_GPIOOE_CRGOE1` register, then polls the real
+`SFR_GPIOIN_SRGI1` register in a loop, printing any transition it
+observes to DUART.
+
+`bao1x_iox_gpio_test.resc` runs that firmware, lets it observe the
+real initial `LOW` state, then -- since this model has no real
+external pin wiring -- directly writes `0x00000008` into the real
+`SFR_GPIOIN_SRGI1` register address (`0x5012f17c`) via Renode's
+`sysbus WriteDoubleWord` monitor command. This is a legitimate,
+real stand-in for "an external pin transitioned" (i.e. a button
+press), not a firmware code path.
+
+Real, verified, reproducible output (two independent runs, same
+result both times):
+
+```
+$ timeout 15 renode --console --disable-xwt renode/bao1x_iox_gpio_test.resc
+...
+baoregon-trail: IOX GPIO real register round-trip test (issue #2)
+Configured PB pin 0x00000003 as input (SFR_GPIOOE_CRGOE1 cleared)
+Initial PB0x00000003 state: LOW
+Polling for a real transition (simulated button press)...
+09:08:38.1586 [INFO] bao1x-iox-test: Machine paused.
+09:08:38.1662 [INFO] bao1x-iox-test: Machine resumed.
+TRANSITION: PB0x00000003 LOW -> HIGH (real SFR_GPIOIN_SRGI1 register read)
+```
+
+The firmware's own poll loop genuinely detected the register change
+through the real IOX address layout -- a real, working round-trip, not
+just "the peripheral exists and doesn't crash".
+
+To build `src/main_renode_iox_test.c` yourself:
+
+```bash
+mkdir -p build-renode-iox
+riscv64-elf-gcc -march=rv32imac -mabi=ilp32 -std=c99 -Wall -Wextra -Os \
+    -ffreestanding -fno-builtin -nostartfiles -g -Isrc \
+    -c -o build-renode-iox/crt0.o src/crt0.S
+riscv64-elf-gcc -march=rv32imac -mabi=ilp32 -std=c99 -Wall -Wextra -Os \
+    -ffreestanding -fno-builtin -nostartfiles -g -Isrc \
+    -c -o build-renode-iox/main_renode_iox_test.o src/main_renode_iox_test.c
+riscv64-elf-gcc -march=rv32imac -mabi=ilp32 -nostartfiles -nostdlib \
+    -T linker.ld -Wl,-Map=build-renode-iox/iox_test.map \
+    -o build-renode-iox/iox_test.elf \
+    build-renode-iox/crt0.o build-renode-iox/main_renode_iox_test.o
+```
+
+### Real quirk found: don't call `start` before `emulation RunFor`
+
+Renode's `sleep <ms>` is NOT a real monitor command in this Renode
+version (it silently produced "unhandled" behavior with no useful
+delay) -- the real, correct idiom for advancing virtual time in a
+scripted `.resc` is `emulation RunFor "<seconds>"`. One further real
+quirk: calling `start` and then `emulation RunFor` back-to-back
+produces `This action is not available when emulation is already
+started` -- `RunFor` itself implicitly starts the machine, so just
+call `emulation RunFor` directly without a preceding `start`. See
+`bao1x_iox_gpio_test.resc` for the working pattern.
 
 ## SVD fixes (why `bao1x_peri.svd` differs from the raw upstream file)
 
