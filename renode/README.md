@@ -6,6 +6,9 @@ Renode support (`emulation/soc/betrusted-soc.repl`,
 `utralib/renode/renode.svd`, dated 2022-06-11, models Precursor
 addresses like `0xf0000000`).
 
+Setting up Renode itself (including on Apple Silicon Macs): see
+`MACOS_ARM_SETUP.md`.
+
 ## Status: real, verified, working MVP demo
 
 ```
@@ -52,12 +55,16 @@ a button.)
   in stock Renode) to the real, standard `CPU.VexRiscv`; (2) split the
   auto-generated `sysctrl` 64KB catch-all region so the real `duart`
   peripheral (below) can claim its own address without a sysbus
-  registration conflict; (3) drop ~23 auto-generated, overlapping
-  "group" catch-all regions (crypto/security-coprocessor segment
-  registers, `ao`/`aoperi`, `ifsub`/`udp`) that collided with more
-  specific regions -- none of these are in this task's scope (BIO
-  coprocessor and crypto engine are explicitly out of scope, covered by
-  `bio-sim` instead; see below).
+  registration conflict, and similarly split the `udma` 128KB
+  catch-all so `udma_spim0` (below) has its own address; (3) drop ~23
+  auto-generated, overlapping "group" catch-all regions
+  (crypto/security-coprocessor segment registers, `ao`/`aoperi`,
+  `ifsub`/`udp`) that collided with more specific regions -- none of
+  these are in this task's scope (BIO coprocessor and crypto engine
+  are explicitly out of scope, covered by `bio-sim` instead; see
+  below); (4) hand-map `udc` (`0x50200000`, absent from the SVD
+  entirely -- see "UDC USB behavioral model" below for the real
+  sourcing).
 - `duart_console.repl` -- a real `Python.PythonPeripheral` model of the
   actual Baochip-1x DUART (Debug UART) peripheral (`0x40042000`,
   `rtl/modules/core/rtl/duart.sv`): writes to `SFR_TXD` (offset 0x0)
@@ -68,6 +75,10 @@ a button.)
 - `iox_gpio.repl` -- a real `Python.PythonPeripheral` model of the
   actual Baochip-1x IOX (GPIO/pin-crossbar) peripheral (`0x5012f000`).
   See "IOX GPIO behavioral model" below.
+- `udma_spim.repl` -- a real `Python.PythonPeripheral` model of the
+  actual Baochip-1x UDMA_SPIM_0 peripheral (`0x50105000`), which
+  drives the badge's memory-LCD display over SPI. See "UDMA_SPIM_0
+  display SPI behavioral model" below.
 - `udc_usb.repl` -- a real `Python.PythonPeripheral` model of the
   actual Baochip-1x UDC (USB Device Controller) peripheral
   (`0x50200000`). See "UDC USB behavioral model" below.
@@ -79,6 +90,10 @@ a button.)
   IOX GPIO model (loads `src/main_renode_iox_test.c`'s ELF, runs it,
   pokes a real input register mid-run to simulate a button press,
   confirms the firmware observes the transition). See "IOX GPIO
+  behavioral model" below.
+- `bao1x_udma_spim_test.resc` -- real, verified round-trip test for
+  the UDMA_SPIM_0 model (drives real command/data buffers via monitor
+  commands, no compiled firmware needed). See "UDMA_SPIM_0 display SPI
   behavioral model" below.
 - `bao1x_udc_usb_test.resc` -- real, verified handshake test for the
   UDC USB model (loads `src/main_renode_udc_test.c`'s ELF, exercises
@@ -209,6 +224,38 @@ Polling for a real transition (simulated button press)...
 TRANSITION: PB0x00000003 LOW -> HIGH (real SFR_GPIOIN_SRGI1 register read)
 ```
 
+The firmware's own poll loop genuinely detected the register change
+through the real IOX address layout -- a real, working round-trip, not
+just "the peripheral exists and doesn't crash".
+
+To build `src/main_renode_iox_test.c` yourself:
+
+```bash
+mkdir -p build-renode-iox
+riscv64-elf-gcc -march=rv32imac -mabi=ilp32 -std=c99 -Wall -Wextra -Os \
+    -ffreestanding -fno-builtin -nostartfiles -g -Isrc \
+    -c -o build-renode-iox/crt0.o src/crt0.S
+riscv64-elf-gcc -march=rv32imac -mabi=ilp32 -std=c99 -Wall -Wextra -Os \
+    -ffreestanding -fno-builtin -nostartfiles -g -Isrc \
+    -c -o build-renode-iox/main_renode_iox_test.o src/main_renode_iox_test.c
+riscv64-elf-gcc -march=rv32imac -mabi=ilp32 -nostartfiles -nostdlib \
+    -T linker.ld -Wl,-Map=build-renode-iox/iox_test.map \
+    -o build-renode-iox/iox_test.elf \
+    build-renode-iox/crt0.o build-renode-iox/main_renode_iox_test.o
+```
+
+### Real quirk found: don't call `start` before `emulation RunFor`
+
+Renode's `sleep <ms>` is NOT a real monitor command in this Renode
+version (it silently produced "unhandled" behavior with no useful
+delay) -- the real, correct idiom for advancing virtual time in a
+scripted `.resc` is `emulation RunFor "<seconds>"`. One further real
+quirk: calling `start` and then `emulation RunFor` back-to-back
+produces `This action is not available when emulation is already
+started` -- `RunFor` itself implicitly starts the machine, so just
+call `emulation RunFor` directly without a preceding `start`. See
+`bao1x_iox_gpio_test.resc` for the working pattern.
+
 ## UDMA_SPIM_0 display SPI behavioral model
 
 `udma_spim.repl`/the `udma_spim0` entry in `bao1x.repl` models the real
@@ -261,7 +308,9 @@ register).
 `sysbus WriteDoubleWord`, points `REG_TX_SADDR`/`SIZE` and
 `REG_CMD_SADDR`/`SIZE` at them, then triggers dispatch by writing
 `REG_CMD_CFG` with the enable bit set -- exactly the sequence real
-firmware would perform. A debug-only read at offset `0x38` (not a real
+firmware would perform (this test needs no compiled firmware at all;
+it drives the model purely via monitor commands, unlike the IOX/UDC
+tests above/below). A debug-only read at offset `0x38` (not a real
 hardware register -- purely a test hook, real firmware never touches
 it) dumps the model's internally captured SPI byte stream so the test
 can verify the round-trip without needing full firmware.
@@ -280,38 +329,6 @@ the little-endian byte order of the two words written to the TX buffer
 and shifts out real data in the real order firmware would supply it.
 `CS=False` correctly reflects that `EndXfer` de-asserted chip-select
 after the transfer, per the command sequence.
-
-The firmware's own poll loop genuinely detected the register change
-through the real IOX address layout -- a real, working round-trip, not
-just "the peripheral exists and doesn't crash".
-
-To build `src/main_renode_iox_test.c` yourself:
-
-```bash
-mkdir -p build-renode-iox
-riscv64-elf-gcc -march=rv32imac -mabi=ilp32 -std=c99 -Wall -Wextra -Os \
-    -ffreestanding -fno-builtin -nostartfiles -g -Isrc \
-    -c -o build-renode-iox/crt0.o src/crt0.S
-riscv64-elf-gcc -march=rv32imac -mabi=ilp32 -std=c99 -Wall -Wextra -Os \
-    -ffreestanding -fno-builtin -nostartfiles -g -Isrc \
-    -c -o build-renode-iox/main_renode_iox_test.o src/main_renode_iox_test.c
-riscv64-elf-gcc -march=rv32imac -mabi=ilp32 -nostartfiles -nostdlib \
-    -T linker.ld -Wl,-Map=build-renode-iox/iox_test.map \
-    -o build-renode-iox/iox_test.elf \
-    build-renode-iox/crt0.o build-renode-iox/main_renode_iox_test.o
-```
-
-### Real quirk found: don't call `start` before `emulation RunFor`
-
-Renode's `sleep <ms>` is NOT a real monitor command in this Renode
-version (it silently produced "unhandled" behavior with no useful
-delay) -- the real, correct idiom for advancing virtual time in a
-scripted `.resc` is `emulation RunFor "<seconds>"`. One further real
-quirk: calling `start` and then `emulation RunFor` back-to-back
-produces `This action is not available when emulation is already
-started` -- `RunFor` itself implicitly starts the machine, so just
-call `emulation RunFor` directly without a preceding `start`. See
-`bao1x_iox_gpio_test.resc` for the working pattern.
 
 ## UDC USB behavioral model
 
